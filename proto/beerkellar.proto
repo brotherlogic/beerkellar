@@ -1,0 +1,34 @@
+syntax = "proto3";
+
+package beerkellar;
+
+option go_package = "github.com/brotherlogic/beerkellar/proto";
+
+message AddBeerRequest {
+  int32 beer_id = 1;
+}
+
+message AddBeerResponse {
+}
+
+message GetBeerRequest {
+  enum GetBeerType {
+    GET_BEER_TYPE_UNSPECIFIED = 0;
+    GET_BEER_TYPE_SESSION = 1;
+    GET_BEER_TYPE_BEST = 2;
+  }
+  GetBeerType type = 1;
+}
+
+message GetBeerResponse {
+  int32 beer_id = 1;
+  string brewery_name = 2;
+  string beer_name = 3;
+}
+
+service BeerKeller {
+  // Adds a beer to the cellar
+  rpc AddBeer(AddBeerRequest) returns (AddBeerResponse) {}
+
+  rpc GetBeer(GetBeerRequest) returns (GetBeerResponse) {}
+}
