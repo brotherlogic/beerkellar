@@ -4,9 +4,17 @@ import (
 	"context"
 
 	pb "github.com/brotherlogic/beerkellar/proto"
+
+	pstore_client "github.com/brotherlogic/pstore/client"
+)
+
+const (
+	CONFIG = "github.com/brotherlogic/beerkellar/config"
+	CACHE  = "github.com/brotherlogic/beerkellar/cache"
 )
 
 type Server struct {
+	client pstore_client.PStoreClient
 }
 
 func NewServer() *Server {
@@ -46,18 +54,7 @@ func (s *Server) AddBeer(ctx context.Context, req *pb.AddBeerRequest) (*pb.AddBe
 		return nil, err
 	}
 
-	beer, err := s.getBeer(ctx, req.GetBeerId())
-	if err != nil {
-		return nil, err
-	}
-
-	for _ := range req.GetQuantity() {
-		cellar.Beers = append(cellar.Beers, &pb.Beer{
-			Id:          req.GetBeerId(),
-			Brewery:     beer.GetBrewery(),
-			Abv:         beer.GetAbv(),
-			Name:        beer.GetName(),
-			GlobalScore: beer.GetGlobalScore(),
-		})
+	for _ = range req.GetQuantity() {
+		cellar.BeerIds = append(cellar.BeerIds, req.GetBeerId())
 	}
 }
