@@ -15,14 +15,17 @@ import (
 )
 
 var (
-	port        = flag.Int("port", 8080, "Server port for grpc traffic")
-	metricsPort = flag.Int("metrics_port", 8081, "Metrics port")
+	port         = flag.Int("port", 8080, "Server port for grpc traffic")
+	metricsPort  = flag.Int("metrics_port", 8081, "Metrics port")
+	clientId     = flag.String("client_id", "", "Client Id From Untappd")
+	clientSecret = flag.String("client_secret", "", "Client Secret From Untappd")
+	redirectUrl  = flag.String("redirect_url", "", "Redirect Url From Untappd")
 )
 
 func main() {
 	flag.Parse()
 
-	s := server.NewServer()
+	s := server.NewServer(clientId, clientSecret, redirectUrl)
 
 	http.Handle("/metrics", promhttp.Handler())
 	go func() {

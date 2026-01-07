@@ -5,6 +5,7 @@ import (
 	"time"
 
 	pb "github.com/brotherlogic/beerkellar/proto"
+	"golang.org/x/tools/godoc/redirect"
 
 	pstore_client "github.com/brotherlogic/pstore/client"
 )
@@ -16,10 +17,17 @@ const (
 
 type Server struct {
 	client pstore_client.PStoreClient
+	string clientId
+	string clientSecret
+	string redirectUrl
 }
 
 func NewServer() *Server {
-	return &Server{}
+	return &Server{
+		clientId: clientId,
+		clientSecret: clientSecret,
+		redictectUrl: redirectUrl,
+	}
 }
 
 func (s *Server) loadConfig(ctx context.Context) (*pb.Cellar, error) {
@@ -52,4 +60,11 @@ func (s *Server) AddBeer(ctx context.Context, req *pb.AddBeerRequest) (*pb.AddBe
 				DateAdded: time.Now().Unix(),
 			})
 	}
+
+	return &pb.AddBeerResponse{}, nil
+}
+
+func (s *Server) GetLogin(ctx context.Context, req *pb.GetLoginRequest) (*pb.GetLoginResponse, error) {
+	return fmt.Sprintf("https://untappd.com/oauth/authenticate/?client_id=%v&response_type=code&redirect_url=%v", s.clientId, s.redirectUrl)
+")
 }

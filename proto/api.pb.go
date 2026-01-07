@@ -21,59 +21,11 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-type GetBeerRequest_GetBeerType int32
-
-const (
-	GetBeerRequest_GET_BEER_TYPE_UNSPECIFIED GetBeerRequest_GetBeerType = 0
-	GetBeerRequest_GET_BEER_TYPE_SESSION     GetBeerRequest_GetBeerType = 1
-	GetBeerRequest_GET_BEER_TYPE_BEST        GetBeerRequest_GetBeerType = 2
-)
-
-// Enum value maps for GetBeerRequest_GetBeerType.
-var (
-	GetBeerRequest_GetBeerType_name = map[int32]string{
-		0: "GET_BEER_TYPE_UNSPECIFIED",
-		1: "GET_BEER_TYPE_SESSION",
-		2: "GET_BEER_TYPE_BEST",
-	}
-	GetBeerRequest_GetBeerType_value = map[string]int32{
-		"GET_BEER_TYPE_UNSPECIFIED": 0,
-		"GET_BEER_TYPE_SESSION":     1,
-		"GET_BEER_TYPE_BEST":        2,
-	}
-)
-
-func (x GetBeerRequest_GetBeerType) Enum() *GetBeerRequest_GetBeerType {
-	p := new(GetBeerRequest_GetBeerType)
-	*p = x
-	return p
-}
-
-func (x GetBeerRequest_GetBeerType) String() string {
-	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
-}
-
-func (GetBeerRequest_GetBeerType) Descriptor() protoreflect.EnumDescriptor {
-	return file_api_proto_enumTypes[0].Descriptor()
-}
-
-func (GetBeerRequest_GetBeerType) Type() protoreflect.EnumType {
-	return &file_api_proto_enumTypes[0]
-}
-
-func (x GetBeerRequest_GetBeerType) Number() protoreflect.EnumNumber {
-	return protoreflect.EnumNumber(x)
-}
-
-// Deprecated: Use GetBeerRequest_GetBeerType.Descriptor instead.
-func (GetBeerRequest_GetBeerType) EnumDescriptor() ([]byte, []int) {
-	return file_api_proto_rawDescGZIP(), []int{2, 0}
-}
-
 type AddBeerRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	BeerId        int64                  `protobuf:"varint,1,opt,name=beer_id,json=beerId,proto3" json:"beer_id,omitempty"`
 	Quantity      int32                  `protobuf:"varint,2,opt,name=quantity,proto3" json:"quantity,omitempty"`
+	SizeFlOz      int32                  `protobuf:"varint,3,opt,name=size_fl_oz,json=sizeFlOz,proto3" json:"size_fl_oz,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -122,6 +74,13 @@ func (x *AddBeerRequest) GetQuantity() int32 {
 	return 0
 }
 
+func (x *AddBeerRequest) GetSizeFlOz() int32 {
+	if x != nil {
+		return x.SizeFlOz
+	}
+	return 0
+}
+
 type AddBeerResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
@@ -159,8 +118,7 @@ func (*AddBeerResponse) Descriptor() ([]byte, []int) {
 }
 
 type GetBeerRequest struct {
-	state         protoimpl.MessageState     `protogen:"open.v1"`
-	Type          GetBeerRequest_GetBeerType `protobuf:"varint,1,opt,name=type,proto3,enum=beerkellar.GetBeerRequest_GetBeerType" json:"type,omitempty"`
+	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -193,13 +151,6 @@ func (x *GetBeerRequest) ProtoReflect() protoreflect.Message {
 // Deprecated: Use GetBeerRequest.ProtoReflect.Descriptor instead.
 func (*GetBeerRequest) Descriptor() ([]byte, []int) {
 	return file_api_proto_rawDescGZIP(), []int{2}
-}
-
-func (x *GetBeerRequest) GetType() GetBeerRequest_GetBeerType {
-	if x != nil {
-		return x.Type
-	}
-	return GetBeerRequest_GET_BEER_TYPE_UNSPECIFIED
 }
 
 type GetBeerResponse struct {
@@ -262,30 +213,111 @@ func (x *GetBeerResponse) GetBeerName() string {
 	return ""
 }
 
+type GetLoginRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetLoginRequest) Reset() {
+	*x = GetLoginRequest{}
+	mi := &file_api_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetLoginRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetLoginRequest) ProtoMessage() {}
+
+func (x *GetLoginRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_api_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetLoginRequest.ProtoReflect.Descriptor instead.
+func (*GetLoginRequest) Descriptor() ([]byte, []int) {
+	return file_api_proto_rawDescGZIP(), []int{4}
+}
+
+type GetLoginResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Url           string                 `protobuf:"bytes,1,opt,name=url,proto3" json:"url,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetLoginResponse) Reset() {
+	*x = GetLoginResponse{}
+	mi := &file_api_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetLoginResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetLoginResponse) ProtoMessage() {}
+
+func (x *GetLoginResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_api_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetLoginResponse.ProtoReflect.Descriptor instead.
+func (*GetLoginResponse) Descriptor() ([]byte, []int) {
+	return file_api_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *GetLoginResponse) GetUrl() string {
+	if x != nil {
+		return x.Url
+	}
+	return ""
+}
+
 var File_api_proto protoreflect.FileDescriptor
 
 const file_api_proto_rawDesc = "" +
 	"\n" +
 	"\tapi.proto\x12\n" +
-	"beerkellar\"E\n" +
+	"beerkellar\"c\n" +
 	"\x0eAddBeerRequest\x12\x17\n" +
 	"\abeer_id\x18\x01 \x01(\x03R\x06beerId\x12\x1a\n" +
-	"\bquantity\x18\x02 \x01(\x05R\bquantity\"\x11\n" +
-	"\x0fAddBeerResponse\"\xad\x01\n" +
-	"\x0eGetBeerRequest\x12:\n" +
-	"\x04type\x18\x01 \x01(\x0e2&.beerkellar.GetBeerRequest.GetBeerTypeR\x04type\"_\n" +
-	"\vGetBeerType\x12\x1d\n" +
-	"\x19GET_BEER_TYPE_UNSPECIFIED\x10\x00\x12\x19\n" +
-	"\x15GET_BEER_TYPE_SESSION\x10\x01\x12\x16\n" +
-	"\x12GET_BEER_TYPE_BEST\x10\x02\"j\n" +
+	"\bquantity\x18\x02 \x01(\x05R\bquantity\x12\x1c\n" +
+	"\n" +
+	"size_fl_oz\x18\x03 \x01(\x05R\bsizeFlOz\"\x11\n" +
+	"\x0fAddBeerResponse\"\x10\n" +
+	"\x0eGetBeerRequest\"j\n" +
 	"\x0fGetBeerResponse\x12\x17\n" +
 	"\abeer_id\x18\x01 \x01(\x05R\x06beerId\x12!\n" +
 	"\fbrewery_name\x18\x02 \x01(\tR\vbreweryName\x12\x1b\n" +
-	"\tbeer_name\x18\x03 \x01(\tR\bbeerName2\x98\x01\n" +
+	"\tbeer_name\x18\x03 \x01(\tR\bbeerName\"\x11\n" +
+	"\x0fGetLoginRequest\"$\n" +
+	"\x10GetLoginResponse\x12\x10\n" +
+	"\x03url\x18\x01 \x01(\tR\x03url2\xe1\x01\n" +
 	"\n" +
 	"BeerKeller\x12D\n" +
 	"\aAddBeer\x12\x1a.beerkellar.AddBeerRequest\x1a\x1b.beerkellar.AddBeerResponse\"\x00\x12D\n" +
-	"\aGetBeer\x12\x1a.beerkellar.GetBeerRequest\x1a\x1b.beerkellar.GetBeerResponse\"\x00B*Z(github.com/brotherlogic/beerkellar/protob\x06proto3"
+	"\aGetBeer\x12\x1a.beerkellar.GetBeerRequest\x1a\x1b.beerkellar.GetBeerResponse\"\x00\x12G\n" +
+	"\bGetLogin\x12\x1b.beerkellar.GetLoginRequest\x1a\x1c.beerkellar.GetLoginResponse\"\x00B*Z(github.com/brotherlogic/beerkellar/protob\x06proto3"
 
 var (
 	file_api_proto_rawDescOnce sync.Once
@@ -299,26 +331,27 @@ func file_api_proto_rawDescGZIP() []byte {
 	return file_api_proto_rawDescData
 }
 
-var file_api_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_api_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
+var file_api_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
 var file_api_proto_goTypes = []any{
-	(GetBeerRequest_GetBeerType)(0), // 0: beerkellar.GetBeerRequest.GetBeerType
-	(*AddBeerRequest)(nil),          // 1: beerkellar.AddBeerRequest
-	(*AddBeerResponse)(nil),         // 2: beerkellar.AddBeerResponse
-	(*GetBeerRequest)(nil),          // 3: beerkellar.GetBeerRequest
-	(*GetBeerResponse)(nil),         // 4: beerkellar.GetBeerResponse
+	(*AddBeerRequest)(nil),   // 0: beerkellar.AddBeerRequest
+	(*AddBeerResponse)(nil),  // 1: beerkellar.AddBeerResponse
+	(*GetBeerRequest)(nil),   // 2: beerkellar.GetBeerRequest
+	(*GetBeerResponse)(nil),  // 3: beerkellar.GetBeerResponse
+	(*GetLoginRequest)(nil),  // 4: beerkellar.GetLoginRequest
+	(*GetLoginResponse)(nil), // 5: beerkellar.GetLoginResponse
 }
 var file_api_proto_depIdxs = []int32{
-	0, // 0: beerkellar.GetBeerRequest.type:type_name -> beerkellar.GetBeerRequest.GetBeerType
-	1, // 1: beerkellar.BeerKeller.AddBeer:input_type -> beerkellar.AddBeerRequest
-	3, // 2: beerkellar.BeerKeller.GetBeer:input_type -> beerkellar.GetBeerRequest
-	2, // 3: beerkellar.BeerKeller.AddBeer:output_type -> beerkellar.AddBeerResponse
-	4, // 4: beerkellar.BeerKeller.GetBeer:output_type -> beerkellar.GetBeerResponse
-	3, // [3:5] is the sub-list for method output_type
-	1, // [1:3] is the sub-list for method input_type
-	1, // [1:1] is the sub-list for extension type_name
-	1, // [1:1] is the sub-list for extension extendee
-	0, // [0:1] is the sub-list for field type_name
+	0, // 0: beerkellar.BeerKeller.AddBeer:input_type -> beerkellar.AddBeerRequest
+	2, // 1: beerkellar.BeerKeller.GetBeer:input_type -> beerkellar.GetBeerRequest
+	4, // 2: beerkellar.BeerKeller.GetLogin:input_type -> beerkellar.GetLoginRequest
+	1, // 3: beerkellar.BeerKeller.AddBeer:output_type -> beerkellar.AddBeerResponse
+	3, // 4: beerkellar.BeerKeller.GetBeer:output_type -> beerkellar.GetBeerResponse
+	5, // 5: beerkellar.BeerKeller.GetLogin:output_type -> beerkellar.GetLoginResponse
+	3, // [3:6] is the sub-list for method output_type
+	0, // [0:3] is the sub-list for method input_type
+	0, // [0:0] is the sub-list for extension type_name
+	0, // [0:0] is the sub-list for extension extendee
+	0, // [0:0] is the sub-list for field type_name
 }
 
 func init() { file_api_proto_init() }
@@ -331,14 +364,13 @@ func file_api_proto_init() {
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_api_proto_rawDesc), len(file_api_proto_rawDesc)),
-			NumEnums:      1,
-			NumMessages:   4,
+			NumEnums:      0,
+			NumMessages:   6,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
 		GoTypes:           file_api_proto_goTypes,
 		DependencyIndexes: file_api_proto_depIdxs,
-		EnumInfos:         file_api_proto_enumTypes,
 		MessageInfos:      file_api_proto_msgTypes,
 	}.Build()
 	File_api_proto = out.File

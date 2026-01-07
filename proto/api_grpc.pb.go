@@ -19,8 +19,9 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	BeerKeller_AddBeer_FullMethodName = "/beerkellar.BeerKeller/AddBeer"
-	BeerKeller_GetBeer_FullMethodName = "/beerkellar.BeerKeller/GetBeer"
+	BeerKeller_AddBeer_FullMethodName  = "/beerkellar.BeerKeller/AddBeer"
+	BeerKeller_GetBeer_FullMethodName  = "/beerkellar.BeerKeller/GetBeer"
+	BeerKeller_GetLogin_FullMethodName = "/beerkellar.BeerKeller/GetLogin"
 )
 
 // BeerKellerClient is the client API for BeerKeller service.
@@ -29,6 +30,7 @@ const (
 type BeerKellerClient interface {
 	AddBeer(ctx context.Context, in *AddBeerRequest, opts ...grpc.CallOption) (*AddBeerResponse, error)
 	GetBeer(ctx context.Context, in *GetBeerRequest, opts ...grpc.CallOption) (*GetBeerResponse, error)
+	GetLogin(ctx context.Context, in *GetLoginRequest, opts ...grpc.CallOption) (*GetLoginResponse, error)
 }
 
 type beerKellerClient struct {
@@ -59,12 +61,23 @@ func (c *beerKellerClient) GetBeer(ctx context.Context, in *GetBeerRequest, opts
 	return out, nil
 }
 
+func (c *beerKellerClient) GetLogin(ctx context.Context, in *GetLoginRequest, opts ...grpc.CallOption) (*GetLoginResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetLoginResponse)
+	err := c.cc.Invoke(ctx, BeerKeller_GetLogin_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // BeerKellerServer is the server API for BeerKeller service.
 // All implementations should embed UnimplementedBeerKellerServer
 // for forward compatibility.
 type BeerKellerServer interface {
 	AddBeer(context.Context, *AddBeerRequest) (*AddBeerResponse, error)
 	GetBeer(context.Context, *GetBeerRequest) (*GetBeerResponse, error)
+	GetLogin(context.Context, *GetLoginRequest) (*GetLoginResponse, error)
 }
 
 // UnimplementedBeerKellerServer should be embedded to have
@@ -79,6 +92,9 @@ func (UnimplementedBeerKellerServer) AddBeer(context.Context, *AddBeerRequest) (
 }
 func (UnimplementedBeerKellerServer) GetBeer(context.Context, *GetBeerRequest) (*GetBeerResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetBeer not implemented")
+}
+func (UnimplementedBeerKellerServer) GetLogin(context.Context, *GetLoginRequest) (*GetLoginResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetLogin not implemented")
 }
 func (UnimplementedBeerKellerServer) testEmbeddedByValue() {}
 
@@ -136,6 +152,24 @@ func _BeerKeller_GetBeer_Handler(srv interface{}, ctx context.Context, dec func(
 	return interceptor(ctx, in, info, handler)
 }
 
+func _BeerKeller_GetLogin_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetLoginRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BeerKellerServer).GetLogin(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: BeerKeller_GetLogin_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BeerKellerServer).GetLogin(ctx, req.(*GetLoginRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // BeerKeller_ServiceDesc is the grpc.ServiceDesc for BeerKeller service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -150,6 +184,10 @@ var BeerKeller_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetBeer",
 			Handler:    _BeerKeller_GetBeer_Handler,
+		},
+		{
+			MethodName: "GetLogin",
+			Handler:    _BeerKeller_GetLogin_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
