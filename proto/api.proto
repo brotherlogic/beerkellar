@@ -4,21 +4,17 @@ package beerkellar;
 
 option go_package = "github.com/brotherlogic/beerkellar/proto";
 
+
 message AddBeerRequest {
   int64 beer_id = 1;
   int32 quantity = 2;
+  float size_fl_oz = 3;
 }
 
 message AddBeerResponse {
 }
 
 message GetBeerRequest {
-  enum GetBeerType {
-    GET_BEER_TYPE_UNSPECIFIED = 0;
-    GET_BEER_TYPE_SESSION = 1;
-    GET_BEER_TYPE_BEST = 2;
-  }
-  GetBeerType type = 1;
 }
 
 message GetBeerResponse {
@@ -28,8 +24,6 @@ message GetBeerResponse {
 }
 
 service BeerKeller {
-  // Adds a beer to the cellar
   rpc AddBeer(AddBeerRequest) returns (AddBeerResponse) {}
-
   rpc GetBeer(GetBeerRequest) returns (GetBeerResponse) {}
 }

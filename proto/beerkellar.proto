@@ -5,12 +5,13 @@ package beerkellar;
 option go_package = "github.com/brotherlogic/beerkellar/proto";
 
 message Cellar {
-  repeated int64 beer_ids = 1;
+  repeated CellarEntry entries = 1;
 }
 
 message CellarEntry {
   int64 beer_id = 1;
   int64 date_added = 2;
+  int32 size_fl_oz = 3;
 }
 
 message DrinkArchive {

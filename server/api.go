@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"time"
 
 	pb "github.com/brotherlogic/beerkellar/proto"
 
@@ -25,10 +26,6 @@ func (s *Server) loadConfig(ctx context.Context) (*pb.Cellar, error) {
 	return &pb.Cellar{}, nil
 }
 
-func (S Server) loadCache(ctx context.Context) (*pb.BeerCache, error) {
-	return &pb.BeerCache{}, nil
-}
-
 func (s *Server) GetBeerFromUntappd(ctx context.Context, beerId int64) (*pb.Beer, error) {
 	return &pb.Beer{}, nil
 }
@@ -38,14 +35,7 @@ func (s *Server) getBeer(ctx context.Context, beerId int64) (*pb.Beer, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	for _, entry := range cache.GetBeers() {
-		if entry.GetId() == beerId {
-			return entry, nil
-		}
-	}
-
-	return s.GetBeerFromUntappd(ctx, beerId)
+	return cache.GetBeer(ctx, beerId)
 }
 
 func (s *Server) AddBeer(ctx context.Context, req *pb.AddBeerRequest) (*pb.AddBeerResponse, error) {
@@ -55,6 +45,11 @@ func (s *Server) AddBeer(ctx context.Context, req *pb.AddBeerRequest) (*pb.AddBe
 	}
 
 	for _ = range req.GetQuantity() {
-		cellar.BeerIds = append(cellar.BeerIds, req.GetBeerId())
+		cellar.Entries = append(cellar.Entries,
+			&pb.CellarEntry{
+				BeerId:    req.GetBeerId(),
+				SizeFlOz:  req.GetSizeFlOz(),
+				DateAdded: time.Now().Unix(),
+			})
 	}
 }
