@@ -4,6 +4,8 @@ import (
 	"context"
 
 	pb "github.com/brotherlogic/beerkellar/proto"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type BeerCache struct {
@@ -25,5 +27,5 @@ func (b BeerCache) GetBeer(ctx context.Context, beerId int64) (*pb.Beer, error) 
 		}
 	}
 
-	return s.GetBeerFromUntappd(ctx, beerId)
+	return nil, status.Errorf(codes.NotFound, "not in cache")
 }

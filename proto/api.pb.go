@@ -117,102 +117,6 @@ func (*AddBeerResponse) Descriptor() ([]byte, []int) {
 	return file_api_proto_rawDescGZIP(), []int{1}
 }
 
-type GetBeerRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *GetBeerRequest) Reset() {
-	*x = GetBeerRequest{}
-	mi := &file_api_proto_msgTypes[2]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *GetBeerRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetBeerRequest) ProtoMessage() {}
-
-func (x *GetBeerRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_msgTypes[2]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GetBeerRequest.ProtoReflect.Descriptor instead.
-func (*GetBeerRequest) Descriptor() ([]byte, []int) {
-	return file_api_proto_rawDescGZIP(), []int{2}
-}
-
-type GetBeerResponse struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	BeerId        int32                  `protobuf:"varint,1,opt,name=beer_id,json=beerId,proto3" json:"beer_id,omitempty"`
-	BreweryName   string                 `protobuf:"bytes,2,opt,name=brewery_name,json=breweryName,proto3" json:"brewery_name,omitempty"`
-	BeerName      string                 `protobuf:"bytes,3,opt,name=beer_name,json=beerName,proto3" json:"beer_name,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *GetBeerResponse) Reset() {
-	*x = GetBeerResponse{}
-	mi := &file_api_proto_msgTypes[3]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *GetBeerResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetBeerResponse) ProtoMessage() {}
-
-func (x *GetBeerResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_msgTypes[3]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GetBeerResponse.ProtoReflect.Descriptor instead.
-func (*GetBeerResponse) Descriptor() ([]byte, []int) {
-	return file_api_proto_rawDescGZIP(), []int{3}
-}
-
-func (x *GetBeerResponse) GetBeerId() int32 {
-	if x != nil {
-		return x.BeerId
-	}
-	return 0
-}
-
-func (x *GetBeerResponse) GetBreweryName() string {
-	if x != nil {
-		return x.BreweryName
-	}
-	return ""
-}
-
-func (x *GetBeerResponse) GetBeerName() string {
-	if x != nil {
-		return x.BeerName
-	}
-	return ""
-}
-
 type GetLoginRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	unknownFields protoimpl.UnknownFields
@@ -221,7 +125,7 @@ type GetLoginRequest struct {
 
 func (x *GetLoginRequest) Reset() {
 	*x = GetLoginRequest{}
-	mi := &file_api_proto_msgTypes[4]
+	mi := &file_api_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -233,7 +137,7 @@ func (x *GetLoginRequest) String() string {
 func (*GetLoginRequest) ProtoMessage() {}
 
 func (x *GetLoginRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_msgTypes[4]
+	mi := &file_api_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -246,7 +150,7 @@ func (x *GetLoginRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetLoginRequest.ProtoReflect.Descriptor instead.
 func (*GetLoginRequest) Descriptor() ([]byte, []int) {
-	return file_api_proto_rawDescGZIP(), []int{4}
+	return file_api_proto_rawDescGZIP(), []int{2}
 }
 
 type GetLoginResponse struct {
@@ -258,7 +162,7 @@ type GetLoginResponse struct {
 
 func (x *GetLoginResponse) Reset() {
 	*x = GetLoginResponse{}
-	mi := &file_api_proto_msgTypes[5]
+	mi := &file_api_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -270,7 +174,7 @@ func (x *GetLoginResponse) String() string {
 func (*GetLoginResponse) ProtoMessage() {}
 
 func (x *GetLoginResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_msgTypes[5]
+	mi := &file_api_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -283,7 +187,7 @@ func (x *GetLoginResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetLoginResponse.ProtoReflect.Descriptor instead.
 func (*GetLoginResponse) Descriptor() ([]byte, []int) {
-	return file_api_proto_rawDescGZIP(), []int{5}
+	return file_api_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *GetLoginResponse) GetUrl() string {
@@ -304,19 +208,13 @@ const file_api_proto_rawDesc = "" +
 	"\bquantity\x18\x02 \x01(\x05R\bquantity\x12\x1c\n" +
 	"\n" +
 	"size_fl_oz\x18\x03 \x01(\x05R\bsizeFlOz\"\x11\n" +
-	"\x0fAddBeerResponse\"\x10\n" +
-	"\x0eGetBeerRequest\"j\n" +
-	"\x0fGetBeerResponse\x12\x17\n" +
-	"\abeer_id\x18\x01 \x01(\x05R\x06beerId\x12!\n" +
-	"\fbrewery_name\x18\x02 \x01(\tR\vbreweryName\x12\x1b\n" +
-	"\tbeer_name\x18\x03 \x01(\tR\bbeerName\"\x11\n" +
+	"\x0fAddBeerResponse\"\x11\n" +
 	"\x0fGetLoginRequest\"$\n" +
 	"\x10GetLoginResponse\x12\x10\n" +
-	"\x03url\x18\x01 \x01(\tR\x03url2\xe1\x01\n" +
+	"\x03url\x18\x01 \x01(\tR\x03url2\x9b\x01\n" +
 	"\n" +
 	"BeerKeller\x12D\n" +
-	"\aAddBeer\x12\x1a.beerkellar.AddBeerRequest\x1a\x1b.beerkellar.AddBeerResponse\"\x00\x12D\n" +
-	"\aGetBeer\x12\x1a.beerkellar.GetBeerRequest\x1a\x1b.beerkellar.GetBeerResponse\"\x00\x12G\n" +
+	"\aAddBeer\x12\x1a.beerkellar.AddBeerRequest\x1a\x1b.beerkellar.AddBeerResponse\"\x00\x12G\n" +
 	"\bGetLogin\x12\x1b.beerkellar.GetLoginRequest\x1a\x1c.beerkellar.GetLoginResponse\"\x00B*Z(github.com/brotherlogic/beerkellar/protob\x06proto3"
 
 var (
@@ -331,24 +229,20 @@ func file_api_proto_rawDescGZIP() []byte {
 	return file_api_proto_rawDescData
 }
 
-var file_api_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
+var file_api_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
 var file_api_proto_goTypes = []any{
 	(*AddBeerRequest)(nil),   // 0: beerkellar.AddBeerRequest
 	(*AddBeerResponse)(nil),  // 1: beerkellar.AddBeerResponse
-	(*GetBeerRequest)(nil),   // 2: beerkellar.GetBeerRequest
-	(*GetBeerResponse)(nil),  // 3: beerkellar.GetBeerResponse
-	(*GetLoginRequest)(nil),  // 4: beerkellar.GetLoginRequest
-	(*GetLoginResponse)(nil), // 5: beerkellar.GetLoginResponse
+	(*GetLoginRequest)(nil),  // 2: beerkellar.GetLoginRequest
+	(*GetLoginResponse)(nil), // 3: beerkellar.GetLoginResponse
 }
 var file_api_proto_depIdxs = []int32{
 	0, // 0: beerkellar.BeerKeller.AddBeer:input_type -> beerkellar.AddBeerRequest
-	2, // 1: beerkellar.BeerKeller.GetBeer:input_type -> beerkellar.GetBeerRequest
-	4, // 2: beerkellar.BeerKeller.GetLogin:input_type -> beerkellar.GetLoginRequest
-	1, // 3: beerkellar.BeerKeller.AddBeer:output_type -> beerkellar.AddBeerResponse
-	3, // 4: beerkellar.BeerKeller.GetBeer:output_type -> beerkellar.GetBeerResponse
-	5, // 5: beerkellar.BeerKeller.GetLogin:output_type -> beerkellar.GetLoginResponse
-	3, // [3:6] is the sub-list for method output_type
-	0, // [0:3] is the sub-list for method input_type
+	2, // 1: beerkellar.BeerKeller.GetLogin:input_type -> beerkellar.GetLoginRequest
+	1, // 2: beerkellar.BeerKeller.AddBeer:output_type -> beerkellar.AddBeerResponse
+	3, // 3: beerkellar.BeerKeller.GetLogin:output_type -> beerkellar.GetLoginResponse
+	2, // [2:4] is the sub-list for method output_type
+	0, // [0:2] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name
 	0, // [0:0] is the sub-list for extension extendee
 	0, // [0:0] is the sub-list for field type_name
@@ -365,7 +259,7 @@ func file_api_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_api_proto_rawDesc), len(file_api_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   6,
+			NumMessages:   4,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

@@ -4,7 +4,6 @@ package beerkellar;
 
 option go_package = "github.com/brotherlogic/beerkellar/proto";
 
-
 message AddBeerRequest {
   int64 beer_id = 1;
   int32 quantity = 2;
@@ -14,14 +13,6 @@ message AddBeerRequest {
 message AddBeerResponse {
 }
 
-message GetBeerRequest {
-}
-
-message GetBeerResponse {
-  int32 beer_id = 1;
-  string brewery_name = 2;
-  string beer_name = 3;
-}
 
 message GetLoginRequest {}
 
@@ -31,6 +22,5 @@ message GetLoginResponse {
 
 service BeerKeller {
   rpc AddBeer(AddBeerRequest) returns (AddBeerResponse) {}
-  rpc GetBeer(GetBeerRequest) returns (GetBeerResponse) {}
   rpc GetLogin(GetLoginRequest) returns (GetLoginResponse) {}
 }
