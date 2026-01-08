@@ -1,12 +1,14 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"log"
 	"net"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"google.golang.org/grpc"
@@ -23,7 +25,15 @@ var (
 func main() {
 	flag.Parse()
 
-	s := server.NewServer(os.Getenv("client_id"), os.Getenv("client_secret"), os.Getenv("redirect_url"))
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+	db := server.NewDatabase(ctx)
+	cancel()
+
+	s := server.NewServer(
+		os.Getenv("client_id"),
+		os.Getenv("client_secret"),
+		os.Getenv("redirect_url"),
+		db)
 
 	http.Handle("/metrics", promhttp.Handler())
 	go func() {
