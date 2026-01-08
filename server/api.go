@@ -41,16 +41,14 @@ func (s *Server) loadConfig(ctx context.Context) (*pb.Cellar, error) {
 	return &pb.Cellar{}, nil
 }
 
-func (s *Server) GetBeerFromUntappd(ctx context.Context, beerId int64) (*pb.Beer, error) {
-	return &pb.Beer{}, nil
-}
-
 func (s *Server) getBeer(ctx context.Context, beerId int64) (*pb.Beer, error) {
-	cache, err := s.loadCache(ctx)
-	if err != nil {
-		return nil, err
+	beer, err := s.db.GetBeer(ctx, beerId)
+	if err == nil {
+		return beer, nil
 	}
-	return cache.GetBeer(ctx, beerId)
+
+	// Cache miss - call out to Untappd
+	return s.getBeerFromUntappd(ctx, beerId)
 }
 
 func GetContextKey(ctx context.Context) (string, error) {
@@ -117,4 +115,54 @@ func (s *Server) AddBeer(ctx context.Context, req *pb.AddBeerRequest) (*pb.AddBe
 
 func (s *Server) GetLogin(ctx context.Context, req *pb.GetLoginRequest) (*pb.GetLoginResponse, error) {
 	return &pb.GetLoginResponse{Url: fmt.Sprintf("https://untappd.com/oauth/authenticate/?client_id=%v&response_type=code&redirect_url=%v", s.clientId, s.redirectUrl)}, nil
+}
+
+func (s *Server) GetBeer(ctx context.Context, req *pb.GetBeerRequest) (*pb.GetBeerResponse, error) {
+	user, err := s.getUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+	cellar, err := s.db.GetCellar(ctx, user.GetUsername())
+	if err != nil {
+		// OutOfRange is cannot be found in DB
+		if status.Code(err) == codes.OutOfRange {
+			cellar = &pb.Cellar{}
+		} else {
+			return nil, err
+		}
+	}
+
+	var beers []*pb.Beer
+	addedDate := make(map[int64]int64)
+	for _, entry := range cellar.GetEntries() {
+		beer, err := s.getBeer(ctx, entry.GetBeerId())
+		if err != nil {
+			return nil, err
+		}
+
+		if date, ok := addedDate[beer.GetId()]; !ok || entry.GetDateAdded() < date {
+			addedDate[beer.GetId()] = entry.GetDateAdded()
+		} else {
+
+		}
+
+		units := convertToLitres(entry.GetSizeFlOz()) * beer.GetAbv()
+		if units < float32(req.GetMaxUnits()) {
+			beers = append(beers, beer)
+		}
+	}
+
+	// Out of the beers - pick the oldest
+	oldest := beers[0]
+	for _, beer := range beers {
+		if addedDate[beer.GetId()] < addedDate[oldest.GetId()] {
+			oldest = beer
+		}
+	}
+
+	return &pb.GetBeerResponse{Beer: oldest}, nil
+}
+
+func convertToLitres(flOz int32) float32 {
+	return float32(flOz) * 0.029574
 }

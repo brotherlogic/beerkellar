@@ -2,6 +2,8 @@ syntax = "proto3";
 
 package beerkellar;
 
+import "beer.proto";
+
 option go_package = "github.com/brotherlogic/beerkellar/proto";
 
 message Cellar {
@@ -26,12 +28,4 @@ message Drink {
 
 message BeerCache {
   repeated Beer beers = 1;
-}
-
-message Beer {
-  int64 id = 1;
-  string name = 2;
-  float abv = 3;
-  string brewery = 4;
-  float global_score = 5;
 }
