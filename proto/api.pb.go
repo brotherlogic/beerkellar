@@ -265,12 +265,101 @@ func (x *GetLoginResponse) GetUrl() string {
 	return ""
 }
 
+type GetBeerRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	MaxUnits      int32                  `protobuf:"varint,1,opt,name=max_units,json=maxUnits,proto3" json:"max_units,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetBeerRequest) Reset() {
+	*x = GetBeerRequest{}
+	mi := &file_api_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetBeerRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetBeerRequest) ProtoMessage() {}
+
+func (x *GetBeerRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_api_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetBeerRequest.ProtoReflect.Descriptor instead.
+func (*GetBeerRequest) Descriptor() ([]byte, []int) {
+	return file_api_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *GetBeerRequest) GetMaxUnits() int32 {
+	if x != nil {
+		return x.MaxUnits
+	}
+	return 0
+}
+
+type GetBeerResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Beer          *Beer                  `protobuf:"bytes,1,opt,name=beer,proto3" json:"beer,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetBeerResponse) Reset() {
+	*x = GetBeerResponse{}
+	mi := &file_api_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetBeerResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetBeerResponse) ProtoMessage() {}
+
+func (x *GetBeerResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_api_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetBeerResponse.ProtoReflect.Descriptor instead.
+func (*GetBeerResponse) Descriptor() ([]byte, []int) {
+	return file_api_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *GetBeerResponse) GetBeer() *Beer {
+	if x != nil {
+		return x.Beer
+	}
+	return nil
+}
+
 var File_api_proto protoreflect.FileDescriptor
 
 const file_api_proto_rawDesc = "" +
 	"\n" +
 	"\tapi.proto\x12\n" +
-	"beerkellar\"v\n" +
+	"beerkellar\x1a\n" +
+	"beer.proto\"v\n" +
 	"\x04User\x12\x12\n" +
 	"\x04auth\x18\x01 \x01(\tR\x04auth\x12\x1d\n" +
 	"\n" +
@@ -286,11 +375,16 @@ const file_api_proto_rawDesc = "" +
 	"\x0fAddBeerResponse\"\x11\n" +
 	"\x0fGetLoginRequest\"$\n" +
 	"\x10GetLoginResponse\x12\x10\n" +
-	"\x03url\x18\x01 \x01(\tR\x03url2\x9b\x01\n" +
+	"\x03url\x18\x01 \x01(\tR\x03url\"-\n" +
+	"\x0eGetBeerRequest\x12\x1b\n" +
+	"\tmax_units\x18\x01 \x01(\x05R\bmaxUnits\"7\n" +
+	"\x0fGetBeerResponse\x12$\n" +
+	"\x04beer\x18\x01 \x01(\v2\x10.beerkellar.BeerR\x04beer2\xe1\x01\n" +
 	"\n" +
 	"BeerKeller\x12D\n" +
 	"\aAddBeer\x12\x1a.beerkellar.AddBeerRequest\x1a\x1b.beerkellar.AddBeerResponse\"\x00\x12G\n" +
-	"\bGetLogin\x12\x1b.beerkellar.GetLoginRequest\x1a\x1c.beerkellar.GetLoginResponse\"\x00B*Z(github.com/brotherlogic/beerkellar/protob\x06proto3"
+	"\bGetLogin\x12\x1b.beerkellar.GetLoginRequest\x1a\x1c.beerkellar.GetLoginResponse\"\x00\x12D\n" +
+	"\aGetBeer\x12\x1a.beerkellar.GetBeerRequest\x1a\x1b.beerkellar.GetBeerResponse\"\x00B*Z(github.com/brotherlogic/beerkellar/protob\x06proto3"
 
 var (
 	file_api_proto_rawDescOnce sync.Once
@@ -304,24 +398,30 @@ func file_api_proto_rawDescGZIP() []byte {
 	return file_api_proto_rawDescData
 }
 
-var file_api_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
+var file_api_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
 var file_api_proto_goTypes = []any{
 	(*User)(nil),             // 0: beerkellar.User
 	(*AddBeerRequest)(nil),   // 1: beerkellar.AddBeerRequest
 	(*AddBeerResponse)(nil),  // 2: beerkellar.AddBeerResponse
 	(*GetLoginRequest)(nil),  // 3: beerkellar.GetLoginRequest
 	(*GetLoginResponse)(nil), // 4: beerkellar.GetLoginResponse
+	(*GetBeerRequest)(nil),   // 5: beerkellar.GetBeerRequest
+	(*GetBeerResponse)(nil),  // 6: beerkellar.GetBeerResponse
+	(*Beer)(nil),             // 7: beerkellar.Beer
 }
 var file_api_proto_depIdxs = []int32{
-	1, // 0: beerkellar.BeerKeller.AddBeer:input_type -> beerkellar.AddBeerRequest
-	3, // 1: beerkellar.BeerKeller.GetLogin:input_type -> beerkellar.GetLoginRequest
-	2, // 2: beerkellar.BeerKeller.AddBeer:output_type -> beerkellar.AddBeerResponse
-	4, // 3: beerkellar.BeerKeller.GetLogin:output_type -> beerkellar.GetLoginResponse
-	2, // [2:4] is the sub-list for method output_type
-	0, // [0:2] is the sub-list for method input_type
-	0, // [0:0] is the sub-list for extension type_name
-	0, // [0:0] is the sub-list for extension extendee
-	0, // [0:0] is the sub-list for field type_name
+	7, // 0: beerkellar.GetBeerResponse.beer:type_name -> beerkellar.Beer
+	1, // 1: beerkellar.BeerKeller.AddBeer:input_type -> beerkellar.AddBeerRequest
+	3, // 2: beerkellar.BeerKeller.GetLogin:input_type -> beerkellar.GetLoginRequest
+	5, // 3: beerkellar.BeerKeller.GetBeer:input_type -> beerkellar.GetBeerRequest
+	2, // 4: beerkellar.BeerKeller.AddBeer:output_type -> beerkellar.AddBeerResponse
+	4, // 5: beerkellar.BeerKeller.GetLogin:output_type -> beerkellar.GetLoginResponse
+	6, // 6: beerkellar.BeerKeller.GetBeer:output_type -> beerkellar.GetBeerResponse
+	4, // [4:7] is the sub-list for method output_type
+	1, // [1:4] is the sub-list for method input_type
+	1, // [1:1] is the sub-list for extension type_name
+	1, // [1:1] is the sub-list for extension extendee
+	0, // [0:1] is the sub-list for field type_name
 }
 
 func init() { file_api_proto_init() }
@@ -329,13 +429,14 @@ func file_api_proto_init() {
 	if File_api_proto != nil {
 		return
 	}
+	file_beer_proto_init()
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_api_proto_rawDesc), len(file_api_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   5,
+			NumMessages:   7,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

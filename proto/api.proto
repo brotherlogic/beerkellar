@@ -2,6 +2,8 @@ syntax = "proto3";
 
 package beerkellar;
 
+import "beer.proto";
+
 option go_package = "github.com/brotherlogic/beerkellar/proto";
 
 
@@ -29,7 +31,16 @@ message GetLoginResponse {
   string url = 1;
 }
 
+message GetBeerRequest {
+  int32 max_units = 1;
+}
+
+message GetBeerResponse{
+  Beer beer = 1;
+}
+
 service BeerKeller {
   rpc AddBeer(AddBeerRequest) returns (AddBeerResponse) {}
   rpc GetLogin(GetLoginRequest) returns (GetLoginResponse) {}
+  rpc GetBeer(GetBeerRequest) returns (GetBeerResponse) {}
 }
