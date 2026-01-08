@@ -1,7 +1,7 @@
 # Todo
 
 1. Write untappd integration pieces
-1. Profit
+1. Work through issues
 
 ## Done
 
