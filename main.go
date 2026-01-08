@@ -6,6 +6,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"os"
 
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"google.golang.org/grpc"
@@ -15,17 +16,14 @@ import (
 )
 
 var (
-	port         = flag.Int("port", 8080, "Server port for grpc traffic")
-	metricsPort  = flag.Int("metrics_port", 8081, "Metrics port")
-	clientId     = flag.String("client_id", "", "Client Id From Untappd")
-	clientSecret = flag.String("client_secret", "", "Client Secret From Untappd")
-	redirectUrl  = flag.String("redirect_url", "", "Redirect Url From Untappd")
+	port        = flag.Int("port", 8080, "Server port for grpc traffic")
+	metricsPort = flag.Int("metrics_port", 8081, "Metrics port")
 )
 
 func main() {
 	flag.Parse()
 
-	s := server.NewServer(*clientId, *clientSecret, *redirectUrl)
+	s := server.NewServer(os.Getenv("client_id"), os.Getenv("client_secret"), os.Getenv("redirect_url"))
 
 	http.Handle("/metrics", promhttp.Handler())
 	go func() {

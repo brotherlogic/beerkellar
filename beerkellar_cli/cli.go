@@ -7,12 +7,13 @@ import (
 	"os"
 
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 
 	pb "github.com/brotherlogic/beerkellar/proto"
 )
 
 func main() {
-	conn, err := grpc.Dial("beer.brotherlogic-backend.com:8080")
+	conn, err := grpc.NewClient("beerkellar.brotherlogic-backend.com:80", grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		log.Fatalf("Did not connect: %v", err)
 	}
