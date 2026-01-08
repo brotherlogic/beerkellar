@@ -4,6 +4,15 @@ package beerkellar;
 
 option go_package = "github.com/brotherlogic/beerkellar/proto";
 
+
+message User {
+    string auth = 1;
+    string user_token = 2;
+    string user_secret = 3;
+
+    string username = 4;
+}
+
 message AddBeerRequest {
   int64 beer_id = 1;
   int32 quantity = 2;
