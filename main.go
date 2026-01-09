@@ -18,8 +18,9 @@ import (
 )
 
 var (
-	port        = flag.Int("port", 8080, "Server port for grpc traffic")
-	metricsPort = flag.Int("metrics_port", 8081, "Metrics port")
+	port         = flag.Int("port", 8080, "Server port for grpc traffic")
+	metricsPort  = flag.Int("metrics_port", 8081, "Metrics port")
+	callbackPort = flag.Int("callback_port", 8082, "Callback port")
 )
 
 func main() {
@@ -37,7 +38,13 @@ func main() {
 
 	http.Handle("/metrics", promhttp.Handler())
 	go func() {
-		err := http.ListenAndServe(fmt.Sprintf(":%v", *metricsPort), nil)
+		err := http.ListenAndServe(fmt.Sprintf(":%v", *metricsPort), mux)
+		log.Fatalf("Beerkellar is unable to serve metrics: %v", err)
+	}()
+
+	http.Handle("/", http.HandlerFunc(s.HandleCallback))
+	go func() {
+		err := http.ListenAndServe(fmt.Sprintf(":%v", *callbackPort), mux)
 		log.Fatalf("Beerkellar is unable to serve metrics: %v", err)
 	}()
 
