@@ -229,57 +229,12 @@ func (x *Drink) GetScore() float32 {
 	return 0
 }
 
-type BeerCache struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Beers         []*Beer                `protobuf:"bytes,1,rep,name=beers,proto3" json:"beers,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
-}
-
-func (x *BeerCache) Reset() {
-	*x = BeerCache{}
-	mi := &file_beerkellar_proto_msgTypes[4]
-	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-	ms.StoreMessageInfo(mi)
-}
-
-func (x *BeerCache) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*BeerCache) ProtoMessage() {}
-
-func (x *BeerCache) ProtoReflect() protoreflect.Message {
-	mi := &file_beerkellar_proto_msgTypes[4]
-	if x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use BeerCache.ProtoReflect.Descriptor instead.
-func (*BeerCache) Descriptor() ([]byte, []int) {
-	return file_beerkellar_proto_rawDescGZIP(), []int{4}
-}
-
-func (x *BeerCache) GetBeers() []*Beer {
-	if x != nil {
-		return x.Beers
-	}
-	return nil
-}
-
 var File_beerkellar_proto protoreflect.FileDescriptor
 
 const file_beerkellar_proto_rawDesc = "" +
 	"\n" +
 	"\x10beerkellar.proto\x12\n" +
-	"beerkellar\x1a\n" +
-	"beer.proto\";\n" +
+	"beerkellar\";\n" +
 	"\x06Cellar\x121\n" +
 	"\aentries\x18\x01 \x03(\v2\x17.beerkellar.CellarEntryR\aentries\"c\n" +
 	"\vCellarEntry\x12\x17\n" +
@@ -293,9 +248,7 @@ const file_beerkellar_proto_rawDesc = "" +
 	"\x05Drink\x12\x17\n" +
 	"\abeer_id\x18\x01 \x01(\x03R\x06beerId\x12\x12\n" +
 	"\x04date\x18\x02 \x01(\x03R\x04date\x12\x14\n" +
-	"\x05score\x18\x03 \x01(\x02R\x05score\"3\n" +
-	"\tBeerCache\x12&\n" +
-	"\x05beers\x18\x01 \x03(\v2\x10.beerkellar.BeerR\x05beersB*Z(github.com/brotherlogic/beerkellar/protob\x06proto3"
+	"\x05score\x18\x03 \x01(\x02R\x05scoreB*Z(github.com/brotherlogic/beerkellar/protob\x06proto3"
 
 var (
 	file_beerkellar_proto_rawDescOnce sync.Once
@@ -309,24 +262,21 @@ func file_beerkellar_proto_rawDescGZIP() []byte {
 	return file_beerkellar_proto_rawDescData
 }
 
-var file_beerkellar_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
+var file_beerkellar_proto_msgTypes = make([]protoimpl.MessageInfo, 4)
 var file_beerkellar_proto_goTypes = []any{
 	(*Cellar)(nil),       // 0: beerkellar.Cellar
 	(*CellarEntry)(nil),  // 1: beerkellar.CellarEntry
 	(*DrinkArchive)(nil), // 2: beerkellar.DrinkArchive
 	(*Drink)(nil),        // 3: beerkellar.Drink
-	(*BeerCache)(nil),    // 4: beerkellar.BeerCache
-	(*Beer)(nil),         // 5: beerkellar.Beer
 }
 var file_beerkellar_proto_depIdxs = []int32{
 	1, // 0: beerkellar.Cellar.entries:type_name -> beerkellar.CellarEntry
 	3, // 1: beerkellar.DrinkArchive.drinks:type_name -> beerkellar.Drink
-	5, // 2: beerkellar.BeerCache.beers:type_name -> beerkellar.Beer
-	3, // [3:3] is the sub-list for method output_type
-	3, // [3:3] is the sub-list for method input_type
-	3, // [3:3] is the sub-list for extension type_name
-	3, // [3:3] is the sub-list for extension extendee
-	0, // [0:3] is the sub-list for field type_name
+	2, // [2:2] is the sub-list for method output_type
+	2, // [2:2] is the sub-list for method input_type
+	2, // [2:2] is the sub-list for extension type_name
+	2, // [2:2] is the sub-list for extension extendee
+	0, // [0:2] is the sub-list for field type_name
 }
 
 func init() { file_beerkellar_proto_init() }
@@ -334,14 +284,13 @@ func file_beerkellar_proto_init() {
 	if File_beerkellar_proto != nil {
 		return
 	}
-	file_beer_proto_init()
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_beerkellar_proto_rawDesc), len(file_beerkellar_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   5,
+			NumMessages:   4,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

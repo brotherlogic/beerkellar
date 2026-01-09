@@ -24,9 +24,8 @@ const (
 type User struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Auth          string                 `protobuf:"bytes,1,opt,name=auth,proto3" json:"auth,omitempty"`
-	UserToken     string                 `protobuf:"bytes,2,opt,name=user_token,json=userToken,proto3" json:"user_token,omitempty"`
-	UserSecret    string                 `protobuf:"bytes,3,opt,name=user_secret,json=userSecret,proto3" json:"user_secret,omitempty"`
-	Username      string                 `protobuf:"bytes,4,opt,name=username,proto3" json:"username,omitempty"`
+	AccessToken   string                 `protobuf:"bytes,2,opt,name=access_token,json=accessToken,proto3" json:"access_token,omitempty"`
+	Username      string                 `protobuf:"bytes,3,opt,name=username,proto3" json:"username,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -68,16 +67,9 @@ func (x *User) GetAuth() string {
 	return ""
 }
 
-func (x *User) GetUserToken() string {
+func (x *User) GetAccessToken() string {
 	if x != nil {
-		return x.UserToken
-	}
-	return ""
-}
-
-func (x *User) GetUserSecret() string {
-	if x != nil {
-		return x.UserSecret
+		return x.AccessToken
 	}
 	return ""
 }
@@ -359,14 +351,11 @@ const file_api_proto_rawDesc = "" +
 	"\n" +
 	"\tapi.proto\x12\n" +
 	"beerkellar\x1a\n" +
-	"beer.proto\"v\n" +
+	"beer.proto\"Y\n" +
 	"\x04User\x12\x12\n" +
-	"\x04auth\x18\x01 \x01(\tR\x04auth\x12\x1d\n" +
-	"\n" +
-	"user_token\x18\x02 \x01(\tR\tuserToken\x12\x1f\n" +
-	"\vuser_secret\x18\x03 \x01(\tR\n" +
-	"userSecret\x12\x1a\n" +
-	"\busername\x18\x04 \x01(\tR\busername\"c\n" +
+	"\x04auth\x18\x01 \x01(\tR\x04auth\x12!\n" +
+	"\faccess_token\x18\x02 \x01(\tR\vaccessToken\x12\x1a\n" +
+	"\busername\x18\x03 \x01(\tR\busername\"c\n" +
 	"\x0eAddBeerRequest\x12\x17\n" +
 	"\abeer_id\x18\x01 \x01(\x03R\x06beerId\x12\x1a\n" +
 	"\bquantity\x18\x02 \x01(\x05R\bquantity\x12\x1c\n" +

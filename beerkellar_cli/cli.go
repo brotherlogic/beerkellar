@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"os"
 
@@ -10,6 +9,7 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 
 	pb "github.com/brotherlogic/beerkellar/proto"
+	"github.com/pkg/browser"
 )
 
 func main() {
@@ -26,6 +26,9 @@ func main() {
 		if err != nil {
 			log.Fatalf("Unable to get login: %v", err)
 		}
-		fmt.Println(url)
+		err = browser.OpenURL(url.GetUrl())
+		if err != nil {
+			log.Fatalf("unable to open URL: %v", err)
+		}
 	}
 }

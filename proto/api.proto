@@ -9,10 +9,8 @@ option go_package = "github.com/brotherlogic/beerkellar/proto";
 
 message User {
     string auth = 1;
-    string user_token = 2;
-    string user_secret = 3;
-
-    string username = 4;
+    string access_token = 2;
+    string username = 3;
 }
 
 message AddBeerRequest {

@@ -14,10 +14,13 @@ type strpass struct {
 	Value string
 }
 
-func get(url string, obj interface{}) error {
-	path := fmt.Sprintf("%v%v", "https://api.untappd.com", url)
+func get(urlSuffix string, obj interface{}) error {
+	path := fmt.Sprintf("%v%v", "https://api.untappd.com", urlSuffix)
+	return baseGet(path, obj)
+}
 
-	resp, err := http.DefaultClient.Get(path)
+func baseGet(url string, obj interface{}) error {
+	resp, err := http.DefaultClient.Get(url)
 	if err != nil {
 		return err
 	}
@@ -34,6 +37,32 @@ func get(url string, obj interface{}) error {
 	nobj := obj.(*strpass)
 	nobj.Value = string(body)
 	return nil
+}
+
+type TokenResponse struct {
+	AccessToken string `json:"access_token"`
+}
+
+type AuthResponse struct {
+	Response TokenResponse
+}
+
+func (s *Server) handleAuthResponse(ctx context.Context, code, token string) (*pb.User, error) {
+	user, err := s.db.GetUser(ctx, token)
+	if err != nil {
+		return nil, err
+	}
+
+	rUrl := fmt.Sprintf("https://untappd.com/oauth/authorize/?client_id=%v&client_secret=%v&response_type=code&redirect_url=%v&code=%v", s.clientId, s.clientSecret, s.redirectUrl, code)
+	resp := &AuthResponse{}
+	err = baseGet(rUrl, resp)
+	if err != nil {
+		return nil, err
+	}
+
+	user.AccessToken = resp.Response.AccessToken
+	err = s.db.SaveUser(ctx, user)
+	return user, err
 }
 
 func (s *Server) getBeerFromUntappd(ctx context.Context, beerId int64) (*pb.Beer, error) {

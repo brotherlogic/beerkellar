@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"fmt"
+	"math/rand"
 	"time"
 
 	pb "github.com/brotherlogic/beerkellar/proto"
@@ -114,7 +115,16 @@ func (s *Server) AddBeer(ctx context.Context, req *pb.AddBeerRequest) (*pb.AddBe
 }
 
 func (s *Server) GetLogin(ctx context.Context, req *pb.GetLoginRequest) (*pb.GetLoginResponse, error) {
-	return &pb.GetLoginResponse{Url: fmt.Sprintf("https://untappd.com/oauth/authenticate/?client_id=%v&response_type=code&redirect_url=%v", s.clientId, s.redirectUrl)}, nil
+	tmpToken := fmt.Sprintf("%v-%v", time.Now().UnixNano(), rand.Int63())
+	user := &pb.User{
+		Auth: tmpToken,
+	}
+	err := s.db.SaveUser(ctx, user)
+	if err != nil {
+		return nil, err
+	}
+
+	return &pb.GetLoginResponse{Url: fmt.Sprintf("https://untappd.com/oauth/authenticate/?client_id=%v&response_type=code&redirect_url=%v&state=%v", s.clientId, s.redirectUrl, user.GetAuth())}, nil
 }
 
 func (s *Server) GetBeer(ctx context.Context, req *pb.GetBeerRequest) (*pb.GetBeerResponse, error) {
