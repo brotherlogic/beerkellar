@@ -38,13 +38,13 @@ func main() {
 
 	http.Handle("/metrics", promhttp.Handler())
 	go func() {
-		err := http.ListenAndServe(fmt.Sprintf(":%v", *metricsPort), mux)
+		err := http.ListenAndServe(fmt.Sprintf(":%v", *metricsPort), nil)
 		log.Fatalf("Beerkellar is unable to serve metrics: %v", err)
 	}()
 
 	http.Handle("/", http.HandlerFunc(s.HandleCallback))
 	go func() {
-		err := http.ListenAndServe(fmt.Sprintf(":%v", *callbackPort), mux)
+		err := http.ListenAndServe(fmt.Sprintf(":%v", *callbackPort), nil)
 		log.Fatalf("Beerkellar is unable to serve metrics: %v", err)
 	}()
 

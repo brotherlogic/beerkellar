@@ -48,16 +48,16 @@ type AuthResponse struct {
 }
 
 func (s *Server) handleAuthResponse(ctx context.Context, code, token string) (*pb.User, error) {
-	user, err := s.db.GetUserFromTmpToken(ctx, token)
+	user, err := s.db.GetUser(ctx, token)
 	if err != nil {
 		return nil, err
 	}
 
-	rUrl := fmt.Sprintf("https://untappd.com/oauth/authorize/?client_id=%v&client_secret=%v&response_type=code&redirect_url=%v&code=%v")
+	rUrl := fmt.Sprintf("https://untappd.com/oauth/authorize/?client_id=%v&client_secret=%v&response_type=code&redirect_url=%v&code=%v", s.clientId, s.clientSecret, s.redirectUrl, code)
 	resp := &AuthResponse{}
 	err = baseGet(rUrl, resp)
 	if err != nil {
-		return err
+		return nil, err
 	}
 
 	user.AccessToken = resp.Response.AccessToken

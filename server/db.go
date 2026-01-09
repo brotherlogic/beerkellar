@@ -4,10 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"strings"
 
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/known/anypb"
@@ -91,26 +88,6 @@ func (d *DB) GetUser(ctx context.Context, auth string) (*pb.User, error) {
 	user := &pb.User{}
 	err = proto.Unmarshal(data, user)
 	return user, err
-}
-
-func (d *DB) GetUserFromTmpToken(ctx context.Context, tmpToken string) (*pb.User, error) {
-	resp, err := d.client.GetKeys(ctx, &pspb.GetKeysRequest{Prefix: "beerkellar/user/"})
-	if err != nil {
-		return nil, err
-	}
-
-	for _, key := range resp.GetKeys() {
-		fields := strings.Split(key, "/")
-		user, err := d.GetUser(ctx, fields[len(fields)-1])
-		if err != nil {
-			return nil, err
-		}
-		if user.GetTmpToken() == tmpToken {
-			return user, nil
-		}
-	}
-
-	return nil, status.Errorf(codes.NotFound, "Could not find user with that tmptoken")
 }
 
 func (d *DB) SaveBeer(ctx context.Context, beer *pb.Beer) error {
