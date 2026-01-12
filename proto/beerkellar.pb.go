@@ -173,7 +173,7 @@ type Drink struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	BeerId        int64                  `protobuf:"varint,1,opt,name=beer_id,json=beerId,proto3" json:"beer_id,omitempty"`
 	Date          int64                  `protobuf:"varint,2,opt,name=date,proto3" json:"date,omitempty"`
-	Score         float32                `protobuf:"fixed32,3,opt,name=score,proto3" json:"score,omitempty"`
+	Score         int32                  `protobuf:"varint,3,opt,name=score,proto3" json:"score,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -222,7 +222,7 @@ func (x *Drink) GetDate() int64 {
 	return 0
 }
 
-func (x *Drink) GetScore() float32 {
+func (x *Drink) GetScore() int32 {
 	if x != nil {
 		return x.Score
 	}
@@ -248,7 +248,7 @@ const file_beerkellar_proto_rawDesc = "" +
 	"\x05Drink\x12\x17\n" +
 	"\abeer_id\x18\x01 \x01(\x03R\x06beerId\x12\x12\n" +
 	"\x04date\x18\x02 \x01(\x03R\x04date\x12\x14\n" +
-	"\x05score\x18\x03 \x01(\x02R\x05scoreB*Z(github.com/brotherlogic/beerkellar/protob\x06proto3"
+	"\x05score\x18\x03 \x01(\x05R\x05scoreB*Z(github.com/brotherlogic/beerkellar/protob\x06proto3"
 
 var (
 	file_beerkellar_proto_rawDescOnce sync.Once

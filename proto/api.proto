@@ -11,6 +11,10 @@ message User {
     string auth = 1;
     string access_token = 2;
     string username = 3;
+    int32 user_id = 6;
+
+    int64 last_update = 4;
+    int64 last_checkin = 5;
 }
 
 message AddBeerRequest {
