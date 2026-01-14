@@ -37,8 +37,12 @@ message GetBeerResponse{
   Beer beer = 1;
 }
 
+message HealthyRequest {}
+message HealthyResponse {}
+
 service BeerKeller {
   rpc AddBeer(AddBeerRequest) returns (AddBeerResponse) {}
   rpc GetLogin(GetLoginRequest) returns (GetLoginResponse) {}
   rpc GetBeer(GetBeerRequest) returns (GetBeerResponse) {}
+  rpc Healthy(HealthyRequest) returns (HealthyResponse) {}
 }
