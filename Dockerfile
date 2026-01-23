@@ -29,7 +29,7 @@ WORKDIR /
 COPY --from=build /beerkellar /beerkellar
 
 # HTTP ; GRPC ; Metrics
-EXPOSE 80   
+EXPOSE 8082
 EXPOSE 8080
 EXPOSE 8081
 

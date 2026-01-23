@@ -176,3 +176,7 @@ func (s *Server) GetBeer(ctx context.Context, req *pb.GetBeerRequest) (*pb.GetBe
 func convertToLitres(flOz int32) float32 {
 	return float32(flOz) * 0.029574
 }
+
+func (s *Server) Healthy(_ context.Context, _ *pb.HealthyRequest) (*pb.HealthyResponse, error) {
+	return &pb.HealthyResponse{}, nil
+}
