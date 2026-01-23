@@ -2,8 +2,10 @@ package integration
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"testing"
+	"time"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -22,7 +24,7 @@ func TestHealth(t *testing.T) {
 	defer i.teardownContainer(t)
 
 	// Send a basic health check to the server via grpc
-	conn, err := grpc.NewClient("localhost:8080", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.NewClient(fmt.Sprintf(":%v", i.mp), grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		t.Fatalf("%v", err)
 	}
@@ -31,4 +33,6 @@ func TestHealth(t *testing.T) {
 	if err != nil {
 		t.Errorf("Unable to determine health: %v", err)
 	}
+	time.Sleep(time.Second * 30)
+
 }
