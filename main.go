@@ -21,13 +21,22 @@ var (
 	port         = flag.Int("port", 8080, "Server port for grpc traffic")
 	metricsPort  = flag.Int("metrics_port", 8081, "Metrics port")
 	callbackPort = flag.Int("callback_port", 8082, "Callback port")
+
+	baseUntappdAPI  = flag.String("untappd_url", "https://api.untappd.com", "Base URL for reaching untappd API")
+	baseUntappdAuth = flag.String("untappd_auth", "https://untappd.com", "Base URL for doing auth")
+	testDb          = flag.Bool("test_db", false, "If true, use a test db")
 )
 
 func main() {
 	flag.Parse()
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
-	db := server.NewDatabase(ctx)
+	var db server.Database
+	if *testDb {
+		db = server.NewTestDatabase(ctx)
+	} else {
+		db = server.NewDatabase(ctx)
+	}
 	cancel()
 
 	s := server.NewServer(

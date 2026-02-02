@@ -40,6 +40,13 @@ func NewDatabase(ctx context.Context) Database {
 	return db
 }
 
+func NewTestDatabase(ctx context.Context) Database {
+	db := &DB{}
+	client := pstore_client.GetTestClient()
+	db.client = client
+	return db
+}
+
 func (d *DB) save(ctx context.Context, key string, message protoreflect.ProtoMessage) error {
 	data, err := proto.Marshal(message)
 	if err != nil {
@@ -77,7 +84,10 @@ func (d *DB) GetCellar(ctx context.Context, username string) (*pb.Cellar, error)
 }
 
 func (d *DB) SaveUser(ctx context.Context, user *pb.User) error {
-	return d.save(ctx, fmt.Sprintf("beerkellar/user/%v", user.GetAuth()), user)
+	if len(user.GetAuth()) > 0 {
+		return d.save(ctx, fmt.Sprintf("beerkellar/user/%v", user.GetAuth()), user)
+	}
+	return d.save(ctx, fmt.Sprintf("beerkellar/tmpuser/%v", user.GetAccessCode()), user)
 }
 
 func (d *DB) GetUser(ctx context.Context, auth string) (*pb.User, error) {

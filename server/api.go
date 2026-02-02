@@ -26,6 +26,8 @@ type Server struct {
 	clientId     string
 	clientSecret string
 	redirectUrl  string
+
+	untappd *Untappd
 }
 
 func NewServer(clientId, clientSecret, redirectUrl string, db Database) *Server {
@@ -49,7 +51,7 @@ func (s *Server) getBeer(ctx context.Context, beerId int64) (*pb.Beer, error) {
 	}
 
 	// Cache miss - call out to Untappd
-	return s.getBeerFromUntappd(ctx, beerId)
+	return s.untappd.getBeerFromUntappd(ctx, beerId)
 }
 
 func GetContextKey(ctx context.Context) (string, error) {
@@ -124,7 +126,22 @@ func (s *Server) GetLogin(ctx context.Context, req *pb.GetLoginRequest) (*pb.Get
 		return nil, err
 	}
 
-	return &pb.GetLoginResponse{Url: fmt.Sprintf("https://untappd.com/oauth/authenticate/?client_id=%v&response_type=code&redirect_url=%v&state=%v", s.clientId, s.redirectUrl, user.GetAuth())}, nil
+	return &pb.GetLoginResponse{
+		Url:  fmt.Sprintf("https://untappd.com/oauth/authenticate/?client_id=%v&response_type=code&redirect_url=%v&state=%v", s.clientId, s.redirectUrl, user.GetAuth()),
+		Code: user.GetAuth(),
+	}, nil
+}
+
+func (s *Server) GetAuthToken(ctx context.Context, req *pb.GetAuthTokenRequest) (*pb.GetAuthTokenResponse, error) {
+	user, err := s.db.GetUser(ctx, req.GetCode())
+	if err != nil {
+		return nil, err
+	}
+
+	if len(user.GetAccessToken()) > 0 {
+		return &pb.GetAuthTokenResponse{}, nil
+	}
+	return &pb.GetAuthTokenResponse{}, status.Errorf(codes.NotFound, "User is not fully authenticated")
 }
 
 func (s *Server) GetBeer(ctx context.Context, req *pb.GetBeerRequest) (*pb.GetBeerResponse, error) {

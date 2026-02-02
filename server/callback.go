@@ -12,5 +12,5 @@ func (s *Server) HandleCallback(w http.ResponseWriter, r *http.Request) {
 
 	code := r.URL.Query().Get("code")
 	token := r.URL.Query().Get("state")
-	s.handleAuthResponse(ctx, code, token)
+	s.handleAuthResponse(ctx, s.untappd, code, token)
 }
