@@ -3,6 +3,7 @@ package integration
 import (
 	"context"
 	"fmt"
+	"log"
 	"testing"
 
 	"github.com/testcontainers/testcontainers-go"
@@ -34,6 +35,7 @@ func runTestServer(ctx context.Context) (*integrationTest, error) {
 	}
 	utc, err := testcontainers.Run(ctx, "", uopts...)
 	if err != nil {
+		log.Printf("RUN ERROR: %v", err)
 		return nil, err
 	}
 
@@ -50,11 +52,11 @@ func runTestServer(ctx context.Context) (*integrationTest, error) {
 		testcontainers.WithWaitStrategy(
 			wait.ForListeningPort("8080/tcp"),
 		),
-		testcontainers.WithCmdArgs("--test_db"),
-		testcontainers.WithCmdArgs(fmt.Sprintf("--baseUntappdAuth http://localhost:%v/", ump)),
+		testcontainers.WithCmdArgs("--test_db", fmt.Sprintf("--untappd_auth http://localhost:%v/", ump)),
 	}
 	tc, err := testcontainers.Run(ctx, "", opts...)
 	if err != nil {
+		log.Printf("--untappd_auth http://localhost:%v/", ump)
 		return nil, err
 	}
 
