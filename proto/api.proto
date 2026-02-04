@@ -57,3 +57,14 @@ service BeerKeller {
 
   rpc Healthy(HealthyRequest) returns (HealthyResponse) {}
 }
+
+message SetRedirectRequest {
+  string url = 1;
+}
+
+message SetRedirectResponse {
+}
+
+service BeerKellerAdmin {
+  rpc SetRedirect(SetRedirectRequest) returns (SetRedirectResponse) {}
+}

@@ -33,12 +33,14 @@ func (s *Server) HandleOauth1(w http.ResponseWriter, r *http.Request) {
 	state := r.URL.Query().Get("state")
 
 	// Given those we just immediatly hit the callback URL
-	url := fmt.Sprintf("%v?code=%v&state=%v", code, redirectUrl, state)
+	url := fmt.Sprintf("%v?code=%v&state=%v", redirectUrl, code, state)
 	http.DefaultClient.Get(url)
 }
 
 func (s *Server) HandleOauth2(w http.ResponseWriter, r *http.Request) {
 	rcode := r.URL.Query().Get("code")
+
+	log.Printf("Handling 2")
 
 	if rcode != code {
 		// Return a 500 error
@@ -53,7 +55,7 @@ func (s *Server) HandleOauth2(w http.ResponseWriter, r *http.Request) {
 func main() {
 	log.Printf("Launching fake untappd")
 	s := &Server{}
-	http.Handle("/authenticate", http.HandlerFunc(s.HandleOauth1))
+	http.Handle("/oauth/authenticate", http.HandlerFunc(s.HandleOauth1))
 	err := http.ListenAndServe(fmt.Sprintf(":%v", *port), nil)
 	log.Fatalf("Beerkellar is unable to serve metrics: %v", err)
 

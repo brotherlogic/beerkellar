@@ -3,6 +3,7 @@ package integration
 import (
 	"context"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"testing"
@@ -17,7 +18,7 @@ func TestLogin(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 	defer cancel()
 
-	i, err := runTestServer(ctx)
+	i, err := runTestServer(ctx, t)
 	if err != nil {
 		t.Fatalf("Unable to bring up server: %v", err)
 	}
@@ -42,13 +43,20 @@ func TestLogin(t *testing.T) {
 	// Let's run the login URL
 	resp, err := http.DefaultClient.Get(lurl.GetUrl())
 	if err != nil {
-		log.Fatalf("Unable to ping login: %v -> %v", lurl, resp)
+		t.Fatalf("Unable to ping login: %v -> %v", lurl, resp)
 	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		t.Fatalf("Unable to read body: %v", err)
+	}
+
+	log.Printf("Response: %v", string(body))
 
 	// And then get the authenticated user
 	_, err = client.GetAuthToken(ctx, &pb.GetAuthTokenRequest{Code: lurl.GetCode()})
 	if err != nil {
-		log.Fatalf("Bad request for user: %v", err)
+		t.Fatalf("Bad request for user: %v", err)
 	}
 
 }

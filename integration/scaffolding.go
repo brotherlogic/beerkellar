@@ -3,11 +3,15 @@ package integration
 import (
 	"context"
 	"fmt"
-	"log"
 	"testing"
 
 	"github.com/testcontainers/testcontainers-go"
+	"github.com/testcontainers/testcontainers-go/log"
 	"github.com/testcontainers/testcontainers-go/wait"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
+
+	pb "github.com/brotherlogic/beerkellar/proto"
 )
 
 type integrationTest struct {
@@ -18,7 +22,7 @@ type integrationTest struct {
 	ump int
 }
 
-func runTestServer(ctx context.Context) (*integrationTest, error) {
+func runTestServer(ctx context.Context, t *testing.T) (*integrationTest, error) {
 
 	// Run the fake untappd server
 	uopts := []testcontainers.ContainerCustomizer{
@@ -41,8 +45,9 @@ func runTestServer(ctx context.Context) (*integrationTest, error) {
 
 	ump, err := utc.MappedPort(ctx, "8085/tcp")
 
+	logger := log.TestLogger(t)
 	opts := []testcontainers.ContainerCustomizer{
-		testcontainers.WithExposedPorts("8080/tcp"),
+		testcontainers.WithExposedPorts("8080/tcp", "8082/tcp", "8083/tcp"),
 		testcontainers.WithDockerfile(
 			testcontainers.FromDockerfile{
 				Context:    "..",
@@ -52,11 +57,11 @@ func runTestServer(ctx context.Context) (*integrationTest, error) {
 		testcontainers.WithWaitStrategy(
 			wait.ForListeningPort("8080/tcp"),
 		),
-		testcontainers.WithCmdArgs("--test_db", fmt.Sprintf("--untappd_auth http://localhost:%v/", ump)),
+		testcontainers.WithLogger(logger),
+		testcontainers.WithCmdArgs("--test_db", "--untappd_auth", fmt.Sprintf("http://localhost:%v/", ump.Int())),
 	}
 	tc, err := testcontainers.Run(ctx, "", opts...)
 	if err != nil {
-		log.Printf("--untappd_auth http://localhost:%v/", ump)
 		return nil, err
 	}
 
@@ -64,7 +69,27 @@ func runTestServer(ctx context.Context) (*integrationTest, error) {
 	if err != nil {
 		return nil, err
 	}
+	amp, err := tc.MappedPort(ctx, "8083/tcp")
+	if err != nil {
+		return nil, err
+	}
 
+	cmp, err := tc.MappedPort(ctx, "8082/tcp")
+	if err != nil {
+		return nil, err
+	}
+
+	// Fix the redirect url
+	conn, err := grpc.NewClient(fmt.Sprintf(":%v", amp.Int()), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		t.Fatalf("Unable to connect to server: %v", err)
+	}
+	defer conn.Close()
+	client := pb.NewBeerKellerAdminClient(conn)
+	_, err = client.SetRedirect(ctx, &pb.SetRedirectRequest{Url: fmt.Sprintf("http://localhost:%v", cmp.Int())})
+	if err != nil {
+		t.Fatalf("Unable to set redirect: %v", err)
+	}
 	return &integrationTest{
 		c:   tc,
 		uc:  utc,

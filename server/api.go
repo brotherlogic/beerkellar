@@ -30,13 +30,14 @@ type Server struct {
 	untappd *Untappd
 }
 
-func NewServer(clientId, clientSecret, redirectUrl string, db Database) *Server {
+func NewServer(clientId, clientSecret, redirectUrl string, db Database, ut *Untappd) *Server {
 	return &Server{
 		clientId:     clientId,
 		clientSecret: clientSecret,
 		redirectUrl:  redirectUrl,
 
-		db: db,
+		db:      db,
+		untappd: ut,
 	}
 }
 
@@ -127,7 +128,7 @@ func (s *Server) GetLogin(ctx context.Context, req *pb.GetLoginRequest) (*pb.Get
 	}
 
 	return &pb.GetLoginResponse{
-		Url:  fmt.Sprintf("https://untappd.com/oauth/authenticate/?client_id=%v&response_type=code&redirect_url=%v&state=%v", s.clientId, s.redirectUrl, user.GetAuth()),
+		Url:  fmt.Sprintf("%voauth/authenticate?client_id=%v&response_type=code&redirect_url=%v&state=%v", s.untappd.baseAuthURL, s.clientId, s.redirectUrl, user.GetAuth()),
 		Code: user.GetAuth(),
 	}, nil
 }
@@ -196,4 +197,10 @@ func convertToLitres(flOz int32) float32 {
 
 func (s *Server) Healthy(_ context.Context, _ *pb.HealthyRequest) (*pb.HealthyResponse, error) {
 	return &pb.HealthyResponse{}, nil
+}
+
+func (s *Server) SetRedirect(_ context.Context, req *pb.SetRedirectRequest) (*pb.SetRedirectResponse, error) {
+	s.redirectUrl = req.GetUrl()
+
+	return &pb.SetRedirectResponse{}, nil
 }

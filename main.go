@@ -19,6 +19,7 @@ import (
 
 var (
 	port         = flag.Int("port", 8080, "Server port for grpc traffic")
+	adminPort    = flag.Int("admin_port", 8083, "Server port for admin requests")
 	metricsPort  = flag.Int("metrics_port", 8081, "Metrics port")
 	callbackPort = flag.Int("callback_port", 8082, "Callback port")
 
@@ -39,11 +40,13 @@ func main() {
 	}
 	cancel()
 
+	ut := server.GetUntappd(*baseUntappdAPI, *baseUntappdAuth)
+
 	s := server.NewServer(
 		os.Getenv("client_id"),
 		os.Getenv("client_secret"),
 		os.Getenv("redirect_url"),
-		db)
+		db, ut)
 
 	http.Handle("/metrics", promhttp.Handler())
 	go func() {
@@ -57,11 +60,24 @@ func main() {
 		log.Fatalf("Beerkellar is unable to serve metrics: %v", err)
 	}()
 
-	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", *port))
+	lisAdmin, err := net.Listen("tcp", fmt.Sprintf(":%d", *adminPort))
 	if err != nil {
 		log.Fatalf("Beerkellar is unable to listen on the min grpc port %v: %v", *port, err)
 	}
 	gs := grpc.NewServer()
+	pb.RegisterBeerKellerAdminServer(gs, s)
+
+	go func() {
+		log.Printf("Serving on port :%d", *adminPort)
+		if err := gs.Serve(lisAdmin); err != nil {
+			log.Fatalf("Beerkellar is unable to serve admin grpc for some reason: %v", err)
+		}
+	}()
+
+	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", *port))
+	if err != nil {
+		log.Fatalf("Beerkellar is unable to listen on the min grpc port %v: %v", *port, err)
+	}
 	pb.RegisterBeerKellerServer(gs, s)
 
 	log.Printf("Serving on port :%d", *port)
