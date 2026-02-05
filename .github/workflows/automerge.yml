@@ -27,4 +27,3 @@ jobs:
         env:
           GITHUB_TOKEN: "${{ secrets.PERSONAL_TOKEN }}"
           MERGE_METHOD: merge
-          MERGE_LABELS: ""
