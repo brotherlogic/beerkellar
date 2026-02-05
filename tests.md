@@ -4,7 +4,7 @@ All built off an effective running app
 
 1. ~~Health Checks~~
    1. Fake that the server comes up and responds to health checks
-1. Login flow
+1. ~~Login flow~~
    1. Fake untappd backend that returns the auth code pages etc.
 1. Initial Checkin Read
    1. Fake untapped backend that returns at least 2 pages of checkins
