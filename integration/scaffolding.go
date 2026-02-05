@@ -37,7 +37,7 @@ func runTestServer(ctx context.Context, t *testing.T) (*integrationTest, error) 
 
 	newNetwork, err := network.New(ctx)
 	require.NoError(t, err)
-	//testcontainers.CleanupNetwork(t, newNetwork)
+	testcontainers.CleanupNetwork(t, newNetwork)
 	aliases := []string{"alias1"}
 
 	// Run the fake untappd server
@@ -67,7 +67,7 @@ func runTestServer(ctx context.Context, t *testing.T) (*integrationTest, error) 
 		log.Printf("RUN ERROR: %v", err)
 		return nil, err
 	}
-
+	testcontainers.CleanupContainer(t, utc)
 	ump, err := utc.MappedPort(ctx, "8085/tcp")
 
 	opts := []testcontainers.ContainerCustomizer{
@@ -95,6 +95,7 @@ func runTestServer(ctx context.Context, t *testing.T) (*integrationTest, error) 
 	if err != nil {
 		return nil, err
 	}
+	testcontainers.CleanupContainer(t, tc)
 
 	mp, err := tc.MappedPort(ctx, "8080/tcp")
 	if err != nil {
@@ -121,9 +122,6 @@ func runTestServer(ctx context.Context, t *testing.T) (*integrationTest, error) 
 	if err != nil {
 		t.Fatalf("Unable to set redirect: %v", err)
 	}
-
-	time.Sleep(time.Second * 5)
-	//t.Fatalf("Running 8080->%v, 8083->%v, 8082->%v and %v", mp, amp, cmp, ump)
 
 	return &integrationTest{
 		c:   tc,

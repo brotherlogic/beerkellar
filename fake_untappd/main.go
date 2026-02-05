@@ -61,7 +61,7 @@ func main() {
 	log.Printf("Launching fake untappd")
 	s := &Server{}
 	http.Handle("/oauth/authenticate", http.HandlerFunc(s.HandleOauth1))
-	http.Handle("/oauth/authorize/", http.HandlerFunc(s.HandleOauth2))
+	http.Handle("/oauth/authorize", http.HandlerFunc(s.HandleOauth2))
 	err := http.ListenAndServe(fmt.Sprintf(":%v", *port), nil)
 	log.Fatalf("Beerkellar is unable to serve metrics: %v", err)
 

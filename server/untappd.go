@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -47,10 +48,8 @@ func baseGet(url string, obj interface{}) error {
 		return fmt.Errorf("%v: %v", resp.StatusCode, string(body))
 	}
 
-	log.Printf("READ %v", len(string(body)))
-	nobj := obj.(*strpass)
-	nobj.Value = string(body)
-	return nil
+	log.Printf("READ %v", string(body))
+	return json.Unmarshal(body, obj)
 }
 
 type TokenResponse struct {
@@ -68,12 +67,12 @@ func (s *Server) handleAuthResponse(ctx context.Context, u *Untappd, code, token
 		return nil, err
 	}
 
-	rUrl := fmt.Sprintf("%voauth/authorize/?client_id=%v&client_secret=%v&response_type=code&redirect_url=%v&code=%v",
+	rUrl := fmt.Sprintf("%voauth/authorize?client_id=%v&client_secret=%v&response_type=code&redirect_url=%v&code=%v",
 		s.untappd.retAuthURL, s.clientId, s.clientSecret, s.redirectUrl, code)
 	resp := &AuthResponse{}
 	err = baseGet(rUrl, resp)
 	if err != nil {
-		log.Printf("Bad get: %v", err)
+		log.Printf("Bad get: %v (%v)", err, rUrl)
 		return nil, err
 	}
 
