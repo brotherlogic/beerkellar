@@ -13,16 +13,18 @@ import (
 type Untappd struct {
 	baseAPIURL  string
 	baseAuthURL string
+	retAuthURL  string
 }
 
 type strpass struct {
 	Value string
 }
 
-func GetUntappd(api, auth string) *Untappd {
+func GetUntappd(api, auth, retAuth string) *Untappd {
 	return &Untappd{
 		baseAPIURL:  api,
 		baseAuthURL: auth,
+		retAuthURL:  retAuth,
 	}
 }
 
@@ -66,7 +68,8 @@ func (s *Server) handleAuthResponse(ctx context.Context, u *Untappd, code, token
 		return nil, err
 	}
 
-	rUrl := fmt.Sprintf("%v/authorize/?client_id=%v&client_secret=%v&response_type=code&redirect_url=%v&code=%v", u.baseAuthURL, s.clientId, s.clientSecret, s.redirectUrl, code)
+	rUrl := fmt.Sprintf("%voauth/authorize/?client_id=%v&client_secret=%v&response_type=code&redirect_url=%v&code=%v",
+		s.untappd.retAuthURL, s.clientId, s.clientSecret, s.redirectUrl, code)
 	resp := &AuthResponse{}
 	err = baseGet(rUrl, resp)
 	if err != nil {

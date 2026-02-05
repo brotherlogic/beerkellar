@@ -6,6 +6,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/log"
 	"github.com/testcontainers/testcontainers-go/network"
@@ -34,15 +35,13 @@ func (lc *StdoutLogConsumer) Accept(l testcontainers.Log) {
 
 func runTestServer(ctx context.Context, t *testing.T) (*integrationTest, error) {
 
+	newNetwork, err := network.New(ctx)
+	require.NoError(t, err)
+	//testcontainers.CleanupNetwork(t, newNetwork)
+	aliases := []string{"alias1"}
+
 	// Run the fake untappd server
 	logger := log.TestLogger(t)
-
-	newNetwork, err := network.New(ctx)
-	if err != nil {
-		t.Fatalf("Unable to bring up bridge network: %v", err)
-	}
-
-	nalias := []string{"network"}
 
 	uopts := []testcontainers.ContainerCustomizer{
 		testcontainers.WithName("untappd"),
@@ -61,7 +60,7 @@ func runTestServer(ctx context.Context, t *testing.T) (*integrationTest, error) 
 			Opts:      []testcontainers.LogProductionOption{testcontainers.WithLogProductionTimeout(10 * time.Second)},
 			Consumers: []testcontainers.LogConsumer{&StdoutLogConsumer{}},
 		}),
-		network.WithNetwork(nalias, newNetwork),
+		network.WithNetwork(aliases, newNetwork),
 	}
 	utc, err := testcontainers.Run(ctx, "", uopts...)
 	if err != nil {
@@ -84,12 +83,13 @@ func runTestServer(ctx context.Context, t *testing.T) (*integrationTest, error) 
 			wait.ForListeningPort("8080/tcp"),
 		),
 		testcontainers.WithLogger(logger),
-		testcontainers.WithCmdArgs("--test_db", "--untappd_auth", fmt.Sprintf("http://localhost:%v/", ump.Int())),
+		testcontainers.WithCmdArgs("--test_db", "--untappd_auth", fmt.Sprintf("http://localhost:%v/", ump.Int()), "--untappd_ret_auth", fmt.Sprintf("http://untappd:8085/")),
 		testcontainers.WithLogConsumerConfig(&testcontainers.LogConsumerConfig{
 			Opts:      []testcontainers.LogProductionOption{testcontainers.WithLogProductionTimeout(10 * time.Second)},
 			Consumers: []testcontainers.LogConsumer{&StdoutLogConsumer{}},
 		}),
-		network.WithNetwork(nalias, newNetwork),
+
+		network.WithNetwork(aliases, newNetwork),
 	}
 	tc, err := testcontainers.Run(ctx, "", opts...)
 	if err != nil {

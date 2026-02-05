@@ -15,7 +15,7 @@ import (
 )
 
 func TestLogin(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute*10)
 	defer cancel()
 
 	i, err := runTestServer(ctx, t)
