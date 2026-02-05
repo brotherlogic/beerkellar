@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"log"
@@ -10,12 +11,26 @@ import (
 	pb "github.com/brotherlogic/beerkellar/proto"
 )
 
+type Untappd struct {
+	baseAPIURL  string
+	baseAuthURL string
+	retAuthURL  string
+}
+
 type strpass struct {
 	Value string
 }
 
-func get(urlSuffix string, obj interface{}) error {
-	path := fmt.Sprintf("%v%v", "https://api.untappd.com", urlSuffix)
+func GetUntappd(api, auth, retAuth string) *Untappd {
+	return &Untappd{
+		baseAPIURL:  api,
+		baseAuthURL: auth,
+		retAuthURL:  retAuth,
+	}
+}
+
+func (u *Untappd) get(urlSuffix string, obj interface{}) error {
+	path := fmt.Sprintf("%v%v", u.baseAPIURL, urlSuffix)
 	return baseGet(path, obj)
 }
 
@@ -33,10 +48,8 @@ func baseGet(url string, obj interface{}) error {
 		return fmt.Errorf("%v: %v", resp.StatusCode, string(body))
 	}
 
-	log.Printf("READ %v", len(string(body)))
-	nobj := obj.(*strpass)
-	nobj.Value = string(body)
-	return nil
+	log.Printf("READ %v", string(body))
+	return json.Unmarshal(body, obj)
 }
 
 type TokenResponse struct {
@@ -47,16 +60,19 @@ type AuthResponse struct {
 	Response TokenResponse
 }
 
-func (s *Server) handleAuthResponse(ctx context.Context, code, token string) (*pb.User, error) {
+func (s *Server) handleAuthResponse(ctx context.Context, u *Untappd, code, token string) (*pb.User, error) {
+	log.Printf("Handling auth")
 	user, err := s.db.GetUser(ctx, token)
 	if err != nil {
 		return nil, err
 	}
 
-	rUrl := fmt.Sprintf("https://untappd.com/oauth/authorize/?client_id=%v&client_secret=%v&response_type=code&redirect_url=%v&code=%v", s.clientId, s.clientSecret, s.redirectUrl, code)
+	rUrl := fmt.Sprintf("%voauth/authorize?client_id=%v&client_secret=%v&response_type=code&redirect_url=%v&code=%v",
+		s.untappd.retAuthURL, s.clientId, s.clientSecret, s.redirectUrl, code)
 	resp := &AuthResponse{}
 	err = baseGet(rUrl, resp)
 	if err != nil {
+		log.Printf("Bad get: %v (%v)", err, rUrl)
 		return nil, err
 	}
 
@@ -65,9 +81,9 @@ func (s *Server) handleAuthResponse(ctx context.Context, code, token string) (*p
 	return user, err
 }
 
-func (s *Server) getBeerFromUntappd(ctx context.Context, beerId int64) (*pb.Beer, error) {
+func (u *Untappd) getBeerFromUntappd(ctx context.Context, beerId int64) (*pb.Beer, error) {
 	resp := &BeerInfoResponse{}
-	err := get(fmt.Sprintf("/v4/beer/info/%v", beerId), resp)
+	err := u.get(fmt.Sprintf("/v4/beer/info/%v", beerId), resp)
 	if err != nil {
 		return nil, err
 	}

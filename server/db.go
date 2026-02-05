@@ -40,6 +40,13 @@ func NewDatabase(ctx context.Context) Database {
 	return db
 }
 
+func NewTestDatabase(ctx context.Context) Database {
+	db := &DB{}
+	client := pstore_client.GetTestClient()
+	db.client = client
+	return db
+}
+
 func (d *DB) save(ctx context.Context, key string, message protoreflect.ProtoMessage) error {
 	data, err := proto.Marshal(message)
 	if err != nil {

@@ -27,6 +27,14 @@ message GetLoginRequest {}
 
 message GetLoginResponse {
   string url = 1;
+  string code = 2;
+}
+
+message GetAuthTokenRequest {
+  string code = 1;
+}
+
+message GetAuthTokenResponse {
 }
 
 message GetBeerRequest {
@@ -42,7 +50,21 @@ message HealthyResponse {}
 
 service BeerKeller {
   rpc AddBeer(AddBeerRequest) returns (AddBeerResponse) {}
-  rpc GetLogin(GetLoginRequest) returns (GetLoginResponse) {}
   rpc GetBeer(GetBeerRequest) returns (GetBeerResponse) {}
+
+  rpc GetLogin(GetLoginRequest) returns (GetLoginResponse) {}
+  rpc GetAuthToken(GetAuthTokenRequest) returns (GetAuthTokenResponse) {}
+
   rpc Healthy(HealthyRequest) returns (HealthyResponse) {}
+}
+
+message SetRedirectRequest {
+  string url = 1;
+}
+
+message SetRedirectResponse {
+}
+
+service BeerKellerAdmin {
+  rpc SetRedirect(SetRedirectRequest) returns (SetRedirectResponse) {}
 }

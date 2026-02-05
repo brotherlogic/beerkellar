@@ -4,6 +4,7 @@ package beerkellar;
 
 option go_package = "github.com/brotherlogic/beerkellar/proto";
 
+
 message Cellar {
   repeated CellarEntry entries = 1;
 }

@@ -10,31 +10,45 @@ import (
 	"os"
 	"time"
 
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"google.golang.org/grpc"
 
 	pb "github.com/brotherlogic/beerkellar/proto"
 	"github.com/brotherlogic/beerkellar/server"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 var (
 	port         = flag.Int("port", 8080, "Server port for grpc traffic")
+	adminPort    = flag.Int("admin_port", 8083, "Server port for admin requests")
 	metricsPort  = flag.Int("metrics_port", 8081, "Metrics port")
 	callbackPort = flag.Int("callback_port", 8082, "Callback port")
+
+	baseUntappdAPI  = flag.String("untappd_url", "https://api.untappd.com", "Base URL for reaching untappd API")
+	baseUntappdAuth = flag.String("untappd_auth", "https://untappd.com", "Base URL for doing auth")
+	retUnttapdAuth  = flag.String("untappd_ret_auth", "https://untappd.com", "Return URL for auth")
+	testDb          = flag.Bool("test_db", false, "If true, use a test db")
 )
 
 func main() {
+	log.Printf("Launching Beerkellar")
 	flag.Parse()
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
-	db := server.NewDatabase(ctx)
+	var db server.Database
+	if *testDb {
+		db = server.NewTestDatabase(ctx)
+	} else {
+		db = server.NewDatabase(ctx)
+	}
 	cancel()
+
+	ut := server.GetUntappd(*baseUntappdAPI, *baseUntappdAuth, *retUnttapdAuth)
 
 	s := server.NewServer(
 		os.Getenv("client_id"),
 		os.Getenv("client_secret"),
 		os.Getenv("redirect_url"),
-		db)
+		db, ut)
 
 	http.Handle("/metrics", promhttp.Handler())
 	go func() {
@@ -47,12 +61,26 @@ func main() {
 		err := http.ListenAndServe(fmt.Sprintf(":%v", *callbackPort), nil)
 		log.Fatalf("Beerkellar is unable to serve metrics: %v", err)
 	}()
+	log.Printf("Handling %v", *callbackPort)
+
+	lisAdmin, err := net.Listen("tcp", fmt.Sprintf(":%d", *adminPort))
+	if err != nil {
+		log.Fatalf("Beerkellar is unable to listen on the min grpc port %v: %v", *port, err)
+	}
+	gs := grpc.NewServer()
+	pb.RegisterBeerKellerAdminServer(gs, s)
+
+	go func() {
+		log.Printf("Serving on port :%d", *adminPort)
+		if err := gs.Serve(lisAdmin); err != nil {
+			log.Fatalf("Beerkellar is unable to serve admin grpc for some reason: %v", err)
+		}
+	}()
 
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", *port))
 	if err != nil {
 		log.Fatalf("Beerkellar is unable to listen on the min grpc port %v: %v", *port, err)
 	}
-	gs := grpc.NewServer()
 	pb.RegisterBeerKellerServer(gs, s)
 
 	log.Printf("Serving on port :%d", *port)

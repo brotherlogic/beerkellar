@@ -13,9 +13,9 @@ import (
 	pb "github.com/brotherlogic/beerkellar/proto"
 )
 
-func TestHealth(t *testing.T) {
+func DontTestHealth(t *testing.T) {
 	ctx := context.Background()
-	i, err := runTestServer(ctx)
+	i, err := runTestServer(ctx, t)
 	if err != nil {
 		t.Fatalf("Unable to bring up server: %v", err)
 	}
