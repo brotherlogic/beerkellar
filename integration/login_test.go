@@ -43,7 +43,7 @@ func TestLogin(t *testing.T) {
 	// Let's run the login URL
 	resp, err := http.DefaultClient.Get(lurl.GetUrl())
 	if err != nil {
-		t.Fatalf("Unable to ping login: %v -> %v", lurl, resp)
+		t.Fatalf("Unable to ping login: %v -> %v: %v", lurl, resp, err)
 	}
 
 	body, err := io.ReadAll(resp.Body)
@@ -51,7 +51,7 @@ func TestLogin(t *testing.T) {
 		t.Fatalf("Unable to read body: %v", err)
 	}
 
-	log.Printf("Response: %v", string(body))
+	log.Printf("Response: %v with %v", string(body), resp.StatusCode)
 
 	// And then get the authenticated user
 	_, err = client.GetAuthToken(ctx, &pb.GetAuthTokenRequest{Code: lurl.GetCode()})

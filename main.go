@@ -10,11 +10,11 @@ import (
 	"os"
 	"time"
 
-	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"google.golang.org/grpc"
 
 	pb "github.com/brotherlogic/beerkellar/proto"
 	"github.com/brotherlogic/beerkellar/server"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 var (
@@ -29,6 +29,7 @@ var (
 )
 
 func main() {
+	log.Printf("Launching Beerkellar")
 	flag.Parse()
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
@@ -59,6 +60,7 @@ func main() {
 		err := http.ListenAndServe(fmt.Sprintf(":%v", *callbackPort), nil)
 		log.Fatalf("Beerkellar is unable to serve metrics: %v", err)
 	}()
+	log.Printf("Handling %v", *callbackPort)
 
 	lisAdmin, err := net.Listen("tcp", fmt.Sprintf(":%d", *adminPort))
 	if err != nil {

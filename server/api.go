@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"fmt"
+	"log"
 	"math/rand"
 	"time"
 
@@ -201,6 +202,8 @@ func (s *Server) Healthy(_ context.Context, _ *pb.HealthyRequest) (*pb.HealthyRe
 
 func (s *Server) SetRedirect(_ context.Context, req *pb.SetRedirectRequest) (*pb.SetRedirectResponse, error) {
 	s.redirectUrl = req.GetUrl()
+
+	log.Printf("Adjusted redirect: %v", req)
 
 	return &pb.SetRedirectResponse{}, nil
 }

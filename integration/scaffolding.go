@@ -4,9 +4,11 @@ import (
 	"context"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/log"
+	"github.com/testcontainers/testcontainers-go/network"
 	"github.com/testcontainers/testcontainers-go/wait"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -22,10 +24,28 @@ type integrationTest struct {
 	ump int
 }
 
+// StdoutLogConsumer is a LogConsumer that prints the log to stdout
+type StdoutLogConsumer struct{}
+
+// Accept prints the log to stdout
+func (lc *StdoutLogConsumer) Accept(l testcontainers.Log) {
+	fmt.Print(string(l.Content))
+}
+
 func runTestServer(ctx context.Context, t *testing.T) (*integrationTest, error) {
 
 	// Run the fake untappd server
+	logger := log.TestLogger(t)
+
+	newNetwork, err := network.New(ctx)
+	if err != nil {
+		t.Fatalf("Unable to bring up bridge network: %v", err)
+	}
+
+	nalias := []string{"network"}
+
 	uopts := []testcontainers.ContainerCustomizer{
+		testcontainers.WithName("untappd"),
 		testcontainers.WithExposedPorts("8085/tcp"),
 		testcontainers.WithDockerfile(
 			testcontainers.FromDockerfile{
@@ -33,9 +53,15 @@ func runTestServer(ctx context.Context, t *testing.T) (*integrationTest, error) 
 				Dockerfile: "Dockerfile",
 			},
 		),
+		testcontainers.WithLogger(logger),
 		testcontainers.WithWaitStrategy(
 			wait.ForListeningPort("8085/tcp"),
 		),
+		testcontainers.WithLogConsumerConfig(&testcontainers.LogConsumerConfig{
+			Opts:      []testcontainers.LogProductionOption{testcontainers.WithLogProductionTimeout(10 * time.Second)},
+			Consumers: []testcontainers.LogConsumer{&StdoutLogConsumer{}},
+		}),
+		network.WithNetwork(nalias, newNetwork),
 	}
 	utc, err := testcontainers.Run(ctx, "", uopts...)
 	if err != nil {
@@ -45,8 +71,8 @@ func runTestServer(ctx context.Context, t *testing.T) (*integrationTest, error) 
 
 	ump, err := utc.MappedPort(ctx, "8085/tcp")
 
-	logger := log.TestLogger(t)
 	opts := []testcontainers.ContainerCustomizer{
+		testcontainers.WithName("beerkellar"),
 		testcontainers.WithExposedPorts("8080/tcp", "8082/tcp", "8083/tcp"),
 		testcontainers.WithDockerfile(
 			testcontainers.FromDockerfile{
@@ -59,6 +85,11 @@ func runTestServer(ctx context.Context, t *testing.T) (*integrationTest, error) 
 		),
 		testcontainers.WithLogger(logger),
 		testcontainers.WithCmdArgs("--test_db", "--untappd_auth", fmt.Sprintf("http://localhost:%v/", ump.Int())),
+		testcontainers.WithLogConsumerConfig(&testcontainers.LogConsumerConfig{
+			Opts:      []testcontainers.LogProductionOption{testcontainers.WithLogProductionTimeout(10 * time.Second)},
+			Consumers: []testcontainers.LogConsumer{&StdoutLogConsumer{}},
+		}),
+		network.WithNetwork(nalias, newNetwork),
 	}
 	tc, err := testcontainers.Run(ctx, "", opts...)
 	if err != nil {
@@ -82,14 +113,18 @@ func runTestServer(ctx context.Context, t *testing.T) (*integrationTest, error) 
 	// Fix the redirect url
 	conn, err := grpc.NewClient(fmt.Sprintf(":%v", amp.Int()), grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
-		t.Fatalf("Unable to connect to server: %v", err)
+		t.Fatalf("Unable to connect to server: %v -> %v", err, cmp)
 	}
 	defer conn.Close()
 	client := pb.NewBeerKellerAdminClient(conn)
-	_, err = client.SetRedirect(ctx, &pb.SetRedirectRequest{Url: fmt.Sprintf("http://localhost:%v", cmp.Int())})
+	_, err = client.SetRedirect(ctx, &pb.SetRedirectRequest{Url: fmt.Sprintf("http://beerkellar:%v", 8082)}) //cmp.Int())})
 	if err != nil {
 		t.Fatalf("Unable to set redirect: %v", err)
 	}
+
+	time.Sleep(time.Second * 5)
+	//t.Fatalf("Running 8080->%v, 8083->%v, 8082->%v and %v", mp, amp, cmp, ump)
+
 	return &integrationTest{
 		c:   tc,
 		uc:  utc,

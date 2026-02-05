@@ -60,6 +60,7 @@ type AuthResponse struct {
 }
 
 func (s *Server) handleAuthResponse(ctx context.Context, u *Untappd, code, token string) (*pb.User, error) {
+	log.Printf("Handling auth")
 	user, err := s.db.GetUser(ctx, token)
 	if err != nil {
 		return nil, err
@@ -69,6 +70,7 @@ func (s *Server) handleAuthResponse(ctx context.Context, u *Untappd, code, token
 	resp := &AuthResponse{}
 	err = baseGet(rUrl, resp)
 	if err != nil {
+		log.Printf("Bad get: %v", err)
 		return nil, err
 	}
 

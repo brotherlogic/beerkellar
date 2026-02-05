@@ -34,7 +34,12 @@ func (s *Server) HandleOauth1(w http.ResponseWriter, r *http.Request) {
 
 	// Given those we just immediatly hit the callback URL
 	url := fmt.Sprintf("%v?code=%v&state=%v", redirectUrl, code, state)
-	http.DefaultClient.Get(url)
+	resp, err := http.DefaultClient.Get(url)
+	if err != nil {
+		log.Printf("Unable to retrieve callback(%v): %v", url, err)
+	} else {
+		log.Printf("Callback with %v", resp.StatusCode)
+	}
 }
 
 func (s *Server) HandleOauth2(w http.ResponseWriter, r *http.Request) {
