@@ -23,9 +23,9 @@ var (
 	metricsPort  = flag.Int("metrics_port", 8081, "Metrics port")
 	callbackPort = flag.Int("callback_port", 8082, "Callback port")
 
-	baseUntappdAPI  = flag.String("untappd_url", "https://api.untappd.com", "Base URL for reaching untappd API")
-	baseUntappdAuth = flag.String("untappd_auth", "https://untappd.com", "Base URL for doing auth")
-	retUnttapdAuth  = flag.String("untappd_ret_auth", "https://untappd.com", "Return URL for auth")
+	baseUntappdAPI  = flag.String("untappd_url", "https://api.untappd.com/", "Base URL for reaching untappd API")
+	baseUntappdAuth = flag.String("untappd_auth", "https://untappd.com/", "Base URL for doing auth")
+	retUnttapdAuth  = flag.String("untappd_ret_auth", "https://untappd.com/", "Return URL for auth")
 	testDb          = flag.Bool("test_db", false, "If true, use a test db")
 )
 

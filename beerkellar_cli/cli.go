@@ -5,11 +5,11 @@ import (
 	"log"
 	"os"
 
+	"github.com/pkg/browser"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
 	pb "github.com/brotherlogic/beerkellar/proto"
-	"github.com/pkg/browser"
 )
 
 func main() {
