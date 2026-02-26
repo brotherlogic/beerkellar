@@ -23,6 +23,8 @@ type Database interface {
 
 	GetBeer(ctx context.Context, beerid int64) (*pb.Beer, error)
 	SaveBeer(ctx context.Context, beer *pb.Beer) error
+
+	SaveDrink(ctx context.Context, user int32, drink *pb.Drink) error
 }
 
 type DB struct {
@@ -109,4 +111,8 @@ func (d *DB) GetBeer(ctx context.Context, beerid int64) (*pb.Beer, error) {
 	beer := &pb.Beer{}
 	err = proto.Unmarshal(data, beer)
 	return beer, err
+}
+
+func (d *DB) SaveDrink(ctx context.Context, userid int32, drink *pb.Drink) error {
+	return d.save(ctx, fmt.Sprintf("beerkellar/drink/%v, %v-%v", userid, drink.GetBeerId(), drink.GetDate()), drink)
 }
