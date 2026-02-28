@@ -23,6 +23,7 @@ const (
 	BeerKeller_GetBeer_FullMethodName      = "/beerkellar.BeerKeller/GetBeer"
 	BeerKeller_GetLogin_FullMethodName     = "/beerkellar.BeerKeller/GetLogin"
 	BeerKeller_GetAuthToken_FullMethodName = "/beerkellar.BeerKeller/GetAuthToken"
+	BeerKeller_GetCellar_FullMethodName    = "/beerkellar.BeerKeller/GetCellar"
 	BeerKeller_Healthy_FullMethodName      = "/beerkellar.BeerKeller/Healthy"
 )
 
@@ -34,6 +35,7 @@ type BeerKellerClient interface {
 	GetBeer(ctx context.Context, in *GetBeerRequest, opts ...grpc.CallOption) (*GetBeerResponse, error)
 	GetLogin(ctx context.Context, in *GetLoginRequest, opts ...grpc.CallOption) (*GetLoginResponse, error)
 	GetAuthToken(ctx context.Context, in *GetAuthTokenRequest, opts ...grpc.CallOption) (*GetAuthTokenResponse, error)
+	GetCellar(ctx context.Context, in *GetCellarRequest, opts ...grpc.CallOption) (*GetCellarResponse, error)
 	Healthy(ctx context.Context, in *HealthyRequest, opts ...grpc.CallOption) (*HealthyResponse, error)
 }
 
@@ -85,6 +87,16 @@ func (c *beerKellerClient) GetAuthToken(ctx context.Context, in *GetAuthTokenReq
 	return out, nil
 }
 
+func (c *beerKellerClient) GetCellar(ctx context.Context, in *GetCellarRequest, opts ...grpc.CallOption) (*GetCellarResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetCellarResponse)
+	err := c.cc.Invoke(ctx, BeerKeller_GetCellar_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *beerKellerClient) Healthy(ctx context.Context, in *HealthyRequest, opts ...grpc.CallOption) (*HealthyResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(HealthyResponse)
@@ -103,6 +115,7 @@ type BeerKellerServer interface {
 	GetBeer(context.Context, *GetBeerRequest) (*GetBeerResponse, error)
 	GetLogin(context.Context, *GetLoginRequest) (*GetLoginResponse, error)
 	GetAuthToken(context.Context, *GetAuthTokenRequest) (*GetAuthTokenResponse, error)
+	GetCellar(context.Context, *GetCellarRequest) (*GetCellarResponse, error)
 	Healthy(context.Context, *HealthyRequest) (*HealthyResponse, error)
 }
 
@@ -124,6 +137,9 @@ func (UnimplementedBeerKellerServer) GetLogin(context.Context, *GetLoginRequest)
 }
 func (UnimplementedBeerKellerServer) GetAuthToken(context.Context, *GetAuthTokenRequest) (*GetAuthTokenResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetAuthToken not implemented")
+}
+func (UnimplementedBeerKellerServer) GetCellar(context.Context, *GetCellarRequest) (*GetCellarResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetCellar not implemented")
 }
 func (UnimplementedBeerKellerServer) Healthy(context.Context, *HealthyRequest) (*HealthyResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Healthy not implemented")
@@ -220,6 +236,24 @@ func _BeerKeller_GetAuthToken_Handler(srv interface{}, ctx context.Context, dec 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _BeerKeller_GetCellar_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetCellarRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BeerKellerServer).GetCellar(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: BeerKeller_GetCellar_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BeerKellerServer).GetCellar(ctx, req.(*GetCellarRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _BeerKeller_Healthy_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(HealthyRequest)
 	if err := dec(in); err != nil {
@@ -260,6 +294,10 @@ var BeerKeller_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetAuthToken",
 			Handler:    _BeerKeller_GetAuthToken_Handler,
+		},
+		{
+			MethodName: "GetCellar",
+			Handler:    _BeerKeller_GetCellar_Handler,
 		},
 		{
 			MethodName: "Healthy",

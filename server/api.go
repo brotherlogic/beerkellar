@@ -91,6 +91,25 @@ func (s *Server) getUser(ctx context.Context) (*pb.User, error) {
 	return s.db.GetUser(ctx, key)
 }
 
+func (s *Server) GetCellar(ctx context.Context, req *pb.GetCellarRequest) (*pb.GetCellarResponse, error) {
+	user, err := s.getUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	cellar, err := s.db.GetCellar(ctx, user.GetUsername())
+	if err != nil {
+		return nil, err
+	}
+
+	var beers []*pb.Beer
+	for _, entry := range cellar.GetEntries() {
+		beers = append(beers, &pb.Beer{Id: entry.GetBeerId()})
+	}
+
+	return &pb.GetCellarResponse{Beers: beers}, nil
+}
+
 func (s *Server) AddBeer(ctx context.Context, req *pb.AddBeerRequest) (*pb.AddBeerResponse, error) {
 	user, err := s.getUser(ctx)
 	if err != nil {

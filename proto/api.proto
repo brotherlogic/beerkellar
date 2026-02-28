@@ -48,12 +48,19 @@ message GetBeerResponse{
 message HealthyRequest {}
 message HealthyResponse {}
 
+message GetCellarRequest{}
+message GetCellarResponse{
+  repeated Beer beers = 1;
+}
+
 service BeerKeller {
   rpc AddBeer(AddBeerRequest) returns (AddBeerResponse) {}
   rpc GetBeer(GetBeerRequest) returns (GetBeerResponse) {}
 
   rpc GetLogin(GetLoginRequest) returns (GetLoginResponse) {}
   rpc GetAuthToken(GetAuthTokenRequest) returns (GetAuthTokenResponse) {}
+
+  rpc GetCellar(GetCellarRequest) returns (GetCellarResponse)  {}
 
   rpc Healthy(HealthyRequest) returns (HealthyResponse) {}
 }
