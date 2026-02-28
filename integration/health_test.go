@@ -1,4 +1,4 @@
-//go:build skip
+//go:build integration
 
 package integration
 
