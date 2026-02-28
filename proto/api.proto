@@ -35,6 +35,7 @@ message GetAuthTokenRequest {
 }
 
 message GetAuthTokenResponse {
+  string code = 1;
 }
 
 message GetBeerRequest {
