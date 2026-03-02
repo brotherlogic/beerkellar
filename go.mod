@@ -6,6 +6,7 @@ toolchain go1.24.10
 
 require (
 	github.com/brotherlogic/pstore v0.62.0
+	github.com/golang/protobuf v1.5.4
 	github.com/pkg/browser v0.0.0-20240102092130-5ac0b6a4141c
 	github.com/prometheus/client_golang v1.23.2
 	github.com/stretchr/testify v1.11.1

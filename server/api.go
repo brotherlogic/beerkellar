@@ -171,7 +171,9 @@ func (s *Server) GetAuthToken(ctx context.Context, req *pb.GetAuthTokenRequest) 
 	}
 
 	if len(user.GetAccessToken()) > 0 {
-		return &pb.GetAuthTokenResponse{}, nil
+		return &pb.GetAuthTokenResponse{
+			Code: req.GetCode(),
+		}, nil
 	}
 	return &pb.GetAuthTokenResponse{}, status.Errorf(codes.NotFound, "User is not fully authenticated")
 }
