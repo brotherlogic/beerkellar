@@ -56,9 +56,13 @@ func TestLogin(t *testing.T) {
 	log.Printf("Response: %v with %v", string(body), resp.StatusCode)
 
 	// And then get the authenticated user
-	_, err = client.GetAuthToken(ctx, &pb.GetAuthTokenRequest{Code: lurl.GetCode()})
+	resp2, err := client.GetAuthToken(ctx, &pb.GetAuthTokenRequest{Code: lurl.GetCode()})
 	if err != nil {
 		t.Fatalf("Bad request for user: %v", err)
+	}
+
+	if resp2.GetCode() != lurl.GetCode() {
+		t.Errorf("Mismatch in codes: %v vs %v", resp2, lurl)
 	}
 
 }

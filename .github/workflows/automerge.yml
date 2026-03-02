@@ -17,6 +17,9 @@ on:
     types:
       - completed
   status: {}
+  workflow_run:
+    workflows: ["Test Beerkellar", "CodeQL"]
+    types: ["completed"]
 jobs:
   automerge:
     runs-on: ubuntu-latest
