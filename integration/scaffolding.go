@@ -83,7 +83,11 @@ func runTestServer(ctx context.Context, t *testing.T) (*integrationTest, error) 
 			wait.ForListeningPort("8080/tcp"),
 		),
 		testcontainers.WithLogger(logger),
-		testcontainers.WithCmdArgs("--test_db", "--untappd_auth", fmt.Sprintf("http://localhost:%v/", ump.Int()), "--untappd_ret_auth", fmt.Sprintf("http://untappd:8085/")),
+		testcontainers.WithCmdArgs(
+			"--test_db",
+			"--untappd_auth", fmt.Sprintf("http://localhost:%v/", ump.Int()),
+			"--untappd_ret_auth", "http://untappd:8085/",
+			"--untappd_url", fmt.Sprintf("http://untappd:8085")),
 		testcontainers.WithLogConsumerConfig(&testcontainers.LogConsumerConfig{
 			Opts:      []testcontainers.LogProductionOption{testcontainers.WithLogProductionTimeout(10 * time.Second)},
 			Consumers: []testcontainers.LogConsumer{&StdoutLogConsumer{}},

@@ -1,4 +1,4 @@
-//go:build skip
+//go:build integration
 
 package integration
 
@@ -44,15 +44,16 @@ func TestAddBeer(t *testing.T) {
 
 	// Add a beer
 	_, err = client.AddBeer(ctx, &pb.AddBeerRequest{
-		BeerId:   6284, // Sierra Nevada Pale Ale
+		BeerId:   16630, // Sierra Nevada Celebration Ale
 		Quantity: 12})
 	if err != nil {
 		t.Fatalf("Unable to add beer: %v", err)
 	}
 
 	foundAbv := false
+	beer := &pb.Beer{}
 	ti := time.Now()
-	for !foundAbv && time.Since(ti) < time.Minute*5 {
+	for !foundAbv && time.Since(ti) < time.Minute {
 		cellar, err := client.GetCellar(ctx, &pb.GetCellarRequest{})
 		if err != nil {
 			t.Fatalf("Unable to retrieve cellar: %v", err)
@@ -62,13 +63,14 @@ func TestAddBeer(t *testing.T) {
 			t.Fatalf("Cellar only contains %v entries, should have 12", len(cellar.GetBeers()))
 		}
 
-		if cellar.GetBeers()[0].GetAbv() == 5.6 {
+		if cellar.GetBeers()[0].GetAbv() == 6.8 {
 			foundAbv = true
 		}
+		beer = cellar.GetBeers()[0]
 	}
 
 	if !foundAbv {
-		t.Errorf("Cellar was not refreshed once beer added")
+		t.Errorf("Cellar was not refreshed once beer added: did not find the abv: %v", beer)
 	}
 
 }
