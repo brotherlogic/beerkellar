@@ -69,6 +69,7 @@ func main() {
 	}
 	gs := grpc.NewServer()
 	pb.RegisterBeerKellerAdminServer(gs, s)
+	pb.RegisterBeerKellerServer(gs, s)
 
 	go func() {
 		log.Printf("Serving on port :%d", *adminPort)
@@ -81,7 +82,6 @@ func main() {
 	if err != nil {
 		log.Fatalf("Beerkellar is unable to listen on the min grpc port %v: %v", *port, err)
 	}
-	pb.RegisterBeerKellerServer(gs, s)
 
 	log.Printf("Serving on port :%d", *port)
 	if err := gs.Serve(lis); err != nil {
