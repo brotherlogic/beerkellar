@@ -27,6 +27,14 @@ func main() {
 	defer cancel()
 
 	switch os.Args[1] {
+	case "cellar":
+		cellar, err := client.GetCellar(ctx, &pb.GetCellarRequest{})
+		if err != nil {
+			log.Fatalf("Unable to get cellar: %v", err)
+		}
+		for i, beer := range cellar.GetBeers() {
+			log.Printf("%v. %v - %v", i, beer.GetBrewery(), beer.GetName())
+		}
 	case "login":
 		url, err := client.GetLogin(context.Background(), &pb.GetLoginRequest{})
 		if err != nil {
