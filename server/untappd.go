@@ -84,14 +84,15 @@ func (s *Server) handleAuthResponse(ctx context.Context, u *Untappd, code, token
 func (u *Untappd) getBeerFromUntappd(ctx context.Context, beerId int64) (*pb.Beer, error) {
 	resp := &BeerInfoResponse{}
 	err := u.get(fmt.Sprintf("/v4/beer/info/%v", beerId), resp)
+	log.Printf("BeerResponse: %v", err)
 	if err != nil {
 		return nil, err
 	}
 	return &pb.Beer{
 		Id:      beerId,
-		Name:    resp.Bear.BeerName,
-		Abv:     resp.Bear.BeerAbv,
-		Brewery: resp.Bear.Brewery.BreweryName,
+		Name:    resp.Beer.BeerName,
+		Abv:     resp.Beer.BeerAbv,
+		Brewery: resp.Beer.Brewery.BreweryName,
 	}, nil
 }
 
@@ -100,12 +101,12 @@ type BreweryResponse struct {
 }
 
 type BeerResponse struct {
-	BeerName    string
-	BeerAbv     float32
+	BeerName    string  `json:"beer_name"`
+	BeerAbv     float32 `json:"beer_abv"`
 	Brewery     BreweryResponse
-	RatingScore float32
+	RatingScore float32 `json:"rating_score"`
 }
 
 type BeerInfoResponse struct {
-	Bear BeerResponse
+	Beer BeerResponse
 }

@@ -29,6 +29,8 @@ type Server struct {
 	redirectUrl  string
 
 	untappd *Untappd
+
+	q *Queue
 }
 
 func NewServer(clientId, clientSecret, redirectUrl string, db Database, ut *Untappd) *Server {
@@ -39,6 +41,8 @@ func NewServer(clientId, clientSecret, redirectUrl string, db Database, ut *Unta
 
 		db:      db,
 		untappd: ut,
+
+		q: NewQueue(),
 	}
 }
 
@@ -91,7 +95,7 @@ func (s *Server) getUser(ctx context.Context) (*pb.User, error) {
 	return s.db.GetUser(ctx, key)
 }
 
-func (s *Server) GetCellar(ctx context.Context, req *pb.GetCellarRequest) (*pb.GetCellarResponse, error) {
+func (s *Server) GetCellar(ctx context.Context, _ *pb.GetCellarRequest) (*pb.GetCellarResponse, error) {
 	user, err := s.getUser(ctx)
 	if err != nil {
 		return nil, err
@@ -103,8 +107,13 @@ func (s *Server) GetCellar(ctx context.Context, req *pb.GetCellarRequest) (*pb.G
 	}
 
 	var beers []*pb.Beer
-	for _, entry := range cellar.GetEntries() {
-		beers = append(beers, &pb.Beer{Id: entry.GetBeerId()})
+	for _, b := range cellar.GetEntries() {
+		beer, err := s.db.GetBeer(ctx, b.BeerId)
+		if err != nil {
+			beers = append(beers, &pb.Beer{Id: b.BeerId})
+		} else {
+			beers = append(beers, &pb.Beer{Id: b.BeerId, Abv: beer.GetAbv()})
+		}
 	}
 
 	return &pb.GetCellarResponse{Beers: beers}, nil
@@ -118,14 +127,14 @@ func (s *Server) AddBeer(ctx context.Context, req *pb.AddBeerRequest) (*pb.AddBe
 	cellar, err := s.db.GetCellar(ctx, user.GetUsername())
 	if err != nil {
 		// OutOfRange is cannot be found in DB
-		if status.Code(err) == codes.OutOfRange {
+		if status.Code(err) == codes.NotFound {
 			cellar = &pb.Cellar{}
 		} else {
 			return nil, err
 		}
 	}
 
-	for _ = range req.GetQuantity() {
+	for range req.GetQuantity() {
 		cellar.Entries = append(cellar.Entries,
 			&pb.CellarEntry{
 				BeerId:    req.GetBeerId(),
@@ -133,6 +142,8 @@ func (s *Server) AddBeer(ctx context.Context, req *pb.AddBeerRequest) (*pb.AddBe
 				DateAdded: time.Now().Unix(),
 			})
 	}
+
+	s.q.Enqueue(CacheBeer{beerId: req.GetBeerId(), u: s.untappd, d: s.db})
 
 	return &pb.AddBeerResponse{}, s.db.SaveCellar(ctx, user.GetUsername(), cellar)
 }

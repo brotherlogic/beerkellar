@@ -44,6 +44,14 @@ func NewTestDatabase(ctx context.Context) Database {
 	db := &DB{}
 	client := pstore_client.GetTestClient()
 	db.client = client
+
+	// Because this is the test database, add a test user
+
+	err := db.SaveUser(context.Background(), &pb.User{Username: "testuser", Auth: "testuser"})
+	if err != nil {
+		panic(err)
+	}
+
 	return db
 }
 
@@ -84,6 +92,7 @@ func (d *DB) GetCellar(ctx context.Context, username string) (*pb.Cellar, error)
 }
 
 func (d *DB) SaveUser(ctx context.Context, user *pb.User) error {
+	log.Printf("SAVING: %v", user)
 	return d.save(ctx, fmt.Sprintf("beerkellar/user/%v", user.GetAuth()), user)
 }
 
