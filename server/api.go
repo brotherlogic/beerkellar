@@ -50,7 +50,7 @@ func (s *Server) loadConfig(ctx context.Context) (*pb.Cellar, error) {
 	return &pb.Cellar{}, nil
 }
 
-func (s *Server) getBeer(ctx context.Context, beerId int64) (*pb.Beer, error) {
+func (s *Server) getBeerFromCache(ctx context.Context, beerId int64) (*pb.Beer, error) {
 	beer, err := s.db.GetBeer(ctx, beerId)
 	if err == nil {
 		return beer, nil
@@ -93,6 +93,24 @@ func (s *Server) getUser(ctx context.Context) (*pb.User, error) {
 	}
 
 	return s.db.GetUser(ctx, key)
+}
+
+func (s *Server) GetBeer(ctx context.Context, _ *pb.GetBeerRequest) (*pb.GetBeerResponse, error) {
+	user, err := s.getUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	cellar, err := s.db.GetCellar(ctx, user.GetUsername())
+	if err != nil {
+		return nil, err
+	}
+
+	// Pick a beer at random
+	rIndex := rand.Intn(len(cellar.GetEntries()))
+	beerId := cellar.GetEntries()[rIndex].GetBeerId()
+
+	return &pb.GetBeerResponse{Beer: &pb.Beer{Id: beerId}}, nil
 }
 
 func (s *Server) GetCellar(ctx context.Context, _ *pb.GetCellarRequest) (*pb.GetCellarResponse, error) {
@@ -182,52 +200,6 @@ func (s *Server) GetAuthToken(ctx context.Context, req *pb.GetAuthTokenRequest) 
 		}, nil
 	}
 	return &pb.GetAuthTokenResponse{}, status.Errorf(codes.NotFound, "User is not fully authenticated")
-}
-
-func (s *Server) GetBeer(ctx context.Context, req *pb.GetBeerRequest) (*pb.GetBeerResponse, error) {
-	user, err := s.getUser(ctx)
-	if err != nil {
-		return nil, err
-	}
-	cellar, err := s.db.GetCellar(ctx, user.GetUsername())
-	if err != nil {
-		// OutOfRange is cannot be found in DB
-		if status.Code(err) == codes.OutOfRange {
-			cellar = &pb.Cellar{}
-		} else {
-			return nil, err
-		}
-	}
-
-	var beers []*pb.Beer
-	addedDate := make(map[int64]int64)
-	for _, entry := range cellar.GetEntries() {
-		beer, err := s.getBeer(ctx, entry.GetBeerId())
-		if err != nil {
-			return nil, err
-		}
-
-		if date, ok := addedDate[beer.GetId()]; !ok || entry.GetDateAdded() < date {
-			addedDate[beer.GetId()] = entry.GetDateAdded()
-		} else {
-
-		}
-
-		units := convertToLitres(entry.GetSizeFlOz()) * beer.GetAbv()
-		if units < float32(req.GetMaxUnits()) {
-			beers = append(beers, beer)
-		}
-	}
-
-	// Out of the beers - pick the oldest
-	oldest := beers[0]
-	for _, beer := range beers {
-		if addedDate[beer.GetId()] < addedDate[oldest.GetId()] {
-			oldest = beer
-		}
-	}
-
-	return &pb.GetBeerResponse{Beer: oldest}, nil
 }
 
 func convertToLitres(flOz int32) float32 {
