@@ -96,7 +96,7 @@ func (s *Server) handleAuthResponse(ctx context.Context, u *Untappd, code, token
 	rUrl := fmt.Sprintf("%voauth/authorize?client_id=%v&client_secret=%v&response_type=code&redirect_url=%v&code=%v",
 		s.untappd.retAuthURL, s.clientId, s.clientSecret, s.redirectUrl, code)
 	resp := &AuthResponse{}
-	err = baseGet(rUrl, resp)
+	err = s.untappd.baseGet(rUrl, resp)
 	if err != nil {
 		log.Printf("Bad get: %v (%v)", err, rUrl)
 		return nil, err
