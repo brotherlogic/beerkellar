@@ -61,6 +61,7 @@ func (u *Untappd) baseGet(url string, obj interface{}) error {
 		url = fmt.Sprintf("%v?%v", url, addition)
 	}
 
+	log.Printf("Reading %v", url)
 	resp, err := http.DefaultClient.Get(url)
 	if err != nil {
 		return err
