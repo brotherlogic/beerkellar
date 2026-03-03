@@ -41,7 +41,7 @@ func (q *Queue) Enqueue(a Queueable) {
 
 func (q *Queue) RunQueue() {
 	for {
-		time.Sleep(time.Second)
+		time.Sleep(time.Second * 10)
 		if len(q.elements) > 0 {
 			ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 			f := q.elements[0]
