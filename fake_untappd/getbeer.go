@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"strings"
 )
 
 const (
@@ -246,6 +247,12 @@ const (
 )
 
 func (s *Server) HandleGetBeer(w http.ResponseWriter, r *http.Request) {
+	// Return a 500 error if we don't have an access token
+	if !strings.Contains(r.URL.Path, "access_token") {
+		w.WriteHeader(http.StatusPreconditionFailed)
+		fmt.Fprint(w, "Missing access_token")
+	}
+
 	w.WriteHeader(http.StatusOK)
 	fmt.Fprint(w, response)
 }
