@@ -1,3 +1,5 @@
+//go:build integration
+
 package integration
 
 import (
@@ -9,9 +11,18 @@ import (
 	pb "github.com/brotherlogic/beerkellar/proto"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/metadata"
 )
 
-func TestAddBeer(t *testing.T) {
+func GetTestContext(ctx context.Context, deadline time.Duration) (context.Context, context.CancelFunc) {
+	ctx, cancel := context.WithTimeout(ctx, deadline)
+	ctx = metadata.AppendToOutgoingContext(context.Background(),
+		"auth-token",
+		"testuser")
+	return ctx, cancel
+}
+
+func TestGetBeer(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute*10)
 	defer cancel()
 
@@ -34,32 +45,31 @@ func TestAddBeer(t *testing.T) {
 	// Add a beer
 	_, err = client.AddBeer(ctx, &pb.AddBeerRequest{
 		BeerId:   16630, // Sierra Nevada Celebration Ale
-		Quantity: 12})
+		Quantity: 1})
 	if err != nil {
 		t.Fatalf("Unable to add beer: %v", err)
 	}
 
-	foundAbv := false
-	beer := &pb.Beer{}
-	ti := time.Now()
-	for !foundAbv && time.Since(ti) < time.Minute {
-		cellar, err := client.GetCellar(ctx, &pb.GetCellarRequest{})
-		if err != nil {
-			t.Fatalf("Unable to retrieve cellar: %v", err)
-		}
-
-		if len(cellar.GetBeers()) != 12 {
-			t.Fatalf("Cellar only contains %v entries, should have 12", len(cellar.GetBeers()))
-		}
-
-		if cellar.GetBeers()[0].GetAbv() == 6.8 {
-			foundAbv = true
-		}
-		beer = cellar.GetBeers()[0]
+	// Add a beer
+	_, err = client.AddBeer(ctx, &pb.AddBeerRequest{
+		BeerId:   6284, // Sierra Nevada Celebration Ale
+		Quantity: 1})
+	if err != nil {
+		t.Fatalf("Unable to add beer: %v", err)
 	}
 
-	if !foundAbv {
-		t.Errorf("Cellar was not refreshed once beer added: did not find the abv: %v", beer)
+	counts := make(map[int64]int)
+	for i := 0; i < 100; i++ {
+		beer, err := client.GetBeer(ctx, &pb.GetBeerRequest{})
+		if err != nil {
+			t.Fatalf("Unable to get beer: %v", err)
+		}
+		counts[beer.GetBeer().GetId()]++
+	}
+
+	// We should have picked both beers
+	if len(counts) != 2 {
+		t.Errorf("Expected 2 beers, got %v", counts)
 	}
 
 }
