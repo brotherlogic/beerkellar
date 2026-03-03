@@ -39,7 +39,7 @@ func TestAddBeer(t *testing.T) {
 	}
 	client := pb.NewBeerKellerClient(conn)
 
-	ctx, cancel = getTestContext(context.Background(), time.Minute*5)
+	ctx, cancel = GetTestContext(context.Background(), time.Minute*5)
 	defer cancel()
 
 	// Add a beer
