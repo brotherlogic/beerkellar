@@ -110,6 +110,9 @@ func (s *Server) GetCellar(ctx context.Context, _ *pb.GetCellarRequest) (*pb.Get
 	for _, b := range cellar.GetEntries() {
 		beer, err := s.db.GetBeer(ctx, b.BeerId)
 		if err != nil {
+			// Trigger a retry to cache
+			s.q.Enqueue(&CacheBeer{beerId: b.BeerId})
+
 			beers = append(beers, &pb.Beer{Id: b.BeerId})
 		} else {
 			beers = append(beers, &pb.Beer{Id: b.BeerId, Abv: beer.GetAbv()})

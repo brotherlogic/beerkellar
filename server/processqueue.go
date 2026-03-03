@@ -51,6 +51,7 @@ func (q *Queue) RunQueue() {
 				log.Printf("Unable to run queue element: %v", err)
 				q.elements = append(q.elements, f)
 			}
+			log.Printf("Ran Queue Element %+v", f)
 			cancel()
 		}
 	}
