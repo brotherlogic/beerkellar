@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"math"
 	"math/rand"
 	"time"
 
@@ -95,7 +96,7 @@ func (s *Server) getUser(ctx context.Context) (*pb.User, error) {
 	return s.db.GetUser(ctx, key)
 }
 
-func (s *Server) GetBeer(ctx context.Context, _ *pb.GetBeerRequest) (*pb.GetBeerResponse, error) {
+func (s *Server) GetBeer(ctx context.Context, req *pb.GetBeerRequest) (*pb.GetBeerResponse, error) {
 	user, err := s.getUser(ctx)
 	if err != nil {
 		return nil, err
@@ -106,11 +107,35 @@ func (s *Server) GetBeer(ctx context.Context, _ *pb.GetBeerRequest) (*pb.GetBeer
 		return nil, err
 	}
 
-	// Pick a beer at random
-	rIndex := rand.Intn(len(cellar.GetEntries()))
-	beerId := cellar.GetEntries()[rIndex].GetBeerId()
+	bcache := make(map[int64]*pb.Beer)
+	for _, entry := range cellar.GetEntries() {
+		beer, err := s.db.GetBeer(ctx, entry.GetBeerId())
+		if err == nil {
+			bcache[beer.GetId()] = beer
+		}
+	}
 
-	return &pb.GetBeerResponse{Beer: &pb.Beer{Id: beerId}}, nil
+	// Filter out beers
+	var ncellar []*pb.CellarEntry
+	var pBeer *pb.Beer
+	oldest := int64(math.MaxInt64)
+	for _, entry := range cellar.GetEntries() {
+		if beer, ok := bcache[entry.GetBeerId()]; ok {
+			if req.GetRequirement().GetMaxUnits() == 0 || convertToLitres(entry.GetSizeFlOz())*beer.GetAbv() < float32(req.GetRequirement().MaxUnits) {
+				ncellar = append(ncellar, entry)
+				if req.Requirement.GetStrategy() == pb.BeerRequirement_STRATEGY_OLDEST && entry.GetDateAdded() < oldest {
+					oldest = entry.GetDateAdded()
+					pBeer = bcache[entry.GetBeerId()]
+				}
+			}
+		}
+	}
+
+	// Pick a beer at random
+	if pBeer == nil {
+		pBeer = bcache[ncellar[rand.Intn(len(ncellar))].GetBeerId()]
+	}
+	return &pb.GetBeerResponse{Beer: pBeer}, nil
 }
 
 func (s *Server) GetCellar(ctx context.Context, _ *pb.GetCellarRequest) (*pb.GetCellarResponse, error) {

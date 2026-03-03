@@ -64,7 +64,7 @@ func TestGetBeerWithRequirements_Random(t *testing.T) {
 	}
 }
 
-func TestGetBeerWithRequirements_Random(t *testing.T) {
+func TestGetBeerWithRequirements_Oldest(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Minute*10)
 	defer cancel()
 
