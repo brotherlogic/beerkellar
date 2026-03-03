@@ -42,7 +42,14 @@ func main() {
 	}
 	cancel()
 
-	ut := server.GetUntappd(*baseUntappdAPI, *baseUntappdAuth, *retUnttapdAuth)
+	ut := server.GetUntappd(
+		*baseUntappdAPI,
+		*baseUntappdAuth,
+		*retUnttapdAuth,
+
+		os.Getenv("client_id"),
+		os.Getenv("client_secret"),
+	)
 
 	s := server.NewServer(
 		os.Getenv("client_id"),
