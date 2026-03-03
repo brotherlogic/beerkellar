@@ -146,7 +146,10 @@ func (s *Server) AddBeer(ctx context.Context, req *pb.AddBeerRequest) (*pb.AddBe
 			})
 	}
 
-	s.q.Enqueue(CacheBeer{beerId: req.GetBeerId(), u: s.untappd, d: s.db})
+	s.q.Enqueue(CacheBeer{
+		beerId: req.GetBeerId(),
+		u:      s.untappd.Upgrade(user.GetAccessToken()),
+		d:      s.db})
 
 	return &pb.AddBeerResponse{}, s.db.SaveCellar(ctx, user.GetUsername(), cellar)
 }
