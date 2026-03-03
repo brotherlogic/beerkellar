@@ -95,6 +95,24 @@ func (s *Server) getUser(ctx context.Context) (*pb.User, error) {
 	return s.db.GetUser(ctx, key)
 }
 
+func (s *Server) GetBeer(ctx context.Context, _ *pb.GetBeerRequest) (*pb.GetBeerResponse, error) {
+	user, err := s.getUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	cellar, err := s.db.GetCellar(ctx, user.GetUsername())
+	if err != nil {
+		return nil, err
+	}
+
+	// Pick a beer at random
+	rIndex := rand.Intn(len(cellar.GetEntries()))
+	beerId := cellar.GetEntries()[rIndex].GetBeerId()
+
+	return &pb.GetBeerResponse{Beer: &pb.Beer{Id: beerId}}, nil
+}
+
 func (s *Server) GetCellar(ctx context.Context, _ *pb.GetCellarRequest) (*pb.GetCellarResponse, error) {
 	user, err := s.getUser(ctx)
 	if err != nil {

@@ -9,9 +9,9 @@ A kubernetes hosted version of the beer cellar. You can:
 
 ## Tasks
 
-1. Have the system support untappd login
-1. Support adding a beer
-1. Support listing the cellar
+1. ~~Have the system support untappd login~~
+1. ~~Support adding a beer~~
+1. ~~Support listing the cellar~~
 1. Pick beer at random
 1. Define requirements proto
 1. Allow pick according to requirements
