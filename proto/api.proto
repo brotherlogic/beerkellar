@@ -38,14 +38,6 @@ message GetAuthTokenResponse {
   string code = 2;
 }
 
-message GetBeerRequest {
-  int32 max_units = 1;
-}
-
-message GetBeerResponse{
-  Beer beer = 1;
-}
-
 message HealthyRequest {}
 message HealthyResponse {}
 
@@ -54,20 +46,30 @@ message GetCellarResponse{
   repeated Beer beers = 1;
 }
 
-message GetBeerRequest{}
+message GetBeerRequest{
+  BeerRequirement requirement = 1;
+}
 message GetBeerResponse{
   Beer beer = 1;
 }
 
+message BeerRequirement {
+  int32 max_units = 1;
+  enum PickStrategy {
+    STRATEGY_RANDOM = 0;
+    STRATEGY_OLDEST = 1;
+  }
+  PickStrategy strategy = 2;
+}
+
 service BeerKeller {
   rpc AddBeer(AddBeerRequest) returns (AddBeerResponse) {}
-  rpc GetBeer(GetBeerRequest) returns (GetBeerResponse) {}
 
   rpc GetLogin(GetLoginRequest) returns (GetLoginResponse) {}
   rpc GetAuthToken(GetAuthTokenRequest) returns (GetAuthTokenResponse) {}
 
   rpc GetCellar(GetCellarRequest) returns (GetCellarResponse)  {}
-  rpc GetBeer(GetBeerRequest) returns (GetBeerResposne) {}
+  rpc GetBeer(GetBeerRequest) returns (GetBeerResponse) {}
 
   rpc Healthy(HealthyRequest) returns (HealthyResponse) {}
 }
