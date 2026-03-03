@@ -77,7 +77,7 @@ func main() {
 			log.Fatalf("Unable to get cellar: %v", err)
 		}
 		for i, beer := range cellar.GetBeers() {
-			log.Printf("%v. %v - %v", i, beer.GetBrewery(), beer.GetName())
+			log.Printf("%v. %v - %v [%v]", i+1, beer.GetBrewery(), beer.GetName(), beer.GetId())
 		}
 	case "login":
 		url, err := client.GetLogin(context.Background(), &pb.GetLoginRequest{})
