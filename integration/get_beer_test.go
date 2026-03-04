@@ -62,11 +62,13 @@ func TestGetBeer(t *testing.T) {
 
 	counts := make(map[int64]int)
 	for i := 0; i < 100; i++ {
-		beer, err := client.GetBeer(ctx, &pb.GetBeerRequest{})
+		beer, err := client.GetBeer(ctx, &pb.GetBeerRequest{Requirements: []*pb.BeerRequirement{{}}})
 		if err != nil {
 			t.Fatalf("Unable to get beer: %v", err)
 		}
-		counts[beer.GetBeer().GetId()]++
+		for _, beer := range beer.GetBeers() {
+			counts[beer.GetId()]++
+		}
 	}
 
 	// We should have picked both beers

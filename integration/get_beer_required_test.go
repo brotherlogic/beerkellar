@@ -53,16 +53,16 @@ func TestGetBeerWithRequirements_Random(t *testing.T) {
 
 	time.Sleep(time.Second)
 
-	beer, err := client.GetBeer(ctx, &pb.GetBeerRequest{Requirement: &pb.BeerRequirement{
+	beer, err := client.GetBeer(ctx, &pb.GetBeerRequest{Requirements: []*pb.BeerRequirement{&pb.BeerRequirement{
 		Strategy: pb.BeerRequirement_STRATEGY_RANDOM,
 		MaxUnits: 5,
-	}})
+	}}})
 	if err != nil {
 		t.Fatalf("Unable to get beer: %v", err)
 	}
 
-	if beer.GetBeer().GetId() != 6284 {
-		t.Errorf("Expected beer %v, got %v", 6284, beer.GetBeer())
+	if beer.GetBeers()[0].GetId() != 6284 {
+		t.Errorf("Expected beer %v, got %v", 6284, beer.GetBeers()[0])
 	}
 }
 
@@ -106,15 +106,15 @@ func TestGetBeerWithRequirements_Oldest(t *testing.T) {
 
 	time.Sleep(time.Second)
 
-	beer, err := client.GetBeer(ctx, &pb.GetBeerRequest{Requirement: &pb.BeerRequirement{
+	beer, err := client.GetBeer(ctx, &pb.GetBeerRequest{Requirements: []*pb.BeerRequirement{&pb.BeerRequirement{
 		Strategy: pb.BeerRequirement_STRATEGY_OLDEST,
 		MaxUnits: 5,
-	}})
+	}}})
 	if err != nil {
 		t.Fatalf("Unable to get beer: %v", err)
 	}
 
-	if beer.GetBeer().GetId() != 16630 {
-		t.Errorf("Expected beer %v, got %v", 16630, beer.GetBeer())
+	if beer.GetBeers()[0].GetId() != 16630 {
+		t.Errorf("Expected beer %v, got %v", 16630, beer.GetBeers()[0])
 	}
 }
