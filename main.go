@@ -49,6 +49,7 @@ func main() {
 
 		os.Getenv("client_id"),
 		os.Getenv("client_secret"),
+		os.Getenv("redirect_url"),
 	)
 
 	s := server.NewServer(

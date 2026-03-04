@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"math"
 	"math/rand"
 	"time"
 
@@ -28,7 +29,7 @@ type Server struct {
 	clientSecret string
 	redirectUrl  string
 
-	untappd *Untappd
+	untappd UntappdAPI
 
 	q *Queue
 }
@@ -95,7 +96,7 @@ func (s *Server) getUser(ctx context.Context) (*pb.User, error) {
 	return s.db.GetUser(ctx, key)
 }
 
-func (s *Server) GetBeer(ctx context.Context, _ *pb.GetBeerRequest) (*pb.GetBeerResponse, error) {
+func (s *Server) GetBeer(ctx context.Context, req *pb.GetBeerRequest) (*pb.GetBeerResponse, error) {
 	user, err := s.getUser(ctx)
 	if err != nil {
 		return nil, err
@@ -106,11 +107,38 @@ func (s *Server) GetBeer(ctx context.Context, _ *pb.GetBeerRequest) (*pb.GetBeer
 		return nil, err
 	}
 
-	// Pick a beer at random
-	rIndex := rand.Intn(len(cellar.GetEntries()))
-	beerId := cellar.GetEntries()[rIndex].GetBeerId()
+	bcache := make(map[int64]*pb.Beer)
+	for _, entry := range cellar.GetEntries() {
+		beer, err := s.db.GetBeer(ctx, entry.GetBeerId())
+		if err == nil {
+			bcache[beer.GetId()] = beer
+		}
+	}
 
-	return &pb.GetBeerResponse{Beer: &pb.Beer{Id: beerId}}, nil
+	// Filter out beers
+	var ncellar []*pb.CellarEntry
+	var pBeer *pb.Beer
+	oldest := int64(math.MaxInt64)
+	for _, entry := range cellar.GetEntries() {
+		if beer, ok := bcache[entry.GetBeerId()]; ok {
+			if req.GetRequirement().GetMaxUnits() == 0 || convertToLitres(entry.GetSizeFlOz())*beer.GetAbv() < float32(req.GetRequirement().MaxUnits) {
+				ncellar = append(ncellar, entry)
+				if req.Requirement.GetStrategy() == pb.BeerRequirement_STRATEGY_OLDEST && entry.GetDateAdded() < oldest {
+					oldest = entry.GetDateAdded()
+					pBeer = bcache[entry.GetBeerId()]
+				}
+			}
+		} else {
+			log.Printf("Beer %v has no details", entry)
+		}
+	}
+
+	// Pick a beer at random
+	if pBeer == nil && len(ncellar) > 0 {
+		log.Printf("CELLAR: %v", len(ncellar))
+		pBeer = bcache[ncellar[rand.Intn(len(ncellar))].GetBeerId()]
+	}
+	return &pb.GetBeerResponse{Beer: pBeer}, nil
 }
 
 func (s *Server) GetCellar(ctx context.Context, _ *pb.GetCellarRequest) (*pb.GetCellarResponse, error) {
@@ -183,7 +211,7 @@ func (s *Server) GetLogin(ctx context.Context, req *pb.GetLoginRequest) (*pb.Get
 	}
 
 	return &pb.GetLoginResponse{
-		Url:  fmt.Sprintf("%voauth/authenticate?client_id=%v&response_type=code&redirect_url=%v&state=%v", s.untappd.baseAuthURL, s.clientId, s.redirectUrl, user.GetAuth()),
+		Url:  fmt.Sprintf("%voauth/authenticate?client_id=%v&response_type=code&redirect_url=%v&state=%v", s.untappd.getBaseAuthURL(), s.clientId, s.redirectUrl, user.GetAuth()),
 		Code: user.GetAuth(),
 	}, nil
 }

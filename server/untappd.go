@@ -12,10 +12,18 @@ import (
 	pb "github.com/brotherlogic/beerkellar/proto"
 )
 
+type UntappdAPI interface {
+	getBeerFromUntappd(ctx context.Context, beerId int64) (*pb.Beer, error)
+	Upgrade(at string) UntappdAPI
+	getBaseAuthURL() string
+	handleAuthResponse(ctx context.Context, db Database, code, token string) (*pb.User, error)
+}
+
 type Untappd struct {
 	baseAPIURL  string
 	baseAuthURL string
 	retAuthURL  string
+	redirectURL string
 
 	clientId     string
 	clientSecret string
@@ -26,22 +34,47 @@ type strpass struct {
 	Value string
 }
 
-func GetUntappd(api, auth, retAuth string, clientId, clientSecret string) *Untappd {
+type TestUntappd struct{}
+
+func GetTestUntappd() UntappdAPI {
+	return &TestUntappd{}
+}
+
+func (tu *TestUntappd) Upgrade(_ string) UntappdAPI {
+	return tu
+}
+
+func (_ *TestUntappd) getBeerFromUntappd(ctx context.Context, beerId int64) (*pb.Beer, error) {
+	log.Printf("Getting Beer: %v", beerId)
+	return &pb.Beer{Id: beerId, Abv: 4.5}, nil
+}
+
+func (_ *TestUntappd) getBaseAuthURL() string {
+	return ""
+}
+
+func (_ *TestUntappd) handleAuthResponse(ctx context.Context, db Database, code, token string) (*pb.User, error) {
+	return &pb.User{}, nil
+}
+
+func GetUntappd(api, auth, retAuth string, clientId, clientSecret, redirectURL string) *Untappd {
 	return &Untappd{
 		baseAPIURL:  api,
 		baseAuthURL: auth,
 		retAuthURL:  retAuth,
+		redirectURL: redirectURL,
 
 		clientId:     clientId,
 		clientSecret: clientSecret,
 	}
 }
 
-func (u *Untappd) Upgrade(accessToken string) *Untappd {
+func (u *Untappd) Upgrade(accessToken string) UntappdAPI {
 	return &Untappd{
+		baseAPIURL:   u.baseAPIURL,
 		clientId:     u.clientId,
 		clientSecret: u.clientSecret,
-		accessToken:  u.accessToken,
+		accessToken:  accessToken,
 	}
 }
 
@@ -51,6 +84,7 @@ func (u *Untappd) get(urlSuffix string, obj interface{}) error {
 }
 
 func (u *Untappd) baseGet(url string, obj interface{}) error {
+	log.Printf("Huh: %v", url)
 	addition := fmt.Sprintf("client_id=%v&client_secret=%v", u.clientId, u.clientSecret)
 	if u.accessToken != "" {
 		addition = fmt.Sprintf("access_token=%v", u.accessToken)
@@ -87,24 +121,28 @@ type AuthResponse struct {
 	Response TokenResponse
 }
 
-func (s *Server) handleAuthResponse(ctx context.Context, u *Untappd, code, token string) (*pb.User, error) {
+func (u *Untappd) getBaseAuthURL() string {
+	return u.baseAuthURL
+}
+
+func (u *Untappd) handleAuthResponse(ctx context.Context, db Database, code, token string) (*pb.User, error) {
 	log.Printf("Handling auth")
-	user, err := s.db.GetUser(ctx, token)
+	user, err := db.GetUser(ctx, token)
 	if err != nil {
 		return nil, err
 	}
 
 	rUrl := fmt.Sprintf("%voauth/authorize?client_id=%v&client_secret=%v&response_type=code&redirect_url=%v&code=%v",
-		s.untappd.retAuthURL, s.clientId, s.clientSecret, s.redirectUrl, code)
+		u.retAuthURL, u.clientId, u.clientSecret, u.redirectURL, code)
 	resp := &AuthResponse{}
-	err = s.untappd.baseGet(rUrl, resp)
+	err = u.baseGet(rUrl, resp)
 	if err != nil {
 		log.Printf("Bad get: %v (%v)", err, rUrl)
 		return nil, err
 	}
 
 	user.AccessToken = resp.Response.AccessToken
-	err = s.db.SaveUser(ctx, user)
+	err = db.SaveUser(ctx, user)
 	return user, err
 }
 
