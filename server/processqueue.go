@@ -15,6 +15,7 @@ type CacheBeer struct {
 	beerId int64
 	u      UntappdAPI
 	d      Database
+	at     time.Time
 }
 
 func (c CacheBeer) run(ctx context.Context) error {
@@ -42,8 +43,9 @@ func (q *Queue) Enqueue(a Queueable) {
 }
 
 func (q *Queue) RunQueue() {
+	backoff := time.Millisecond * 20
 	for {
-		time.Sleep(time.Second * 10)
+		time.Sleep(backoff)
 		if len(q.elements) > 0 {
 			q.flushLock.Lock()
 			ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
@@ -51,8 +53,13 @@ func (q *Queue) RunQueue() {
 			q.elements = q.elements[1:]
 			err := f.run(ctx)
 			if err != nil {
+				backoff += time.Second
 				log.Printf("Unable to run queue element: %v", err)
 				q.elements = append(q.elements, f)
+			} else {
+				if backoff > time.Second {
+					backoff -= time.Second
+				}
 			}
 			log.Printf("Ran Queue Element %+v", f)
 			cancel()

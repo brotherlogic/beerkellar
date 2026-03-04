@@ -102,6 +102,8 @@ func TestGetBeerWithRequirements_Oldest(t *testing.T) {
 		t.Fatalf("Unable to add beer: %v", err)
 	}
 
+	time.Sleep(time.Second)
+
 	beer, err := client.GetBeer(ctx, &pb.GetBeerRequest{Requirement: &pb.BeerRequirement{
 		Strategy: pb.BeerRequirement_STRATEGY_OLDEST,
 		MaxUnits: 5,

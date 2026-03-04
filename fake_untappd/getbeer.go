@@ -2,10 +2,12 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net/http"
 )
 
 func (s *Server) HandleGetBeer(w http.ResponseWriter, r *http.Request) {
+	log.Printf("Handling get beer")
 	w.WriteHeader(http.StatusOK)
 	fmt.Fprint(w, response)
 }

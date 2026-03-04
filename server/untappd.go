@@ -71,9 +71,10 @@ func GetUntappd(api, auth, retAuth string, clientId, clientSecret, redirectURL s
 
 func (u *Untappd) Upgrade(accessToken string) UntappdAPI {
 	return &Untappd{
+		baseAPIURL:   u.baseAPIURL,
 		clientId:     u.clientId,
 		clientSecret: u.clientSecret,
-		accessToken:  u.accessToken,
+		accessToken:  accessToken,
 	}
 }
 
@@ -83,6 +84,7 @@ func (u *Untappd) get(urlSuffix string, obj interface{}) error {
 }
 
 func (u *Untappd) baseGet(url string, obj interface{}) error {
+	log.Printf("Huh: %v", url)
 	addition := fmt.Sprintf("client_id=%v&client_secret=%v", u.clientId, u.clientSecret)
 	if u.accessToken != "" {
 		addition = fmt.Sprintf("access_token=%v", u.accessToken)
