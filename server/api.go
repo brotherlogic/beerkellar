@@ -142,7 +142,13 @@ func (s *Server) GetBeer(ctx context.Context, req *pb.GetBeerRequest) (*pb.GetBe
 			pBeer = bcache[ncellar[rand.Intn(len(ncellar))].GetBeerId()]
 		}
 
-		beers = append(beers, pBeer)
+		// If we don't want to repeat beers, we can just remove it from the cache
+		if req.GetNoRepeat() {
+			delete(bcache, pBeer.GetId())
+		}
+		if pBeer != nil {
+			beers = append(beers, pBeer)
+		}
 	}
 	return &pb.GetBeerResponse{Beers: beers}, nil
 }
