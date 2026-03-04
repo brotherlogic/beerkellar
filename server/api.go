@@ -29,7 +29,7 @@ type Server struct {
 	clientSecret string
 	redirectUrl  string
 
-	untappd *Untappd
+	untappd UntappdAPI
 
 	q *Queue
 }
@@ -128,11 +128,14 @@ func (s *Server) GetBeer(ctx context.Context, req *pb.GetBeerRequest) (*pb.GetBe
 					pBeer = bcache[entry.GetBeerId()]
 				}
 			}
+		} else {
+			log.Printf("Beer %v has no details", entry)
 		}
 	}
 
 	// Pick a beer at random
-	if pBeer == nil {
+	if pBeer == nil && len(ncellar) > 0 {
+		log.Printf("CELLAR: %v", len(ncellar))
 		pBeer = bcache[ncellar[rand.Intn(len(ncellar))].GetBeerId()]
 	}
 	return &pb.GetBeerResponse{Beer: pBeer}, nil
@@ -208,7 +211,7 @@ func (s *Server) GetLogin(ctx context.Context, req *pb.GetLoginRequest) (*pb.Get
 	}
 
 	return &pb.GetLoginResponse{
-		Url:  fmt.Sprintf("%voauth/authenticate?client_id=%v&response_type=code&redirect_url=%v&state=%v", s.untappd.baseAuthURL, s.clientId, s.redirectUrl, user.GetAuth()),
+		Url:  fmt.Sprintf("%voauth/authenticate?client_id=%v&response_type=code&redirect_url=%v&state=%v", s.untappd.getBaseAuthURL(), s.clientId, s.redirectUrl, user.GetAuth()),
 		Code: user.GetAuth(),
 	}, nil
 }

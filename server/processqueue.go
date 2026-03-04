@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"log"
+	"sync"
 	"time"
 )
 
@@ -12,7 +13,7 @@ type Queueable interface {
 
 type CacheBeer struct {
 	beerId int64
-	u      *Untappd
+	u      UntappdAPI
 	d      Database
 }
 
@@ -32,7 +33,8 @@ func (c CacheBeer) run(ctx context.Context) error {
 }
 
 type Queue struct {
-	elements []Queueable
+	elements  []Queueable
+	flushLock sync.Mutex
 }
 
 func (q *Queue) Enqueue(a Queueable) {
@@ -43,6 +45,7 @@ func (q *Queue) RunQueue() {
 	for {
 		time.Sleep(time.Second * 10)
 		if len(q.elements) > 0 {
+			q.flushLock.Lock()
 			ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
 			f := q.elements[0]
 			q.elements = q.elements[1:]
@@ -53,12 +56,34 @@ func (q *Queue) RunQueue() {
 			}
 			log.Printf("Ran Queue Element %+v", f)
 			cancel()
+			q.flushLock.Unlock()
 		}
+	}
+}
+
+func (q *Queue) Flush() {
+	for len(q.elements) > 0 {
+		q.flushLock.Lock()
+		ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+		f := q.elements[0]
+		q.elements = q.elements[1:]
+		err := f.run(ctx)
+		if err != nil {
+			log.Printf("Unable to run queue element: %v", err)
+		}
+		log.Printf("Ran Queue Element %+v", f)
+		cancel()
+		q.flushLock.Unlock()
 	}
 }
 
 func NewQueue() *Queue {
 	q := &Queue{}
 	go q.RunQueue()
+	return q
+}
+
+func NewTestQueue() *Queue {
+	q := &Queue{}
 	return q
 }
