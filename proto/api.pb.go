@@ -554,6 +554,7 @@ func (x *GetCellarResponse) GetBeers() []*Beer {
 type GetBeerRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Requirements  []*BeerRequirement     `protobuf:"bytes,1,rep,name=requirements,proto3" json:"requirements,omitempty"`
+	NoRepeat      bool                   `protobuf:"varint,2,opt,name=no_repeat,json=noRepeat,proto3" json:"no_repeat,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -593,6 +594,13 @@ func (x *GetBeerRequest) GetRequirements() []*BeerRequirement {
 		return x.Requirements
 	}
 	return nil
+}
+
+func (x *GetBeerRequest) GetNoRepeat() bool {
+	if x != nil {
+		return x.NoRepeat
+	}
+	return false
 }
 
 type GetBeerResponse struct {
@@ -800,9 +808,10 @@ const file_api_proto_rawDesc = "" +
 	"\x0fHealthyResponse\"\x12\n" +
 	"\x10GetCellarRequest\";\n" +
 	"\x11GetCellarResponse\x12&\n" +
-	"\x05beers\x18\x01 \x03(\v2\x10.beerkellar.BeerR\x05beers\"Q\n" +
+	"\x05beers\x18\x01 \x03(\v2\x10.beerkellar.BeerR\x05beers\"n\n" +
 	"\x0eGetBeerRequest\x12?\n" +
-	"\frequirements\x18\x01 \x03(\v2\x1b.beerkellar.BeerRequirementR\frequirements\"9\n" +
+	"\frequirements\x18\x01 \x03(\v2\x1b.beerkellar.BeerRequirementR\frequirements\x12\x1b\n" +
+	"\tno_repeat\x18\x02 \x01(\bR\bnoRepeat\"9\n" +
 	"\x0fGetBeerResponse\x12&\n" +
 	"\x05beers\x18\x01 \x03(\v2\x10.beerkellar.BeerR\x05beers\"\xae\x01\n" +
 	"\x0fBeerRequirement\x12\x1b\n" +
