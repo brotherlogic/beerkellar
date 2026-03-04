@@ -47,10 +47,11 @@ message GetCellarResponse{
 }
 
 message GetBeerRequest{
-  BeerRequirement requirement = 1;
+  repeated BeerRequirement requirements = 1;
 }
 message GetBeerResponse{
-  Beer beer = 1;
+  repeated Beer beers = 1;
+  bool no_repeat = 2;
 }
 
 message BeerRequirement {

@@ -115,30 +115,36 @@ func (s *Server) GetBeer(ctx context.Context, req *pb.GetBeerRequest) (*pb.GetBe
 		}
 	}
 
-	// Filter out beers
-	var ncellar []*pb.CellarEntry
-	var pBeer *pb.Beer
-	oldest := int64(math.MaxInt64)
-	for _, entry := range cellar.GetEntries() {
-		if beer, ok := bcache[entry.GetBeerId()]; ok {
-			if req.GetRequirement().GetMaxUnits() == 0 || convertToLitres(entry.GetSizeFlOz())*beer.GetAbv() < float32(req.GetRequirement().MaxUnits) {
-				ncellar = append(ncellar, entry)
-				if req.Requirement.GetStrategy() == pb.BeerRequirement_STRATEGY_OLDEST && entry.GetDateAdded() < oldest {
-					oldest = entry.GetDateAdded()
-					pBeer = bcache[entry.GetBeerId()]
-				}
-			}
-		} else {
-			log.Printf("Beer %v has no details", entry)
-		}
-	}
+	var beers []*pb.Beer
+	for _, requirement := range req.GetRequirements() {
 
-	// Pick a beer at random
-	if pBeer == nil && len(ncellar) > 0 {
-		log.Printf("CELLAR: %v", len(ncellar))
-		pBeer = bcache[ncellar[rand.Intn(len(ncellar))].GetBeerId()]
+		// Filter out beers
+		var ncellar []*pb.CellarEntry
+		var pBeer *pb.Beer
+		oldest := int64(math.MaxInt64)
+		for _, entry := range cellar.GetEntries() {
+			if beer, ok := bcache[entry.GetBeerId()]; ok {
+				if requirement.GetMaxUnits() == 0 || convertToLitres(entry.GetSizeFlOz())*beer.GetAbv() < float32(requirement.GetMaxUnits()) {
+					ncellar = append(ncellar, entry)
+					if requirement.GetStrategy() == pb.BeerRequirement_STRATEGY_OLDEST && entry.GetDateAdded() < oldest {
+						oldest = entry.GetDateAdded()
+						pBeer = bcache[entry.GetBeerId()]
+					}
+				}
+			} else {
+				log.Printf("Beer %v has no details", entry)
+			}
+		}
+
+		// Pick a beer at random
+		if pBeer == nil && len(ncellar) > 0 {
+			log.Printf("CELLAR: %v", len(ncellar))
+			pBeer = bcache[ncellar[rand.Intn(len(ncellar))].GetBeerId()]
+		}
+
+		beers = append(beers, pBeer)
 	}
-	return &pb.GetBeerResponse{Beer: pBeer}, nil
+	return &pb.GetBeerResponse{Beers: beers}, nil
 }
 
 func (s *Server) GetCellar(ctx context.Context, _ *pb.GetCellarRequest) (*pb.GetCellarResponse, error) {

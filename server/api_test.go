@@ -44,12 +44,16 @@ func TestGetBeer(t *testing.T) {
 	}
 	s.q.Flush()
 
-	r, err := s.GetBeer(ctx, &pb.GetBeerRequest{})
+	r, err := s.GetBeer(ctx, &pb.GetBeerRequest{Requirements: []*pb.BeerRequirement{{}}})
 	if err != nil {
 		t.Fatalf("Unable to get beer: %v", err)
 	}
 
-	if r.GetBeer().GetId() != 123 {
+	if len(r.GetBeers()) == 0 {
+		t.Fatalf("No beers returned: %v", r)
+	}
+
+	if r.GetBeers()[0].GetId() != 123 {
 		t.Errorf("Wrong beer returned: %v", r)
 	}
 }
