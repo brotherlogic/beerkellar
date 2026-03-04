@@ -57,3 +57,33 @@ func TestGetBeer(t *testing.T) {
 		t.Errorf("Wrong beer returned: %v", r)
 	}
 }
+
+func TestGetBeerWithNoMulitples(t *testing.T) {
+	ctx, cancel := GetTestContext(context.Background(), time.Minute)
+	defer cancel()
+
+	s := getTestServer(ctx)
+
+	_, err := s.AddBeer(ctx, &pb.AddBeerRequest{
+		BeerId:   123,
+		SizeFlOz: 12,
+		Quantity: 2,
+	})
+	if err != nil {
+		t.Fatalf("Unable to add beer: %v", err)
+	}
+	s.q.Flush()
+
+	r, err := s.GetBeer(ctx, &pb.GetBeerRequest{NoRepeat: true, Requirements: []*pb.BeerRequirement{{}, {}}})
+	if err != nil {
+		t.Fatalf("Unable to get beer: %v", err)
+	}
+
+	if len(r.GetBeers()) != 1 {
+		t.Fatalf("No beers returned (or wrong number): %v", r)
+	}
+
+	if r.GetBeers()[0].GetId() != 123 {
+		t.Errorf("Wrong beer returned: %v", r)
+	}
+}
