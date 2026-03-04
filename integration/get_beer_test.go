@@ -58,6 +58,8 @@ func TestGetBeer(t *testing.T) {
 		t.Fatalf("Unable to add beer: %v", err)
 	}
 
+	time.Sleep(time.Second)
+
 	counts := make(map[int64]int)
 	for i := 0; i < 100; i++ {
 		beer, err := client.GetBeer(ctx, &pb.GetBeerRequest{})
