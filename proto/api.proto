@@ -16,6 +16,13 @@ message User {
     int64 last_feed_pull = 5;
 }
 
+message Checkin {
+  int64 checkin_id = 1;
+  int64 beer_id = 2;
+  int64 date = 3;
+  int32 rating = 4;
+}
+
 message AddBeerRequest {
   int64 beer_id = 1;
   int32 quantity = 2;
