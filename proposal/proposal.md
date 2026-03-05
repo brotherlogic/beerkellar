@@ -16,4 +16,5 @@ A kubernetes hosted version of the beer cellar. You can:
 1. ~~Define requirements proto~~
 1. ~~Allow pick according to requirements~~
 1. ~~Support pick and remove from cellar~~
-1. Support cron pulls with printer
+1. ~~Support cron pulls with printer~~
+1. Support removing cellar beers that have been drunk

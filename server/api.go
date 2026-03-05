@@ -107,6 +107,8 @@ func (s *Server) GetBeer(ctx context.Context, req *pb.GetBeerRequest) (*pb.GetBe
 		return nil, err
 	}
 
+	log.Printf("Found: %v", cellar)
+
 	bcache := make(map[int64]*pb.Beer)
 	for _, entry := range cellar.GetEntries() {
 		beer, err := s.db.GetBeer(ctx, entry.GetBeerId())
