@@ -72,6 +72,7 @@ type User struct {
 	Auth          string                 `protobuf:"bytes,1,opt,name=auth,proto3" json:"auth,omitempty"`
 	AccessToken   string                 `protobuf:"bytes,2,opt,name=access_token,json=accessToken,proto3" json:"access_token,omitempty"`
 	Username      string                 `protobuf:"bytes,3,opt,name=username,proto3" json:"username,omitempty"`
+	LatestCheckin int64                  `protobuf:"varint,4,opt,name=latest_checkin,json=latestCheckin,proto3" json:"latest_checkin,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -125,6 +126,13 @@ func (x *User) GetUsername() string {
 		return x.Username
 	}
 	return ""
+}
+
+func (x *User) GetLatestCheckin() int64 {
+	if x != nil {
+		return x.LatestCheckin
+	}
+	return 0
 }
 
 type AddBeerRequest struct {
@@ -785,11 +793,12 @@ const file_api_proto_rawDesc = "" +
 	"\n" +
 	"\tapi.proto\x12\n" +
 	"beerkellar\x1a\n" +
-	"beer.proto\"Y\n" +
+	"beer.proto\"\x80\x01\n" +
 	"\x04User\x12\x12\n" +
 	"\x04auth\x18\x01 \x01(\tR\x04auth\x12!\n" +
 	"\faccess_token\x18\x02 \x01(\tR\vaccessToken\x12\x1a\n" +
-	"\busername\x18\x03 \x01(\tR\busername\"c\n" +
+	"\busername\x18\x03 \x01(\tR\busername\x12%\n" +
+	"\x0elatest_checkin\x18\x04 \x01(\x03R\rlatestCheckin\"c\n" +
 	"\x0eAddBeerRequest\x12\x17\n" +
 	"\abeer_id\x18\x01 \x01(\x03R\x06beerId\x12\x1a\n" +
 	"\bquantity\x18\x02 \x01(\x05R\bquantity\x12\x1c\n" +
