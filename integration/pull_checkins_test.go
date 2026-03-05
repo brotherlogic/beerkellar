@@ -5,6 +5,7 @@ package integration
 import (
 	"context"
 	"fmt"
+	"log"
 	"net/http"
 	"testing"
 	"time"
@@ -60,10 +61,11 @@ func TestPullCheckins(t *testing.T) {
 	}
 
 	// Let's drink one of these beers
-	_, err = http.NewRequest("GET", "http://untappd.untappd:8085/checkin/16630", nil)
+	resp, err := http.NewRequest("GET", "http://untappd.untappd:8085/checkin/16630", nil)
 	if err != nil {
 		t.Fatalf("Unable to checkin beer: %v", err)
 	}
+	log.Printf("Checkin response: %v", resp)
 
 	// And we need to trigger a checkin pull
 	_, err = iclient.RefreshUser(ctx, &pb.RefreshUserRequest{})
