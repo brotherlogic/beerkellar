@@ -114,7 +114,6 @@ func (u *Untappd) baseGet(url string, obj interface{}) error {
 		return fmt.Errorf("%v: %v", resp.StatusCode, string(body))
 	}
 
-	log.Printf("READ %v", string(body))
 	return json.Unmarshal(body, obj)
 }
 
