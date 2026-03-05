@@ -31,6 +31,12 @@ func TestPullCheckins(t *testing.T) {
 	}
 	client := pb.NewBeerKellerClient(conn)
 
+	iconn, err := grpc.NewClient(fmt.Sprintf(":%v", i.mp), grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		t.Fatalf("Unable to connect to server: %v", err)
+	}
+	iclient := pb.NewBeerKellerAdminClient(iconn)
+
 	ctx, cancel = GetTestContext(context.Background(), time.Minute*5)
 	defer cancel()
 
@@ -54,9 +60,15 @@ func TestPullCheckins(t *testing.T) {
 	}
 
 	// Let's drink one of these beers
-	_, err = http.NewRequest("http://untappd.untappd:8085/checkin/16630")
+	_, err = http.NewRequest("GET", "http://untappd.untappd:8085/checkin/16630", nil)
 	if err != nil {
 		t.Fatalf("Unable to checkin beer: %v", err)
+	}
+
+	// And we need to trigger a checkin pull
+	_, err = iclient.RefreshUser(ctx, &pb.RefreshUserRequest{})
+	if err != nil {
+		t.Fatalf("Unable to refresh user: %v", err)
 	}
 
 	// Two things should happen

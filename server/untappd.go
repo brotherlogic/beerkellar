@@ -17,6 +17,7 @@ type UntappdAPI interface {
 	Upgrade(at string) UntappdAPI
 	getBaseAuthURL() string
 	handleAuthResponse(ctx context.Context, db Database, code, token string) (*pb.User, error)
+	GetCheckins(ctx context.Context, cid int64) ([]*pb.Checkin, error)
 }
 
 type Untappd struct {
@@ -51,6 +52,10 @@ func (_ *TestUntappd) getBeerFromUntappd(ctx context.Context, beerId int64) (*pb
 
 func (_ *TestUntappd) getBaseAuthURL() string {
 	return ""
+}
+
+func (_ *TestUntappd) GetCheckins(ctx context.Context, cid int64) ([]*pb.Checkin, error) {
+	return []*pb.Checkin{}, nil
 }
 
 func (_ *TestUntappd) handleAuthResponse(ctx context.Context, db Database, code, token string) (*pb.User, error) {
@@ -144,6 +149,10 @@ func (u *Untappd) handleAuthResponse(ctx context.Context, db Database, code, tok
 	user.AccessToken = resp.Response.AccessToken
 	err = db.SaveUser(ctx, user)
 	return user, err
+}
+
+func (u *Untappd) GetCheckins(ctx context.Context, checkin int64) ([]*pb.Checkin, error) {
+	return []*pb.Checkin{}, nil
 }
 
 func (u *Untappd) getBeerFromUntappd(ctx context.Context, beerId int64) (*pb.Beer, error) {

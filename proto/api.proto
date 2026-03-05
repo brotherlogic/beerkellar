@@ -104,6 +104,10 @@ message SetRedirectRequest {
 message SetRedirectResponse {
 }
 
+message RefreshUserRequest {}
+message RefreshUserResponse {}
+
 service BeerKellerAdmin {
   rpc SetRedirect(SetRedirectRequest) returns (SetRedirectResponse) {}
+  rpc RefreshUser(RefreshUserRequest) returns (RefreshUserResponse) {}
 }

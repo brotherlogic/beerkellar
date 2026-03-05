@@ -1003,6 +1003,78 @@ func (*SetRedirectResponse) Descriptor() ([]byte, []int) {
 	return file_api_proto_rawDescGZIP(), []int{19}
 }
 
+type RefreshUserRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RefreshUserRequest) Reset() {
+	*x = RefreshUserRequest{}
+	mi := &file_api_proto_msgTypes[20]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RefreshUserRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RefreshUserRequest) ProtoMessage() {}
+
+func (x *RefreshUserRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_api_proto_msgTypes[20]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RefreshUserRequest.ProtoReflect.Descriptor instead.
+func (*RefreshUserRequest) Descriptor() ([]byte, []int) {
+	return file_api_proto_rawDescGZIP(), []int{20}
+}
+
+type RefreshUserResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RefreshUserResponse) Reset() {
+	*x = RefreshUserResponse{}
+	mi := &file_api_proto_msgTypes[21]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RefreshUserResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RefreshUserResponse) ProtoMessage() {}
+
+func (x *RefreshUserResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_api_proto_msgTypes[21]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RefreshUserResponse.ProtoReflect.Descriptor instead.
+func (*RefreshUserResponse) Descriptor() ([]byte, []int) {
+	return file_api_proto_rawDescGZIP(), []int{21}
+}
+
 var File_api_proto protoreflect.FileDescriptor
 
 const file_api_proto_rawDesc = "" +
@@ -1068,7 +1140,9 @@ const file_api_proto_rawDesc = "" +
 	"\x05value\x18\x02 \x01(\x03R\x05value:\x028\x01\"&\n" +
 	"\x12SetRedirectRequest\x12\x10\n" +
 	"\x03url\x18\x01 \x01(\tR\x03url\"\x15\n" +
-	"\x13SetRedirectResponse2\x91\x04\n" +
+	"\x13SetRedirectResponse\"\x14\n" +
+	"\x12RefreshUserRequest\"\x15\n" +
+	"\x13RefreshUserResponse2\x91\x04\n" +
 	"\n" +
 	"BeerKeller\x12D\n" +
 	"\aAddBeer\x12\x1a.beerkellar.AddBeerRequest\x1a\x1b.beerkellar.AddBeerResponse\"\x00\x12G\n" +
@@ -1077,9 +1151,10 @@ const file_api_proto_rawDesc = "" +
 	"\tGetCellar\x12\x1c.beerkellar.GetCellarRequest\x1a\x1d.beerkellar.GetCellarResponse\"\x00\x12D\n" +
 	"\aGetBeer\x12\x1a.beerkellar.GetBeerRequest\x1a\x1b.beerkellar.GetBeerResponse\"\x00\x12G\n" +
 	"\bGetDrunk\x12\x1b.beerkellar.GetDrunkRequest\x1a\x1c.beerkellar.GetDrunkResponse\"\x00\x12D\n" +
-	"\aHealthy\x12\x1a.beerkellar.HealthyRequest\x1a\x1b.beerkellar.HealthyResponse\"\x002c\n" +
+	"\aHealthy\x12\x1a.beerkellar.HealthyRequest\x1a\x1b.beerkellar.HealthyResponse\"\x002\xb5\x01\n" +
 	"\x0fBeerKellerAdmin\x12P\n" +
-	"\vSetRedirect\x12\x1e.beerkellar.SetRedirectRequest\x1a\x1f.beerkellar.SetRedirectResponse\"\x00B*Z(github.com/brotherlogic/beerkellar/protob\x06proto3"
+	"\vSetRedirect\x12\x1e.beerkellar.SetRedirectRequest\x1a\x1f.beerkellar.SetRedirectResponse\"\x00\x12P\n" +
+	"\vRefreshUser\x12\x1e.beerkellar.RefreshUserRequest\x1a\x1f.beerkellar.RefreshUserResponse\"\x00B*Z(github.com/brotherlogic/beerkellar/protob\x06proto3"
 
 var (
 	file_api_proto_rawDescOnce sync.Once
@@ -1094,7 +1169,7 @@ func file_api_proto_rawDescGZIP() []byte {
 }
 
 var file_api_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_api_proto_msgTypes = make([]protoimpl.MessageInfo, 22)
+var file_api_proto_msgTypes = make([]protoimpl.MessageInfo, 24)
 var file_api_proto_goTypes = []any{
 	(BeerRequirement_PickStrategy)(0), // 0: beerkellar.BeerRequirement.PickStrategy
 	(*User)(nil),                      // 1: beerkellar.User
@@ -1117,17 +1192,19 @@ var file_api_proto_goTypes = []any{
 	(*GetDrunkResponse)(nil),          // 18: beerkellar.GetDrunkResponse
 	(*SetRedirectRequest)(nil),        // 19: beerkellar.SetRedirectRequest
 	(*SetRedirectResponse)(nil),       // 20: beerkellar.SetRedirectResponse
-	nil,                               // 21: beerkellar.LastCheckins.LastCheckinsEntry
-	nil,                               // 22: beerkellar.GetDrunkResponse.DrunkEntry
-	(*Beer)(nil),                      // 23: beerkellar.Beer
+	(*RefreshUserRequest)(nil),        // 21: beerkellar.RefreshUserRequest
+	(*RefreshUserResponse)(nil),       // 22: beerkellar.RefreshUserResponse
+	nil,                               // 23: beerkellar.LastCheckins.LastCheckinsEntry
+	nil,                               // 24: beerkellar.GetDrunkResponse.DrunkEntry
+	(*Beer)(nil),                      // 25: beerkellar.Beer
 }
 var file_api_proto_depIdxs = []int32{
-	21, // 0: beerkellar.LastCheckins.last_checkins:type_name -> beerkellar.LastCheckins.LastCheckinsEntry
-	23, // 1: beerkellar.GetCellarResponse.beers:type_name -> beerkellar.Beer
+	23, // 0: beerkellar.LastCheckins.last_checkins:type_name -> beerkellar.LastCheckins.LastCheckinsEntry
+	25, // 1: beerkellar.GetCellarResponse.beers:type_name -> beerkellar.Beer
 	16, // 2: beerkellar.GetBeerRequest.requirements:type_name -> beerkellar.BeerRequirement
-	23, // 3: beerkellar.GetBeerResponse.beers:type_name -> beerkellar.Beer
+	25, // 3: beerkellar.GetBeerResponse.beers:type_name -> beerkellar.Beer
 	0,  // 4: beerkellar.BeerRequirement.strategy:type_name -> beerkellar.BeerRequirement.PickStrategy
-	22, // 5: beerkellar.GetDrunkResponse.drunk:type_name -> beerkellar.GetDrunkResponse.DrunkEntry
+	24, // 5: beerkellar.GetDrunkResponse.drunk:type_name -> beerkellar.GetDrunkResponse.DrunkEntry
 	4,  // 6: beerkellar.BeerKeller.AddBeer:input_type -> beerkellar.AddBeerRequest
 	6,  // 7: beerkellar.BeerKeller.GetLogin:input_type -> beerkellar.GetLoginRequest
 	8,  // 8: beerkellar.BeerKeller.GetAuthToken:input_type -> beerkellar.GetAuthTokenRequest
@@ -1136,16 +1213,18 @@ var file_api_proto_depIdxs = []int32{
 	17, // 11: beerkellar.BeerKeller.GetDrunk:input_type -> beerkellar.GetDrunkRequest
 	10, // 12: beerkellar.BeerKeller.Healthy:input_type -> beerkellar.HealthyRequest
 	19, // 13: beerkellar.BeerKellerAdmin.SetRedirect:input_type -> beerkellar.SetRedirectRequest
-	5,  // 14: beerkellar.BeerKeller.AddBeer:output_type -> beerkellar.AddBeerResponse
-	7,  // 15: beerkellar.BeerKeller.GetLogin:output_type -> beerkellar.GetLoginResponse
-	9,  // 16: beerkellar.BeerKeller.GetAuthToken:output_type -> beerkellar.GetAuthTokenResponse
-	13, // 17: beerkellar.BeerKeller.GetCellar:output_type -> beerkellar.GetCellarResponse
-	15, // 18: beerkellar.BeerKeller.GetBeer:output_type -> beerkellar.GetBeerResponse
-	18, // 19: beerkellar.BeerKeller.GetDrunk:output_type -> beerkellar.GetDrunkResponse
-	11, // 20: beerkellar.BeerKeller.Healthy:output_type -> beerkellar.HealthyResponse
-	20, // 21: beerkellar.BeerKellerAdmin.SetRedirect:output_type -> beerkellar.SetRedirectResponse
-	14, // [14:22] is the sub-list for method output_type
-	6,  // [6:14] is the sub-list for method input_type
+	21, // 14: beerkellar.BeerKellerAdmin.RefreshUser:input_type -> beerkellar.RefreshUserRequest
+	5,  // 15: beerkellar.BeerKeller.AddBeer:output_type -> beerkellar.AddBeerResponse
+	7,  // 16: beerkellar.BeerKeller.GetLogin:output_type -> beerkellar.GetLoginResponse
+	9,  // 17: beerkellar.BeerKeller.GetAuthToken:output_type -> beerkellar.GetAuthTokenResponse
+	13, // 18: beerkellar.BeerKeller.GetCellar:output_type -> beerkellar.GetCellarResponse
+	15, // 19: beerkellar.BeerKeller.GetBeer:output_type -> beerkellar.GetBeerResponse
+	18, // 20: beerkellar.BeerKeller.GetDrunk:output_type -> beerkellar.GetDrunkResponse
+	11, // 21: beerkellar.BeerKeller.Healthy:output_type -> beerkellar.HealthyResponse
+	20, // 22: beerkellar.BeerKellerAdmin.SetRedirect:output_type -> beerkellar.SetRedirectResponse
+	22, // 23: beerkellar.BeerKellerAdmin.RefreshUser:output_type -> beerkellar.RefreshUserResponse
+	15, // [15:24] is the sub-list for method output_type
+	6,  // [6:15] is the sub-list for method input_type
 	6,  // [6:6] is the sub-list for extension type_name
 	6,  // [6:6] is the sub-list for extension extendee
 	0,  // [0:6] is the sub-list for field type_name
@@ -1163,7 +1242,7 @@ func file_api_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_api_proto_rawDesc), len(file_api_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   22,
+			NumMessages:   24,
 			NumExtensions: 0,
 			NumServices:   2,
 		},

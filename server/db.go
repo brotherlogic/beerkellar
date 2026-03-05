@@ -15,8 +15,8 @@ import (
 )
 
 type Database interface {
-	GetCellar(ctx context.Context, user string) (*pb.Cellar, error)
-	SaveCellar(ctx context.Context, user string, cellar *pb.Cellar) error
+	GetCellar(ctx context.Context, userId int64) (*pb.Cellar, error)
+	SaveCellar(ctx context.Context, userId int64, cellar *pb.Cellar) error
 
 	GetUser(ctx context.Context, auth string) (*pb.User, error)
 	SaveUser(ctx context.Context, user *pb.User) error
@@ -25,6 +25,8 @@ type Database interface {
 	SaveBeer(ctx context.Context, beer *pb.Beer) error
 
 	GetDrunk(ctx context.Context, userId int64) (*pb.LastCheckins, error)
+
+	SaveCheckin(ctx context.Context, userId int64, checkin *pb.Checkin) error
 }
 
 type DB struct {
@@ -79,12 +81,16 @@ func (d *DB) load(ctx context.Context, key string) ([]byte, error) {
 	return val.GetValue().GetValue(), nil
 }
 
-func (d *DB) SaveCellar(ctx context.Context, username string, cellar *pb.Cellar) error {
-	return d.save(ctx, fmt.Sprintf("beerkellar/cellar/%v", username), cellar)
+func (d *DB) SaveCellar(ctx context.Context, userId int64, cellar *pb.Cellar) error {
+	return d.save(ctx, fmt.Sprintf("beerkellar/cellar/%v", userId), cellar)
 }
 
-func (d *DB) GetCellar(ctx context.Context, username string) (*pb.Cellar, error) {
-	data, err := d.load(ctx, fmt.Sprintf("beerkellar/cellar/%v", username))
+func (d *DB) SaveCheckin(ctx context.Context, userId int64, checkin *pb.Checkin) error {
+	return d.save(ctx, fmt.Sprintf("beerkellar/checkin/%v/%v", userId, checkin.GetCheckinId()), checkin)
+}
+
+func (d *DB) GetCellar(ctx context.Context, userId int64) (*pb.Cellar, error) {
+	data, err := d.load(ctx, fmt.Sprintf("beerkellar/cellar/%v", userId))
 	if err != nil {
 		return nil, err
 	}

@@ -102,7 +102,7 @@ func (s *Server) GetBeer(ctx context.Context, req *pb.GetBeerRequest) (*pb.GetBe
 		return nil, err
 	}
 
-	cellar, err := s.db.GetCellar(ctx, user.GetUsername())
+	cellar, err := s.db.GetCellar(ctx, user.GetUserId())
 	if err != nil {
 		return nil, err
 	}
@@ -161,7 +161,7 @@ func (s *Server) GetCellar(ctx context.Context, _ *pb.GetCellarRequest) (*pb.Get
 		return nil, err
 	}
 
-	cellar, err := s.db.GetCellar(ctx, user.GetUsername())
+	cellar, err := s.db.GetCellar(ctx, user.GetUserId())
 	if err != nil {
 		return nil, err
 	}
@@ -187,7 +187,7 @@ func (s *Server) AddBeer(ctx context.Context, req *pb.AddBeerRequest) (*pb.AddBe
 	if err != nil {
 		return nil, err
 	}
-	cellar, err := s.db.GetCellar(ctx, user.GetUsername())
+	cellar, err := s.db.GetCellar(ctx, user.GetUserId())
 	if err != nil {
 		// OutOfRange is cannot be found in DB
 		if status.Code(err) == codes.NotFound {
@@ -211,7 +211,7 @@ func (s *Server) AddBeer(ctx context.Context, req *pb.AddBeerRequest) (*pb.AddBe
 		u:      s.untappd.Upgrade(user.GetAccessToken()),
 		d:      s.db})
 
-	return &pb.AddBeerResponse{}, s.db.SaveCellar(ctx, user.GetUsername(), cellar)
+	return &pb.AddBeerResponse{}, s.db.SaveCellar(ctx, user.GetUserId(), cellar)
 }
 
 func (s *Server) GetLogin(ctx context.Context, req *pb.GetLoginRequest) (*pb.GetLoginResponse, error) {
@@ -260,13 +260,17 @@ func (s *Server) SetRedirect(_ context.Context, req *pb.SetRedirectRequest) (*pb
 	return &pb.SetRedirectResponse{}, nil
 }
 
+func (s *Server) RefreshUser(ctx context.Context, req *pb.RefreshUserRequest) (*pb.RefreshUserResponse, error) {
+	return &pb.RefreshUserResponse{}, nil
+}
+
 func (s *Server) GetDrunk(ctx context.Context, req *pb.GetDrunkRequest) (*pb.GetDrunkResponse, error) {
 	user, err := s.getUser(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	drunks, err := s.db.GetDrunk(ctx, user.GetId())
+	drunks, err := s.db.GetDrunk(ctx, user.GetUserId())
 	if err != nil {
 		return nil, err
 	}

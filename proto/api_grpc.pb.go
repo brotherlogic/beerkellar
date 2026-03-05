@@ -348,6 +348,7 @@ var BeerKeller_ServiceDesc = grpc.ServiceDesc{
 
 const (
 	BeerKellerAdmin_SetRedirect_FullMethodName = "/beerkellar.BeerKellerAdmin/SetRedirect"
+	BeerKellerAdmin_RefreshUser_FullMethodName = "/beerkellar.BeerKellerAdmin/RefreshUser"
 )
 
 // BeerKellerAdminClient is the client API for BeerKellerAdmin service.
@@ -355,6 +356,7 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type BeerKellerAdminClient interface {
 	SetRedirect(ctx context.Context, in *SetRedirectRequest, opts ...grpc.CallOption) (*SetRedirectResponse, error)
+	RefreshUser(ctx context.Context, in *RefreshUserRequest, opts ...grpc.CallOption) (*RefreshUserResponse, error)
 }
 
 type beerKellerAdminClient struct {
@@ -375,11 +377,22 @@ func (c *beerKellerAdminClient) SetRedirect(ctx context.Context, in *SetRedirect
 	return out, nil
 }
 
+func (c *beerKellerAdminClient) RefreshUser(ctx context.Context, in *RefreshUserRequest, opts ...grpc.CallOption) (*RefreshUserResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(RefreshUserResponse)
+	err := c.cc.Invoke(ctx, BeerKellerAdmin_RefreshUser_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // BeerKellerAdminServer is the server API for BeerKellerAdmin service.
 // All implementations should embed UnimplementedBeerKellerAdminServer
 // for forward compatibility.
 type BeerKellerAdminServer interface {
 	SetRedirect(context.Context, *SetRedirectRequest) (*SetRedirectResponse, error)
+	RefreshUser(context.Context, *RefreshUserRequest) (*RefreshUserResponse, error)
 }
 
 // UnimplementedBeerKellerAdminServer should be embedded to have
@@ -391,6 +404,9 @@ type UnimplementedBeerKellerAdminServer struct{}
 
 func (UnimplementedBeerKellerAdminServer) SetRedirect(context.Context, *SetRedirectRequest) (*SetRedirectResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method SetRedirect not implemented")
+}
+func (UnimplementedBeerKellerAdminServer) RefreshUser(context.Context, *RefreshUserRequest) (*RefreshUserResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method RefreshUser not implemented")
 }
 func (UnimplementedBeerKellerAdminServer) testEmbeddedByValue() {}
 
@@ -430,6 +446,24 @@ func _BeerKellerAdmin_SetRedirect_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _BeerKellerAdmin_RefreshUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RefreshUserRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BeerKellerAdminServer).RefreshUser(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: BeerKellerAdmin_RefreshUser_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BeerKellerAdminServer).RefreshUser(ctx, req.(*RefreshUserRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // BeerKellerAdmin_ServiceDesc is the grpc.ServiceDesc for BeerKellerAdmin service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -440,6 +474,10 @@ var BeerKellerAdmin_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "SetRedirect",
 			Handler:    _BeerKellerAdmin_SetRedirect_Handler,
+		},
+		{
+			MethodName: "RefreshUser",
+			Handler:    _BeerKellerAdmin_RefreshUser_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
