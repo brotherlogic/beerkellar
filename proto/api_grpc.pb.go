@@ -24,6 +24,7 @@ const (
 	BeerKeller_GetAuthToken_FullMethodName = "/beerkellar.BeerKeller/GetAuthToken"
 	BeerKeller_GetCellar_FullMethodName    = "/beerkellar.BeerKeller/GetCellar"
 	BeerKeller_GetBeer_FullMethodName      = "/beerkellar.BeerKeller/GetBeer"
+	BeerKeller_GetDrunk_FullMethodName     = "/beerkellar.BeerKeller/GetDrunk"
 	BeerKeller_Healthy_FullMethodName      = "/beerkellar.BeerKeller/Healthy"
 )
 
@@ -36,6 +37,7 @@ type BeerKellerClient interface {
 	GetAuthToken(ctx context.Context, in *GetAuthTokenRequest, opts ...grpc.CallOption) (*GetAuthTokenResponse, error)
 	GetCellar(ctx context.Context, in *GetCellarRequest, opts ...grpc.CallOption) (*GetCellarResponse, error)
 	GetBeer(ctx context.Context, in *GetBeerRequest, opts ...grpc.CallOption) (*GetBeerResponse, error)
+	GetDrunk(ctx context.Context, in *GetDrunkRequest, opts ...grpc.CallOption) (*GetDrunkResponse, error)
 	Healthy(ctx context.Context, in *HealthyRequest, opts ...grpc.CallOption) (*HealthyResponse, error)
 }
 
@@ -97,6 +99,16 @@ func (c *beerKellerClient) GetBeer(ctx context.Context, in *GetBeerRequest, opts
 	return out, nil
 }
 
+func (c *beerKellerClient) GetDrunk(ctx context.Context, in *GetDrunkRequest, opts ...grpc.CallOption) (*GetDrunkResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetDrunkResponse)
+	err := c.cc.Invoke(ctx, BeerKeller_GetDrunk_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *beerKellerClient) Healthy(ctx context.Context, in *HealthyRequest, opts ...grpc.CallOption) (*HealthyResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(HealthyResponse)
@@ -116,6 +128,7 @@ type BeerKellerServer interface {
 	GetAuthToken(context.Context, *GetAuthTokenRequest) (*GetAuthTokenResponse, error)
 	GetCellar(context.Context, *GetCellarRequest) (*GetCellarResponse, error)
 	GetBeer(context.Context, *GetBeerRequest) (*GetBeerResponse, error)
+	GetDrunk(context.Context, *GetDrunkRequest) (*GetDrunkResponse, error)
 	Healthy(context.Context, *HealthyRequest) (*HealthyResponse, error)
 }
 
@@ -140,6 +153,9 @@ func (UnimplementedBeerKellerServer) GetCellar(context.Context, *GetCellarReques
 }
 func (UnimplementedBeerKellerServer) GetBeer(context.Context, *GetBeerRequest) (*GetBeerResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetBeer not implemented")
+}
+func (UnimplementedBeerKellerServer) GetDrunk(context.Context, *GetDrunkRequest) (*GetDrunkResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetDrunk not implemented")
 }
 func (UnimplementedBeerKellerServer) Healthy(context.Context, *HealthyRequest) (*HealthyResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method Healthy not implemented")
@@ -254,6 +270,24 @@ func _BeerKeller_GetBeer_Handler(srv interface{}, ctx context.Context, dec func(
 	return interceptor(ctx, in, info, handler)
 }
 
+func _BeerKeller_GetDrunk_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetDrunkRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BeerKellerServer).GetDrunk(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: BeerKeller_GetDrunk_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BeerKellerServer).GetDrunk(ctx, req.(*GetDrunkRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _BeerKeller_Healthy_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(HealthyRequest)
 	if err := dec(in); err != nil {
@@ -298,6 +332,10 @@ var BeerKeller_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetBeer",
 			Handler:    _BeerKeller_GetBeer_Handler,
+		},
+		{
+			MethodName: "GetDrunk",
+			Handler:    _BeerKeller_GetDrunk_Handler,
 		},
 		{
 			MethodName: "Healthy",

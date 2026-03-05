@@ -23,6 +23,8 @@ type Database interface {
 
 	GetBeer(ctx context.Context, beerid int64) (*pb.Beer, error)
 	SaveBeer(ctx context.Context, beer *pb.Beer) error
+
+	GetDrunk(ctx context.Context, userId int64) (*pb.LastCheckins, error)
 }
 
 type DB struct {
@@ -118,4 +120,14 @@ func (d *DB) GetBeer(ctx context.Context, beerid int64) (*pb.Beer, error) {
 	beer := &pb.Beer{}
 	err = proto.Unmarshal(data, beer)
 	return beer, err
+}
+
+func (d *DB) GetDrunk(ctx context.Context, userId int64) (*pb.LastCheckins, error) {
+	data, err := d.load(ctx, fmt.Sprintf("beerkellar/darchive/%v", userId))
+	if err != nil {
+		return nil, err
+	}
+	darchive := &pb.LastCheckins{}
+	err = proto.Unmarshal(data, darchive)
+	return darchive, err
 }

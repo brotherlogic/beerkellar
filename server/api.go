@@ -259,3 +259,17 @@ func (s *Server) SetRedirect(_ context.Context, req *pb.SetRedirectRequest) (*pb
 
 	return &pb.SetRedirectResponse{}, nil
 }
+
+func (s *Server) GetDrunk(ctx context.Context, req *pb.GetDrunkRequest) (*pb.GetDrunkResponse, error) {
+	user, err := s.getUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	drunks, err := s.db.GetDrunk(ctx, user.GetId())
+	if err != nil {
+		return nil, err
+	}
+
+	return &pb.GetDrunkResponse{Drunk: drunks.GetLastCheckins()}, nil
+}
