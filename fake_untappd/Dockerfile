@@ -4,8 +4,8 @@ FROM golang:1.24 AS build
 
 WORKDIR $GOPATH/src/github.com/brotherlogic/beerkellar/fake_untappd
 
-COPY go.mod ./
-#COPY go.sum ./
+COPY ../go.mod ./
+COPY ../go.sum ./
 
 RUN go mod download
 

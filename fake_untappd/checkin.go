@@ -12,6 +12,7 @@ import (
 )
 
 func (s *Server) HandleCheckin(w http.ResponseWriter, r *http.Request) {
+	log.Printf("Handling Checkin: %v", r.URL)
 	// Get the beer id
 	pathElems := strings.Split(r.URL.Path, "/")
 	strId := pathElems[len(pathElems)-1]
@@ -28,4 +29,23 @@ func (s *Server) HandleCheckin(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusOK)
 	fmt.Fprint(w, "Great")
+}
+
+type Checkins struct {
+	count int
+	items []Checkin
+}
+
+type Checkin struct {
+	checkin_id int
+	created_at string
+	beer       Beer
+}
+
+type Beer struct {
+	bid int
+}
+
+func (s *Server) HandleCheckins(w http.ResponseWriter, r *http.Request) {
+
 }
