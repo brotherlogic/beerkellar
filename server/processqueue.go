@@ -14,14 +14,13 @@ type Queueable interface {
 }
 
 type RefreshUser struct {
-	u         UntappdAPI
-	d         Database
-	user      *pb.User
-	checkinId int64
+	u    UntappdAPI
+	d    Database
+	user *pb.User
 }
 
 func (r RefreshUser) run(ctx context.Context) error {
-	checkins, err := r.u.GetCheckins(ctx, r.checkinId)
+	checkins, err := r.u.GetCheckins(ctx)
 	if err != nil {
 		return err
 	}
