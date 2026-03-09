@@ -1,15 +1,18 @@
 # syntax=docker/dockerfile:1
 
-FROM golang:1.24 AS build
+FROM golang:1.25 AS build
 
-WORKDIR $GOPATH/src/github.com/brotherlogic/beerkellar/fake_untappd
+WORKDIR $GOPATH/src/github.com/brotherlogic/beerkellar
 
-COPY ../go.mod ./
-COPY ../go.sum ./
+COPY go.sum ./
+COPY go.mod ./
+
+RUN mkdir proto
+COPY proto/*.go ./proto/
 
 RUN go mod download
 
-COPY *.go ./
+COPY fake_untappd/*.go ./
 
 RUN CGO_ENABLED=0 go build -o /fake_untappd
 
