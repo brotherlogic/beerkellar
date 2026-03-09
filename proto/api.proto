@@ -104,7 +104,9 @@ message SetRedirectRequest {
 message SetRedirectResponse {
 }
 
-message RefreshUserRequest {}
+message RefreshUserRequest {
+  string username = 1;
+}
 message RefreshUserResponse {}
 
 service BeerKellerAdmin {

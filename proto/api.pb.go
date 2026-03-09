@@ -1005,6 +1005,7 @@ func (*SetRedirectResponse) Descriptor() ([]byte, []int) {
 
 type RefreshUserRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
+	Username      string                 `protobuf:"bytes,1,opt,name=username,proto3" json:"username,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1037,6 +1038,13 @@ func (x *RefreshUserRequest) ProtoReflect() protoreflect.Message {
 // Deprecated: Use RefreshUserRequest.ProtoReflect.Descriptor instead.
 func (*RefreshUserRequest) Descriptor() ([]byte, []int) {
 	return file_api_proto_rawDescGZIP(), []int{20}
+}
+
+func (x *RefreshUserRequest) GetUsername() string {
+	if x != nil {
+		return x.Username
+	}
+	return ""
 }
 
 type RefreshUserResponse struct {
@@ -1140,8 +1148,9 @@ const file_api_proto_rawDesc = "" +
 	"\x05value\x18\x02 \x01(\x03R\x05value:\x028\x01\"&\n" +
 	"\x12SetRedirectRequest\x12\x10\n" +
 	"\x03url\x18\x01 \x01(\tR\x03url\"\x15\n" +
-	"\x13SetRedirectResponse\"\x14\n" +
-	"\x12RefreshUserRequest\"\x15\n" +
+	"\x13SetRedirectResponse\"0\n" +
+	"\x12RefreshUserRequest\x12\x1a\n" +
+	"\busername\x18\x01 \x01(\tR\busername\"\x15\n" +
 	"\x13RefreshUserResponse2\x91\x04\n" +
 	"\n" +
 	"BeerKeller\x12D\n" +
