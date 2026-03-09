@@ -74,17 +74,7 @@ func TestPullCheckins(t *testing.T) {
 	}
 
 	// Two things should happen
-	// First, we should have a smaller cellar
-	cellar, err = client.GetCellar(ctx, &pb.GetCellarRequest{})
-	if err != nil {
-		t.Fatalf("Unable to retrieve cellar: %v", err)
-	}
-
-	if len(cellar.GetBeers()) != 11 {
-		t.Fatalf("Cellar only contains %v entries, should have 11 (we drunk one)", len(cellar.GetBeers()))
-	}
-
-	// Second, we should have an entry in our drunk map
+	// First, we should have an entry in our drunk map
 	drunk, err := client.GetDrunk(ctx, &pb.GetDrunkRequest{})
 	if err != nil {
 		t.Fatalf("Unable to get drunks: %v", err)
@@ -92,6 +82,16 @@ func TestPullCheckins(t *testing.T) {
 
 	if time.Since(time.Unix(drunk.GetDrunk()[16630], 0)) < time.Hour {
 		t.Fatalf("The drunk map is broken: %v", drunk)
+	}
+
+	// Second, we should have a smaller cellar
+	cellar, err = client.GetCellar(ctx, &pb.GetCellarRequest{})
+	if err != nil {
+		t.Fatalf("Unable to retrieve cellar: %v", err)
+	}
+
+	if len(cellar.GetBeers()) != 11 {
+		t.Fatalf("Cellar only contains %v entries, should have 11 (we drunk one)", len(cellar.GetBeers()))
 	}
 
 }

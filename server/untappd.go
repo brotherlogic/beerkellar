@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 	"strings"
+	"time"
 
 	pb "github.com/brotherlogic/beerkellar/proto"
 )
@@ -17,7 +18,7 @@ type UntappdAPI interface {
 	Upgrade(at string) UntappdAPI
 	getBaseAuthURL() string
 	handleAuthResponse(ctx context.Context, db Database, code, token string) (*pb.User, error)
-	GetCheckins(ctx context.Context, cid int64) ([]*pb.Checkin, error)
+	GetCheckins(ctx context.Context) ([]*pb.Checkin, error)
 }
 
 type Untappd struct {
@@ -54,7 +55,7 @@ func (_ *TestUntappd) getBaseAuthURL() string {
 	return ""
 }
 
-func (_ *TestUntappd) GetCheckins(ctx context.Context, cid int64) ([]*pb.Checkin, error) {
+func (_ *TestUntappd) GetCheckins(ctx context.Context) ([]*pb.Checkin, error) {
 	return []*pb.Checkin{}, nil
 }
 
@@ -150,7 +151,42 @@ func (u *Untappd) handleAuthResponse(ctx context.Context, db Database, code, tok
 	return user, err
 }
 
-func (u *Untappd) GetCheckins(ctx context.Context, checkin int64) ([]*pb.Checkin, error) {
+type CheckinResponse struct {
+	Checkins []Checkin
+}
+
+type Checkin struct {
+	CheckinId   int    `json:"checkin_id`
+	CreatedAt   string `json:"created_at`
+	RatingScore int    `json:"rating_score`
+	Beer        BeerResponse
+}
+
+func parseDate(dstr string) int64 {
+	val, err := time.Parse("Mon, 2 Jan 2006 15:04:05 -0700", dstr)
+	if err != nil {
+		panic(err)
+	}
+	return val.Unix()
+}
+
+func (u *Untappd) GetCheckins(ctx context.Context) ([]*pb.Checkin, error) {
+	resp := &CheckinResponse{}
+	err := u.get("v4/user/checkins/", resp)
+	if err != nil {
+		return nil, err
+	}
+
+	var checkins []*pb.Checkin
+	for _, c := range resp.Checkins {
+		checkins = append(checkins, &pb.Checkin{
+			CheckinId: int64(c.CheckinId),
+			BeerId:    int64(c.Beer.Bid),
+			Rating:    int32(c.RatingScore),
+			Date:      parseDate(c.CreatedAt),
+		})
+	}
+
 	return []*pb.Checkin{}, nil
 }
 
@@ -178,6 +214,7 @@ type BeerResponse struct {
 	BeerAbv     float32 `json:"beer_abv"`
 	Brewery     BreweryResponse
 	RatingScore float32 `json:"rating_score"`
+	Bid         int     `json:bid`
 }
 
 type BeerInfoResponse struct {

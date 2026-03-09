@@ -45,7 +45,3 @@ type Checkin struct {
 type Beer struct {
 	bid int
 }
-
-func (s *Server) HandleCheckins(w http.ResponseWriter, r *http.Request) {
-
-}

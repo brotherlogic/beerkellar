@@ -261,6 +261,7 @@ func (s *Server) SetRedirect(_ context.Context, req *pb.SetRedirectRequest) (*pb
 }
 
 func (s *Server) RefreshUser(ctx context.Context, req *pb.RefreshUserRequest) (*pb.RefreshUserResponse, error) {
+
 	return &pb.RefreshUserResponse{}, nil
 }
 
