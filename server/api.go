@@ -261,8 +261,7 @@ func (s *Server) SetRedirect(_ context.Context, req *pb.SetRedirectRequest) (*pb
 }
 
 func (s *Server) RefreshUser(ctx context.Context, req *pb.RefreshUserRequest) (*pb.RefreshUserResponse, error) {
-
-	return &pb.RefreshUserResponse{}, nil
+	return &pb.RefreshUserResponse{}, status.Errorf(codes.Unimplemented, "Nto implemented yet")
 }
 
 func (s *Server) GetDrunk(ctx context.Context, req *pb.GetDrunkRequest) (*pb.GetDrunkResponse, error) {
