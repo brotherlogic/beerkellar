@@ -262,11 +262,28 @@ func (s *Server) SetRedirect(_ context.Context, req *pb.SetRedirectRequest) (*pb
 
 func (s *Server) RefreshUser(ctx context.Context, req *pb.RefreshUserRequest) (*pb.RefreshUserResponse, error) {
 	// Get the user
-	user, err := s.db.GetUserByName(req.GetUsername())
+	user, err := s.db.GetUserByName(ctx, req.GetUsername())
 	if err != nil {
 		return nil, err
 	}
-	return &pb.RefreshUserResponse{}, status.Errorf(codes.Unimplemented, "Nto implemented yet")
+
+	nut := s.untappd.Upgrade(user.GetAuth())
+
+	checkins, err := nut.GetCheckins(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, checkin := range checkins {
+		err = s.db.SaveCheckin(ctx, user.GetUserId(), checkin)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	user.LastFeedPull = time.Now().Unix()
+
+	return &pb.RefreshUserResponse{}, s.db.SaveUser(ctx, user)
 }
 
 func (s *Server) GetDrunk(ctx context.Context, req *pb.GetDrunkRequest) (*pb.GetDrunkResponse, error) {

@@ -138,7 +138,7 @@ func (d *DB) GetUserByName(ctx context.Context, name string) (*pb.User, error) {
 		}
 	}
 
-	return nil, status.Errorf(codes.NotFound, fmt.Sprintf("unable to locate %v", name))
+	return nil, status.Errorf(codes.NotFound, "unable to locate %v", name)
 }
 
 func (d *DB) SaveBeer(ctx context.Context, beer *pb.Beer) error {
