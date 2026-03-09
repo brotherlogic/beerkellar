@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"log"
 
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/known/anypb"
@@ -19,6 +21,7 @@ type Database interface {
 	SaveCellar(ctx context.Context, userId int64, cellar *pb.Cellar) error
 
 	GetUser(ctx context.Context, auth string) (*pb.User, error)
+	GetUserByName(ctx context.Context, name string) (*pb.User, error)
 	SaveUser(ctx context.Context, user *pb.User) error
 
 	GetBeer(ctx context.Context, beerid int64) (*pb.Beer, error)
@@ -112,6 +115,30 @@ func (d *DB) GetUser(ctx context.Context, auth string) (*pb.User, error) {
 	user := &pb.User{}
 	err = proto.Unmarshal(data, user)
 	return user, err
+}
+
+func (d *DB) GetUserByName(ctx context.Context, name string) (*pb.User, error) {
+	keys, err := d.client.GetKeys(ctx, &pspb.GetKeysRequest{Prefix: "beerkellar/user/"})
+	if err != nil {
+		return nil, err
+	}
+
+	for _, key := range keys.GetKeys() {
+		data, err := d.load(ctx, key)
+		if err != nil {
+			return nil, err
+		}
+		user := &pb.User{}
+		err = proto.Unmarshal(data, user)
+		if err != nil {
+			return nil, err
+		}
+		if user.GetUsername() == name {
+			return user, nil
+		}
+	}
+
+	return nil, status.Errorf(codes.NotFound, fmt.Sprintf("unable to locate %v", name))
 }
 
 func (d *DB) SaveBeer(ctx context.Context, beer *pb.Beer) error {

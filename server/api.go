@@ -261,6 +261,11 @@ func (s *Server) SetRedirect(_ context.Context, req *pb.SetRedirectRequest) (*pb
 }
 
 func (s *Server) RefreshUser(ctx context.Context, req *pb.RefreshUserRequest) (*pb.RefreshUserResponse, error) {
+	// Get the user
+	user, err := s.db.GetUserByName(req.GetUsername())
+	if err != nil {
+		return nil, err
+	}
 	return &pb.RefreshUserResponse{}, status.Errorf(codes.Unimplemented, "Nto implemented yet")
 }
 
