@@ -68,7 +68,7 @@ func TestPullCheckins(t *testing.T) {
 	log.Printf("Checkin response: %v", resp)
 
 	// And we need to trigger a checkin pull
-	_, err = iclient.RefreshUser(ctx, &pb.RefreshUserRequest{})
+	_, err = iclient.RefreshUser(ctx, &pb.RefreshUserRequest{Username: "testuser"})
 	if err != nil {
 		t.Fatalf("Unable to refresh user: %v", err)
 	}

@@ -264,20 +264,20 @@ func (s *Server) RefreshUser(ctx context.Context, req *pb.RefreshUserRequest) (*
 	// Get the user
 	user, err := s.db.GetUserByName(ctx, req.GetUsername())
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("unable to locate user %v -> %w", req.GetUsername(), err)
 	}
 
 	nut := s.untappd.Upgrade(user.GetAuth())
 
 	checkins, err := nut.GetCheckins(ctx)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("unable to get checkins: %w", err)
 	}
 
 	for _, checkin := range checkins {
 		err = s.db.SaveCheckin(ctx, user.GetUserId(), checkin)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("unable to save checkins: %w", err)
 		}
 	}
 
