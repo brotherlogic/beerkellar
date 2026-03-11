@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -32,16 +33,34 @@ func (s *Server) HandleCheckin(w http.ResponseWriter, r *http.Request) {
 }
 
 type Checkins struct {
-	count int
-	items []Checkin
+	Count int
+	Items []Checkin
 }
 
 type Checkin struct {
-	checkin_id int
-	created_at string
-	beer       Beer
+	Checkin_id int
+	Created_at string
+	Beer       Beer
 }
 
 type Beer struct {
-	bid int
+	Bid int
+}
+
+func (s *Server) HandleCheckins(w http.ResponseWriter, r *http.Request) {
+	res := Checkins{Count: len(s.checkins)}
+	for _, checkin := range s.checkins {
+		res.Items = append(res.Items, Checkin{
+			Checkin_id: int(checkin.GetCheckinId()),
+			Created_at: time.Unix(checkin.GetDate(), 0).Format("Mon, 2 Jan 2006 15:04:05 -0700"),
+			Beer:       Beer{Bid: int(checkin.GetBeerId())},
+		})
+	}
+
+	jsonData, err := json.Marshal(res)
+	if err != nil {
+		panic(err)
+	}
+	_, err = w.Write(jsonData)
+	log.Printf("Write Error: %v", err)
 }

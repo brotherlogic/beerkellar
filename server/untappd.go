@@ -172,7 +172,7 @@ func parseDate(dstr string) int64 {
 
 func (u *Untappd) GetCheckins(ctx context.Context) ([]*pb.Checkin, error) {
 	resp := &CheckinResponse{}
-	err := u.get("v4/user/checkins/", resp)
+	err := u.get("/v4/user/checkins/", resp)
 	if err != nil {
 		return nil, err
 	}

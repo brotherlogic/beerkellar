@@ -294,6 +294,9 @@ func (s *Server) GetDrunk(ctx context.Context, req *pb.GetDrunkRequest) (*pb.Get
 
 	drunks, err := s.db.GetDrunk(ctx, user.GetUserId())
 	if err != nil {
+		if status.Code(err) == codes.NotFound {
+			return &pb.GetDrunkResponse{Drunk: make(map[int64]int64)}, nil
+		}
 		return nil, err
 	}
 

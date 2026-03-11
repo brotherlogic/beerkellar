@@ -68,6 +68,7 @@ func main() {
 	http.Handle("/oauth/authorize", http.HandlerFunc(s.HandleOauth2))
 	http.Handle("/v4/beer/info/", http.HandlerFunc(s.HandleGetBeer))
 	http.Handle("/checkin/", http.HandlerFunc(s.HandleCheckin))
+	http.Handle("/v4/user/checkins/", http.HandlerFunc(s.HandleCheckins))
 
 	err := http.ListenAndServe(fmt.Sprintf(":%v", *port), nil)
 	log.Fatalf("Beerkellar is unable to serve metrics: %v", err)
