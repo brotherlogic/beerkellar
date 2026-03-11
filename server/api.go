@@ -274,10 +274,39 @@ func (s *Server) RefreshUser(ctx context.Context, req *pb.RefreshUserRequest) (*
 		return nil, fmt.Errorf("unable to get checkins: %w", err)
 	}
 
+	cellar, err := s.db.GetCellar(ctx, user.GetUserId())
+	cellarChanged := false
+	if err != nil {
+		return nil, fmt.Errorf("unable to get cellar: %w", err)
+	}
+
+	log.Printf("Found %v checkins", len(checkins))
 	for _, checkin := range checkins {
 		err = s.db.SaveCheckin(ctx, user.GetUserId(), checkin)
 		if err != nil {
 			return nil, fmt.Errorf("unable to save checkins: %w", err)
+		}
+
+		// Remove the beer from the cellar if it's recent
+		if checkin.GetDate() > user.GetLastFeedPull() {
+			var nbeers []*pb.CellarEntry
+			found := false
+			for _, entry := range cellar.GetEntries() {
+				if found || entry.GetBeerId() != checkin.GetBeerId() {
+					nbeers = append(nbeers, entry)
+				} else {
+					found = true
+					cellarChanged = true
+				}
+			}
+			cellar.Entries = nbeers
+		}
+	}
+
+	if cellarChanged {
+		err = s.db.SaveCellar(ctx, user.GetUserId(), cellar)
+		if err != nil {
+			return nil, err
 		}
 	}
 
@@ -301,4 +330,18 @@ func (s *Server) GetDrunk(ctx context.Context, req *pb.GetDrunkRequest) (*pb.Get
 	}
 
 	return &pb.GetDrunkResponse{Drunk: drunks.GetLastCheckins()}, nil
+}
+func (s *Server) DrinkBeer(ctx context.Context, req *pb.DrinkBeerRequest) (*pb.DrinkBeerResponse, error) {
+	err := s.untappd.Checkin(ctx, req.GetBeerId())
+	if err != nil {
+		return nil, err
+	}
+
+	user, err := s.getUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = s.RefreshUser(ctx, &pb.RefreshUserRequest{Username: user.GetUsername()})
+	return &pb.DrinkBeerResponse{}, err
 }

@@ -84,8 +84,15 @@ message GetDrunkResponse {
   map<int64, int64> drunk = 1;
 }
 
+message DrinkBeerRequest {
+  int64 beer_id = 1;
+}
+
+message DrinkBeerResponse {}
+
 service BeerKeller {
   rpc AddBeer(AddBeerRequest) returns (AddBeerResponse) {}
+  rpc DrinkBeer(DrinkBeerRequest) returns (DrinkBeerResponse) {}
 
   rpc GetLogin(GetLoginRequest) returns (GetLoginResponse) {}
   rpc GetAuthToken(GetAuthTokenRequest) returns (GetAuthTokenResponse) {}

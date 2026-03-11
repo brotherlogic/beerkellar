@@ -11,6 +11,8 @@ import (
 	"time"
 
 	pb "github.com/brotherlogic/beerkellar/proto"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type UntappdAPI interface {
@@ -19,6 +21,7 @@ type UntappdAPI interface {
 	getBaseAuthURL() string
 	handleAuthResponse(ctx context.Context, db Database, code, token string) (*pb.User, error)
 	GetCheckins(ctx context.Context) ([]*pb.Checkin, error)
+	Checkin(ctx context.Context, beerId int64) error
 }
 
 type Untappd struct {
@@ -36,7 +39,9 @@ type strpass struct {
 	Value string
 }
 
-type TestUntappd struct{}
+type TestUntappd struct {
+	checkins []*pb.Checkin
+}
 
 func GetTestUntappd() UntappdAPI {
 	return &TestUntappd{}
@@ -55,8 +60,13 @@ func (_ *TestUntappd) getBaseAuthURL() string {
 	return ""
 }
 
-func (_ *TestUntappd) GetCheckins(ctx context.Context) ([]*pb.Checkin, error) {
-	return []*pb.Checkin{}, nil
+func (tu *TestUntappd) GetCheckins(ctx context.Context) ([]*pb.Checkin, error) {
+	return tu.checkins, nil
+}
+
+func (tu *TestUntappd) Checkin(ctx context.Context, beerId int64) error {
+	tu.checkins = append(tu.checkins, &pb.Checkin{CheckinId: time.Now().Unix(), Date: time.Now().Unix(), BeerId: beerId})
+	return nil
 }
 
 func (_ *TestUntappd) handleAuthResponse(ctx context.Context, db Database, code, token string) (*pb.User, error) {
@@ -128,6 +138,10 @@ type AuthResponse struct {
 
 func (u *Untappd) getBaseAuthURL() string {
 	return u.baseAuthURL
+}
+
+func (u *Untappd) Checkin(ctx context.Context, beerId int64) error {
+	return status.Errorf(codes.Unimplemented, "Not supported by vanilla untappd")
 }
 
 func (u *Untappd) handleAuthResponse(ctx context.Context, db Database, code, token string) (*pb.User, error) {
