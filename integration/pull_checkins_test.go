@@ -5,6 +5,7 @@ package integration
 import (
 	"context"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"testing"
@@ -61,11 +62,19 @@ func TestPullCheckins(t *testing.T) {
 	}
 
 	// Let's drink one of these beers
-	resp, err := http.NewRequest("GET", "http://untappd.untappd:8085/checkin/16630", nil)
+	req, err := http.NewRequest("GET", fmt.Sprintf("http://localhost:%v/checkin/16630", i.ump), nil)
 	if err != nil {
 		t.Fatalf("Unable to checkin beer: %v", err)
 	}
-	log.Printf("Checkin response: %v", resp)
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Fatalf("unable to checking beer: %v", err)
+	}
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		t.Fatalf("Bad read: %v", err)
+	}
+	log.Printf("Checkin response: %v (%v) -> %v", resp, resp.StatusCode, string(body))
 
 	// And we need to trigger a checkin pull
 	_, err = iclient.RefreshUser(ctx, &pb.RefreshUserRequest{Username: "testuser"})
