@@ -121,6 +121,8 @@ func (u *Untappd) baseGet(url string, obj interface{}) error {
 		return err
 	}
 
+	log.Printf("READ %v", string(body))
+
 	if resp.StatusCode != 200 && resp.StatusCode != 201 {
 		return fmt.Errorf("%v: %v", resp.StatusCode, string(body))
 	}
@@ -166,13 +168,13 @@ func (u *Untappd) handleAuthResponse(ctx context.Context, db Database, code, tok
 }
 
 type CheckinResponse struct {
-	Checkins []Checkin
+	Checkins []Checkin `json:"items"`
 }
 
 type Checkin struct {
-	CheckinId   int    `json:"checkin_id`
-	CreatedAt   string `json:"created_at`
-	RatingScore int    `json:"rating_score`
+	CheckinId   int    `json:"checkin_id"`
+	CreatedAt   string `json:"created_at"`
+	RatingScore int    `json:"rating_score"`
 	Beer        BeerResponse
 }
 
@@ -190,6 +192,8 @@ func (u *Untappd) GetCheckins(ctx context.Context) ([]*pb.Checkin, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	log.Printf("Checkins resp: %+v", resp)
 
 	var checkins []*pb.Checkin
 	for _, c := range resp.Checkins {

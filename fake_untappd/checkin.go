@@ -29,22 +29,22 @@ func (s *Server) HandleCheckin(w http.ResponseWriter, r *http.Request) {
 	})
 
 	w.WriteHeader(http.StatusOK)
-	fmt.Fprint(w, "Great")
+	fmt.Fprintf(w, "Read checkin: %v", id)
 }
 
 type Checkins struct {
 	Count int
-	Items []Checkin
+	Items []Checkin `json:"items"`
 }
 
 type Checkin struct {
-	Checkin_id int
-	Created_at string
-	Beer       Beer
+	Checkin_id int    `json:"checkin_id"`
+	Created_at string `json:"created_at"`
+	Beer       Beer   `json:"beer"`
 }
 
 type Beer struct {
-	Bid int
+	Bid int `json:"bid"`
 }
 
 func (s *Server) HandleCheckins(w http.ResponseWriter, r *http.Request) {
