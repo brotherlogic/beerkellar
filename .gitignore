@@ -1,3 +1,6 @@
 beerkellar
 beerkellar_cli/beerkellar_cli
 fake_untappd/fake_untappd
+
+.gemini/
+gha-creds-*.json

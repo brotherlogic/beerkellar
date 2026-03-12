@@ -20,10 +20,12 @@ const _ = grpc.SupportPackageIsVersion9
 
 const (
 	BeerKeller_AddBeer_FullMethodName      = "/beerkellar.BeerKeller/AddBeer"
+	BeerKeller_DrinkBeer_FullMethodName    = "/beerkellar.BeerKeller/DrinkBeer"
 	BeerKeller_GetLogin_FullMethodName     = "/beerkellar.BeerKeller/GetLogin"
 	BeerKeller_GetAuthToken_FullMethodName = "/beerkellar.BeerKeller/GetAuthToken"
 	BeerKeller_GetCellar_FullMethodName    = "/beerkellar.BeerKeller/GetCellar"
 	BeerKeller_GetBeer_FullMethodName      = "/beerkellar.BeerKeller/GetBeer"
+	BeerKeller_GetDrunk_FullMethodName     = "/beerkellar.BeerKeller/GetDrunk"
 	BeerKeller_Healthy_FullMethodName      = "/beerkellar.BeerKeller/Healthy"
 )
 
@@ -32,10 +34,12 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type BeerKellerClient interface {
 	AddBeer(ctx context.Context, in *AddBeerRequest, opts ...grpc.CallOption) (*AddBeerResponse, error)
+	DrinkBeer(ctx context.Context, in *DrinkBeerRequest, opts ...grpc.CallOption) (*DrinkBeerResponse, error)
 	GetLogin(ctx context.Context, in *GetLoginRequest, opts ...grpc.CallOption) (*GetLoginResponse, error)
 	GetAuthToken(ctx context.Context, in *GetAuthTokenRequest, opts ...grpc.CallOption) (*GetAuthTokenResponse, error)
 	GetCellar(ctx context.Context, in *GetCellarRequest, opts ...grpc.CallOption) (*GetCellarResponse, error)
 	GetBeer(ctx context.Context, in *GetBeerRequest, opts ...grpc.CallOption) (*GetBeerResponse, error)
+	GetDrunk(ctx context.Context, in *GetDrunkRequest, opts ...grpc.CallOption) (*GetDrunkResponse, error)
 	Healthy(ctx context.Context, in *HealthyRequest, opts ...grpc.CallOption) (*HealthyResponse, error)
 }
 
@@ -51,6 +55,16 @@ func (c *beerKellerClient) AddBeer(ctx context.Context, in *AddBeerRequest, opts
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(AddBeerResponse)
 	err := c.cc.Invoke(ctx, BeerKeller_AddBeer_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *beerKellerClient) DrinkBeer(ctx context.Context, in *DrinkBeerRequest, opts ...grpc.CallOption) (*DrinkBeerResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(DrinkBeerResponse)
+	err := c.cc.Invoke(ctx, BeerKeller_DrinkBeer_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -97,6 +111,16 @@ func (c *beerKellerClient) GetBeer(ctx context.Context, in *GetBeerRequest, opts
 	return out, nil
 }
 
+func (c *beerKellerClient) GetDrunk(ctx context.Context, in *GetDrunkRequest, opts ...grpc.CallOption) (*GetDrunkResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetDrunkResponse)
+	err := c.cc.Invoke(ctx, BeerKeller_GetDrunk_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *beerKellerClient) Healthy(ctx context.Context, in *HealthyRequest, opts ...grpc.CallOption) (*HealthyResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(HealthyResponse)
@@ -112,10 +136,12 @@ func (c *beerKellerClient) Healthy(ctx context.Context, in *HealthyRequest, opts
 // for forward compatibility.
 type BeerKellerServer interface {
 	AddBeer(context.Context, *AddBeerRequest) (*AddBeerResponse, error)
+	DrinkBeer(context.Context, *DrinkBeerRequest) (*DrinkBeerResponse, error)
 	GetLogin(context.Context, *GetLoginRequest) (*GetLoginResponse, error)
 	GetAuthToken(context.Context, *GetAuthTokenRequest) (*GetAuthTokenResponse, error)
 	GetCellar(context.Context, *GetCellarRequest) (*GetCellarResponse, error)
 	GetBeer(context.Context, *GetBeerRequest) (*GetBeerResponse, error)
+	GetDrunk(context.Context, *GetDrunkRequest) (*GetDrunkResponse, error)
 	Healthy(context.Context, *HealthyRequest) (*HealthyResponse, error)
 }
 
@@ -129,6 +155,9 @@ type UnimplementedBeerKellerServer struct{}
 func (UnimplementedBeerKellerServer) AddBeer(context.Context, *AddBeerRequest) (*AddBeerResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method AddBeer not implemented")
 }
+func (UnimplementedBeerKellerServer) DrinkBeer(context.Context, *DrinkBeerRequest) (*DrinkBeerResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method DrinkBeer not implemented")
+}
 func (UnimplementedBeerKellerServer) GetLogin(context.Context, *GetLoginRequest) (*GetLoginResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetLogin not implemented")
 }
@@ -140,6 +169,9 @@ func (UnimplementedBeerKellerServer) GetCellar(context.Context, *GetCellarReques
 }
 func (UnimplementedBeerKellerServer) GetBeer(context.Context, *GetBeerRequest) (*GetBeerResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetBeer not implemented")
+}
+func (UnimplementedBeerKellerServer) GetDrunk(context.Context, *GetDrunkRequest) (*GetDrunkResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetDrunk not implemented")
 }
 func (UnimplementedBeerKellerServer) Healthy(context.Context, *HealthyRequest) (*HealthyResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method Healthy not implemented")
@@ -178,6 +210,24 @@ func _BeerKeller_AddBeer_Handler(srv interface{}, ctx context.Context, dec func(
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(BeerKellerServer).AddBeer(ctx, req.(*AddBeerRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _BeerKeller_DrinkBeer_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DrinkBeerRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BeerKellerServer).DrinkBeer(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: BeerKeller_DrinkBeer_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BeerKellerServer).DrinkBeer(ctx, req.(*DrinkBeerRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -254,6 +304,24 @@ func _BeerKeller_GetBeer_Handler(srv interface{}, ctx context.Context, dec func(
 	return interceptor(ctx, in, info, handler)
 }
 
+func _BeerKeller_GetDrunk_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetDrunkRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BeerKellerServer).GetDrunk(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: BeerKeller_GetDrunk_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BeerKellerServer).GetDrunk(ctx, req.(*GetDrunkRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _BeerKeller_Healthy_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(HealthyRequest)
 	if err := dec(in); err != nil {
@@ -284,6 +352,10 @@ var BeerKeller_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _BeerKeller_AddBeer_Handler,
 		},
 		{
+			MethodName: "DrinkBeer",
+			Handler:    _BeerKeller_DrinkBeer_Handler,
+		},
+		{
 			MethodName: "GetLogin",
 			Handler:    _BeerKeller_GetLogin_Handler,
 		},
@@ -300,6 +372,10 @@ var BeerKeller_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _BeerKeller_GetBeer_Handler,
 		},
 		{
+			MethodName: "GetDrunk",
+			Handler:    _BeerKeller_GetDrunk_Handler,
+		},
+		{
 			MethodName: "Healthy",
 			Handler:    _BeerKeller_Healthy_Handler,
 		},
@@ -310,6 +386,7 @@ var BeerKeller_ServiceDesc = grpc.ServiceDesc{
 
 const (
 	BeerKellerAdmin_SetRedirect_FullMethodName = "/beerkellar.BeerKellerAdmin/SetRedirect"
+	BeerKellerAdmin_RefreshUser_FullMethodName = "/beerkellar.BeerKellerAdmin/RefreshUser"
 )
 
 // BeerKellerAdminClient is the client API for BeerKellerAdmin service.
@@ -317,6 +394,7 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type BeerKellerAdminClient interface {
 	SetRedirect(ctx context.Context, in *SetRedirectRequest, opts ...grpc.CallOption) (*SetRedirectResponse, error)
+	RefreshUser(ctx context.Context, in *RefreshUserRequest, opts ...grpc.CallOption) (*RefreshUserResponse, error)
 }
 
 type beerKellerAdminClient struct {
@@ -337,11 +415,22 @@ func (c *beerKellerAdminClient) SetRedirect(ctx context.Context, in *SetRedirect
 	return out, nil
 }
 
+func (c *beerKellerAdminClient) RefreshUser(ctx context.Context, in *RefreshUserRequest, opts ...grpc.CallOption) (*RefreshUserResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(RefreshUserResponse)
+	err := c.cc.Invoke(ctx, BeerKellerAdmin_RefreshUser_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // BeerKellerAdminServer is the server API for BeerKellerAdmin service.
 // All implementations should embed UnimplementedBeerKellerAdminServer
 // for forward compatibility.
 type BeerKellerAdminServer interface {
 	SetRedirect(context.Context, *SetRedirectRequest) (*SetRedirectResponse, error)
+	RefreshUser(context.Context, *RefreshUserRequest) (*RefreshUserResponse, error)
 }
 
 // UnimplementedBeerKellerAdminServer should be embedded to have
@@ -353,6 +442,9 @@ type UnimplementedBeerKellerAdminServer struct{}
 
 func (UnimplementedBeerKellerAdminServer) SetRedirect(context.Context, *SetRedirectRequest) (*SetRedirectResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method SetRedirect not implemented")
+}
+func (UnimplementedBeerKellerAdminServer) RefreshUser(context.Context, *RefreshUserRequest) (*RefreshUserResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method RefreshUser not implemented")
 }
 func (UnimplementedBeerKellerAdminServer) testEmbeddedByValue() {}
 
@@ -392,6 +484,24 @@ func _BeerKellerAdmin_SetRedirect_Handler(srv interface{}, ctx context.Context, 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _BeerKellerAdmin_RefreshUser_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RefreshUserRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BeerKellerAdminServer).RefreshUser(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: BeerKellerAdmin_RefreshUser_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BeerKellerAdminServer).RefreshUser(ctx, req.(*RefreshUserRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // BeerKellerAdmin_ServiceDesc is the grpc.ServiceDesc for BeerKellerAdmin service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -402,6 +512,10 @@ var BeerKellerAdmin_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "SetRedirect",
 			Handler:    _BeerKellerAdmin_SetRedirect_Handler,
+		},
+		{
+			MethodName: "RefreshUser",
+			Handler:    _BeerKellerAdmin_RefreshUser_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

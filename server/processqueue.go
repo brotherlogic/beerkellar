@@ -5,10 +5,46 @@ import (
 	"log"
 	"sync"
 	"time"
+
+	pb "github.com/brotherlogic/beerkellar/proto"
 )
 
 type Queueable interface {
 	run(ctx context.Context) error
+}
+
+type RefreshUser struct {
+	u    UntappdAPI
+	d    Database
+	user *pb.User
+}
+
+func (r RefreshUser) run(ctx context.Context) error {
+	checkins, err := r.u.GetCheckins(ctx)
+	if err != nil {
+		return err
+	}
+
+	cellar, err := r.d.GetCellar(ctx, r.user.GetUserId())
+
+	for _, checkin := range checkins {
+		err = r.d.SaveCheckin(ctx, r.user.GetUserId(), checkin)
+		if err != nil {
+			return err
+		}
+
+		// Remove the beer from the cellar
+		var ncellar []*pb.CellarEntry
+		found := false
+		for _, entry := range cellar.GetEntries() {
+			if found || entry.GetBeerId() != checkin.GetBeerId() {
+				ncellar = append(ncellar, entry)
+			}
+		}
+		cellar.Entries = ncellar
+	}
+
+	return r.d.SaveCellar(ctx, r.user.GetUserId(), cellar)
 }
 
 type CacheBeer struct {
