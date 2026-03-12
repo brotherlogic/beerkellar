@@ -205,7 +205,7 @@ func (u *Untappd) GetCheckins(ctx context.Context) ([]*pb.Checkin, error) {
 		})
 	}
 
-	return []*pb.Checkin{}, nil
+	return checkins, nil
 }
 
 func (u *Untappd) getBeerFromUntappd(ctx context.Context, beerId int64) (*pb.Beer, error) {
@@ -232,7 +232,7 @@ type BeerResponse struct {
 	BeerAbv     float32 `json:"beer_abv"`
 	Brewery     BreweryResponse
 	RatingScore float32 `json:"rating_score"`
-	Bid         int     `json:bid`
+	Bid         int     `json:"bid"`
 }
 
 type BeerInfoResponse struct {
