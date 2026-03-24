@@ -30,4 +30,5 @@ jobs:
         env:
           GITHUB_TOKEN: "${{ secrets.PERSONAL_TOKEN }}"
           MERGE_METHOD: squash
+          MERGE_COMMIT_MESSAGE: "pull-request-title-and-description"
           MERGE_LABELS: ""
