@@ -12,15 +12,14 @@
 		},
 		"ghcr.io/siri404/devcontainer-ai-features/gemini-cli:1": {},
 		"ghcr.io/devcontainers/features/common-utils": "2",
-		"ghcr.io/devcontainers-extra/features/protoc:1": {},
+		"ghcr.io/devcontainers-extra/features/protoc:1": {}
 	},
 	// Features to add to the dev container. More info: https://containers.dev/features.
 	// "features": {},
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
 	// "forwardPorts": [],
 	// Use 'postCreateCommand' to run commands after the container is created.
-	"postCreateCommand": "sudo apt update && sudo apt install -y  protobuf-compiler xdg-utils &&  go install google.golang.org/protobuf/cmd/protoc-gen-go@latest && go install google.golang.org/grpc/cmd/protoc-gen-go-grpc@latest",
-	// Configure tool-specific properties.
+	"postCreateCommand": "postCreate.sh",
 	// "customizations": {},
 	// Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
 	// "remoteUser": "root"
