@@ -15,7 +15,7 @@ import (
 	pb "github.com/brotherlogic/beerkellar/proto"
 )
 
-func DontTestHealth(t *testing.T) {
+func TestHealth(t *testing.T) {
 	ctx := context.Background()
 	i, err := runTestServer(ctx, t)
 	if err != nil {

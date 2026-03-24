@@ -48,8 +48,8 @@ func runTestServer(ctx context.Context, t *testing.T) (*integrationTest, error) 
 		testcontainers.WithExposedPorts("8085/tcp"),
 		testcontainers.WithDockerfile(
 			testcontainers.FromDockerfile{
-				Context:    "../fake_untappd/",
-				Dockerfile: "Dockerfile",
+				Context:    "../",
+				Dockerfile: "fake_untappd/Dockerfile",
 			},
 		),
 		testcontainers.WithLogger(logger),

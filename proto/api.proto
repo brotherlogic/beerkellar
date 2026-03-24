@@ -11,9 +11,10 @@ message User {
     string auth = 1;
     string access_token = 2;
     string username = 3;
+    int64 user_id = 4;
 
-    int64 latest_checkin = 4;
-    int64 last_feed_pull = 5;
+    int64 latest_checkin = 5;
+    int64 last_feed_pull = 6;
 }
 
 message Checkin {
@@ -21,6 +22,11 @@ message Checkin {
   int64 beer_id = 2;
   int64 date = 3;
   int32 rating = 4;
+}
+
+message LastCheckins {
+  string username = 1;
+  map<int64, int64> last_checkins = 2;
 }
 
 message AddBeerRequest {
@@ -73,14 +79,27 @@ message BeerRequirement {
   PickStrategy strategy = 2;
 }
 
+message GetDrunkRequest {}
+message GetDrunkResponse {
+  map<int64, int64> drunk = 1;
+}
+
+message DrinkBeerRequest {
+  int64 beer_id = 1;
+}
+
+message DrinkBeerResponse {}
+
 service BeerKeller {
   rpc AddBeer(AddBeerRequest) returns (AddBeerResponse) {}
+  rpc DrinkBeer(DrinkBeerRequest) returns (DrinkBeerResponse) {}
 
   rpc GetLogin(GetLoginRequest) returns (GetLoginResponse) {}
   rpc GetAuthToken(GetAuthTokenRequest) returns (GetAuthTokenResponse) {}
 
   rpc GetCellar(GetCellarRequest) returns (GetCellarResponse)  {}
   rpc GetBeer(GetBeerRequest) returns (GetBeerResponse) {}
+  rpc GetDrunk(GetDrunkRequest) returns (GetDrunkResponse) {}
 
   rpc Healthy(HealthyRequest) returns (HealthyResponse) {}
 }
@@ -92,6 +111,12 @@ message SetRedirectRequest {
 message SetRedirectResponse {
 }
 
+message RefreshUserRequest {
+  string username = 1;
+}
+message RefreshUserResponse {}
+
 service BeerKellerAdmin {
   rpc SetRedirect(SetRedirectRequest) returns (SetRedirectResponse) {}
+  rpc RefreshUser(RefreshUserRequest) returns (RefreshUserResponse) {}
 }

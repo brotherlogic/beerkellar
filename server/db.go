@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"log"
 
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/known/anypb"
@@ -15,14 +17,19 @@ import (
 )
 
 type Database interface {
-	GetCellar(ctx context.Context, user string) (*pb.Cellar, error)
-	SaveCellar(ctx context.Context, user string, cellar *pb.Cellar) error
+	GetCellar(ctx context.Context, userId int64) (*pb.Cellar, error)
+	SaveCellar(ctx context.Context, userId int64, cellar *pb.Cellar) error
 
 	GetUser(ctx context.Context, auth string) (*pb.User, error)
+	GetUserByName(ctx context.Context, name string) (*pb.User, error)
 	SaveUser(ctx context.Context, user *pb.User) error
 
 	GetBeer(ctx context.Context, beerid int64) (*pb.Beer, error)
 	SaveBeer(ctx context.Context, beer *pb.Beer) error
+
+	GetDrunk(ctx context.Context, userId int64) (*pb.LastCheckins, error)
+
+	SaveCheckin(ctx context.Context, userId int64, checkin *pb.Checkin) error
 }
 
 type DB struct {
@@ -77,12 +84,16 @@ func (d *DB) load(ctx context.Context, key string) ([]byte, error) {
 	return val.GetValue().GetValue(), nil
 }
 
-func (d *DB) SaveCellar(ctx context.Context, username string, cellar *pb.Cellar) error {
-	return d.save(ctx, fmt.Sprintf("beerkellar/cellar/%v", username), cellar)
+func (d *DB) SaveCellar(ctx context.Context, userId int64, cellar *pb.Cellar) error {
+	return d.save(ctx, fmt.Sprintf("beerkellar/cellar/%v", userId), cellar)
 }
 
-func (d *DB) GetCellar(ctx context.Context, username string) (*pb.Cellar, error) {
-	data, err := d.load(ctx, fmt.Sprintf("beerkellar/cellar/%v", username))
+func (d *DB) SaveCheckin(ctx context.Context, userId int64, checkin *pb.Checkin) error {
+	return d.save(ctx, fmt.Sprintf("beerkellar/checkin/%v/%v", userId, checkin.GetCheckinId()), checkin)
+}
+
+func (d *DB) GetCellar(ctx context.Context, userId int64) (*pb.Cellar, error) {
+	data, err := d.load(ctx, fmt.Sprintf("beerkellar/cellar/%v", userId))
 	if err != nil {
 		return nil, err
 	}
@@ -106,6 +117,30 @@ func (d *DB) GetUser(ctx context.Context, auth string) (*pb.User, error) {
 	return user, err
 }
 
+func (d *DB) GetUserByName(ctx context.Context, name string) (*pb.User, error) {
+	keys, err := d.client.GetKeys(ctx, &pspb.GetKeysRequest{Prefix: "beerkellar/user/"})
+	if err != nil {
+		return nil, err
+	}
+
+	for _, key := range keys.GetKeys() {
+		data, err := d.load(ctx, key)
+		if err != nil {
+			return nil, err
+		}
+		user := &pb.User{}
+		err = proto.Unmarshal(data, user)
+		if err != nil {
+			return nil, err
+		}
+		if user.GetUsername() == name {
+			return user, nil
+		}
+	}
+
+	return nil, status.Errorf(codes.NotFound, "unable to locate %v", name)
+}
+
 func (d *DB) SaveBeer(ctx context.Context, beer *pb.Beer) error {
 	return d.save(ctx, fmt.Sprintf("beerkellar/beer/%v", beer.GetId()), beer)
 }
@@ -118,4 +153,14 @@ func (d *DB) GetBeer(ctx context.Context, beerid int64) (*pb.Beer, error) {
 	beer := &pb.Beer{}
 	err = proto.Unmarshal(data, beer)
 	return beer, err
+}
+
+func (d *DB) GetDrunk(ctx context.Context, userId int64) (*pb.LastCheckins, error) {
+	data, err := d.load(ctx, fmt.Sprintf("beerkellar/darchive/%v", userId))
+	if err != nil {
+		return nil, err
+	}
+	darchive := &pb.LastCheckins{}
+	err = proto.Unmarshal(data, darchive)
+	return darchive, err
 }

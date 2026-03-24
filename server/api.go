@@ -102,7 +102,7 @@ func (s *Server) GetBeer(ctx context.Context, req *pb.GetBeerRequest) (*pb.GetBe
 		return nil, err
 	}
 
-	cellar, err := s.db.GetCellar(ctx, user.GetUsername())
+	cellar, err := s.db.GetCellar(ctx, user.GetUserId())
 	if err != nil {
 		return nil, err
 	}
@@ -161,7 +161,7 @@ func (s *Server) GetCellar(ctx context.Context, _ *pb.GetCellarRequest) (*pb.Get
 		return nil, err
 	}
 
-	cellar, err := s.db.GetCellar(ctx, user.GetUsername())
+	cellar, err := s.db.GetCellar(ctx, user.GetUserId())
 	if err != nil {
 		return nil, err
 	}
@@ -187,7 +187,7 @@ func (s *Server) AddBeer(ctx context.Context, req *pb.AddBeerRequest) (*pb.AddBe
 	if err != nil {
 		return nil, err
 	}
-	cellar, err := s.db.GetCellar(ctx, user.GetUsername())
+	cellar, err := s.db.GetCellar(ctx, user.GetUserId())
 	if err != nil {
 		// OutOfRange is cannot be found in DB
 		if status.Code(err) == codes.NotFound {
@@ -211,7 +211,7 @@ func (s *Server) AddBeer(ctx context.Context, req *pb.AddBeerRequest) (*pb.AddBe
 		u:      s.untappd.Upgrade(user.GetAccessToken()),
 		d:      s.db})
 
-	return &pb.AddBeerResponse{}, s.db.SaveCellar(ctx, user.GetUsername(), cellar)
+	return &pb.AddBeerResponse{}, s.db.SaveCellar(ctx, user.GetUserId(), cellar)
 }
 
 func (s *Server) GetLogin(ctx context.Context, req *pb.GetLoginRequest) (*pb.GetLoginResponse, error) {
@@ -258,4 +258,90 @@ func (s *Server) SetRedirect(_ context.Context, req *pb.SetRedirectRequest) (*pb
 	log.Printf("Adjusted redirect: %v", req)
 
 	return &pb.SetRedirectResponse{}, nil
+}
+
+func (s *Server) RefreshUser(ctx context.Context, req *pb.RefreshUserRequest) (*pb.RefreshUserResponse, error) {
+	// Get the user
+	user, err := s.db.GetUserByName(ctx, req.GetUsername())
+	if err != nil {
+		return nil, fmt.Errorf("unable to locate user %v -> %w", req.GetUsername(), err)
+	}
+
+	nut := s.untappd.Upgrade(user.GetAuth())
+
+	checkins, err := nut.GetCheckins(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("unable to get checkins: %w", err)
+	}
+
+	cellar, err := s.db.GetCellar(ctx, user.GetUserId())
+	cellarChanged := false
+	if err != nil {
+		return nil, fmt.Errorf("unable to get cellar: %w", err)
+	}
+
+	log.Printf("Found %v checkins", len(checkins))
+	for _, checkin := range checkins {
+		err = s.db.SaveCheckin(ctx, user.GetUserId(), checkin)
+		if err != nil {
+			return nil, fmt.Errorf("unable to save checkins: %w", err)
+		}
+
+		// Remove the beer from the cellar if it's recent
+		if checkin.GetDate() > user.GetLastFeedPull() {
+			var nbeers []*pb.CellarEntry
+			found := false
+			for _, entry := range cellar.GetEntries() {
+				if found || entry.GetBeerId() != checkin.GetBeerId() {
+					nbeers = append(nbeers, entry)
+				} else {
+					found = true
+					cellarChanged = true
+				}
+			}
+			cellar.Entries = nbeers
+		}
+	}
+
+	if cellarChanged {
+		err = s.db.SaveCellar(ctx, user.GetUserId(), cellar)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	user.LastFeedPull = time.Now().Unix()
+
+	return &pb.RefreshUserResponse{}, s.db.SaveUser(ctx, user)
+}
+
+func (s *Server) GetDrunk(ctx context.Context, req *pb.GetDrunkRequest) (*pb.GetDrunkResponse, error) {
+	user, err := s.getUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	drunks, err := s.db.GetDrunk(ctx, user.GetUserId())
+	if err != nil {
+		if status.Code(err) == codes.NotFound {
+			return &pb.GetDrunkResponse{Drunk: make(map[int64]int64)}, nil
+		}
+		return nil, err
+	}
+
+	return &pb.GetDrunkResponse{Drunk: drunks.GetLastCheckins()}, nil
+}
+func (s *Server) DrinkBeer(ctx context.Context, req *pb.DrinkBeerRequest) (*pb.DrinkBeerResponse, error) {
+	err := s.untappd.Checkin(ctx, req.GetBeerId())
+	if err != nil {
+		return nil, err
+	}
+
+	user, err := s.getUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = s.RefreshUser(ctx, &pb.RefreshUserRequest{Username: user.GetUsername()})
+	return &pb.DrinkBeerResponse{}, err
 }

@@ -64,7 +64,7 @@ func (x BeerRequirement_PickStrategy) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use BeerRequirement_PickStrategy.Descriptor instead.
 func (BeerRequirement_PickStrategy) EnumDescriptor() ([]byte, []int) {
-	return file_api_proto_rawDescGZIP(), []int{14, 0}
+	return file_api_proto_rawDescGZIP(), []int{15, 0}
 }
 
 type User struct {
@@ -72,8 +72,9 @@ type User struct {
 	Auth          string                 `protobuf:"bytes,1,opt,name=auth,proto3" json:"auth,omitempty"`
 	AccessToken   string                 `protobuf:"bytes,2,opt,name=access_token,json=accessToken,proto3" json:"access_token,omitempty"`
 	Username      string                 `protobuf:"bytes,3,opt,name=username,proto3" json:"username,omitempty"`
-	LatestCheckin int64                  `protobuf:"varint,4,opt,name=latest_checkin,json=latestCheckin,proto3" json:"latest_checkin,omitempty"`
-	LastFeedPull  int64                  `protobuf:"varint,5,opt,name=last_feed_pull,json=lastFeedPull,proto3" json:"last_feed_pull,omitempty"`
+	UserId        int64                  `protobuf:"varint,4,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	LatestCheckin int64                  `protobuf:"varint,5,opt,name=latest_checkin,json=latestCheckin,proto3" json:"latest_checkin,omitempty"`
+	LastFeedPull  int64                  `protobuf:"varint,6,opt,name=last_feed_pull,json=lastFeedPull,proto3" json:"last_feed_pull,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -127,6 +128,13 @@ func (x *User) GetUsername() string {
 		return x.Username
 	}
 	return ""
+}
+
+func (x *User) GetUserId() int64 {
+	if x != nil {
+		return x.UserId
+	}
+	return 0
 }
 
 func (x *User) GetLatestCheckin() int64 {
@@ -211,6 +219,58 @@ func (x *Checkin) GetRating() int32 {
 	return 0
 }
 
+type LastCheckins struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Username      string                 `protobuf:"bytes,1,opt,name=username,proto3" json:"username,omitempty"`
+	LastCheckins  map[int64]int64        `protobuf:"bytes,2,rep,name=last_checkins,json=lastCheckins,proto3" json:"last_checkins,omitempty" protobuf_key:"varint,1,opt,name=key" protobuf_val:"varint,2,opt,name=value"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *LastCheckins) Reset() {
+	*x = LastCheckins{}
+	mi := &file_api_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *LastCheckins) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*LastCheckins) ProtoMessage() {}
+
+func (x *LastCheckins) ProtoReflect() protoreflect.Message {
+	mi := &file_api_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use LastCheckins.ProtoReflect.Descriptor instead.
+func (*LastCheckins) Descriptor() ([]byte, []int) {
+	return file_api_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *LastCheckins) GetUsername() string {
+	if x != nil {
+		return x.Username
+	}
+	return ""
+}
+
+func (x *LastCheckins) GetLastCheckins() map[int64]int64 {
+	if x != nil {
+		return x.LastCheckins
+	}
+	return nil
+}
+
 type AddBeerRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	BeerId        int64                  `protobuf:"varint,1,opt,name=beer_id,json=beerId,proto3" json:"beer_id,omitempty"`
@@ -222,7 +282,7 @@ type AddBeerRequest struct {
 
 func (x *AddBeerRequest) Reset() {
 	*x = AddBeerRequest{}
-	mi := &file_api_proto_msgTypes[2]
+	mi := &file_api_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -234,7 +294,7 @@ func (x *AddBeerRequest) String() string {
 func (*AddBeerRequest) ProtoMessage() {}
 
 func (x *AddBeerRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_msgTypes[2]
+	mi := &file_api_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -247,7 +307,7 @@ func (x *AddBeerRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AddBeerRequest.ProtoReflect.Descriptor instead.
 func (*AddBeerRequest) Descriptor() ([]byte, []int) {
-	return file_api_proto_rawDescGZIP(), []int{2}
+	return file_api_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *AddBeerRequest) GetBeerId() int64 {
@@ -279,7 +339,7 @@ type AddBeerResponse struct {
 
 func (x *AddBeerResponse) Reset() {
 	*x = AddBeerResponse{}
-	mi := &file_api_proto_msgTypes[3]
+	mi := &file_api_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -291,7 +351,7 @@ func (x *AddBeerResponse) String() string {
 func (*AddBeerResponse) ProtoMessage() {}
 
 func (x *AddBeerResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_msgTypes[3]
+	mi := &file_api_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -304,7 +364,7 @@ func (x *AddBeerResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use AddBeerResponse.ProtoReflect.Descriptor instead.
 func (*AddBeerResponse) Descriptor() ([]byte, []int) {
-	return file_api_proto_rawDescGZIP(), []int{3}
+	return file_api_proto_rawDescGZIP(), []int{4}
 }
 
 type GetLoginRequest struct {
@@ -315,7 +375,7 @@ type GetLoginRequest struct {
 
 func (x *GetLoginRequest) Reset() {
 	*x = GetLoginRequest{}
-	mi := &file_api_proto_msgTypes[4]
+	mi := &file_api_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -327,7 +387,7 @@ func (x *GetLoginRequest) String() string {
 func (*GetLoginRequest) ProtoMessage() {}
 
 func (x *GetLoginRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_msgTypes[4]
+	mi := &file_api_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -340,7 +400,7 @@ func (x *GetLoginRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetLoginRequest.ProtoReflect.Descriptor instead.
 func (*GetLoginRequest) Descriptor() ([]byte, []int) {
-	return file_api_proto_rawDescGZIP(), []int{4}
+	return file_api_proto_rawDescGZIP(), []int{5}
 }
 
 type GetLoginResponse struct {
@@ -353,7 +413,7 @@ type GetLoginResponse struct {
 
 func (x *GetLoginResponse) Reset() {
 	*x = GetLoginResponse{}
-	mi := &file_api_proto_msgTypes[5]
+	mi := &file_api_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -365,7 +425,7 @@ func (x *GetLoginResponse) String() string {
 func (*GetLoginResponse) ProtoMessage() {}
 
 func (x *GetLoginResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_msgTypes[5]
+	mi := &file_api_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -378,7 +438,7 @@ func (x *GetLoginResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetLoginResponse.ProtoReflect.Descriptor instead.
 func (*GetLoginResponse) Descriptor() ([]byte, []int) {
-	return file_api_proto_rawDescGZIP(), []int{5}
+	return file_api_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *GetLoginResponse) GetUrl() string {
@@ -404,7 +464,7 @@ type GetAuthTokenRequest struct {
 
 func (x *GetAuthTokenRequest) Reset() {
 	*x = GetAuthTokenRequest{}
-	mi := &file_api_proto_msgTypes[6]
+	mi := &file_api_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -416,7 +476,7 @@ func (x *GetAuthTokenRequest) String() string {
 func (*GetAuthTokenRequest) ProtoMessage() {}
 
 func (x *GetAuthTokenRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_msgTypes[6]
+	mi := &file_api_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -429,7 +489,7 @@ func (x *GetAuthTokenRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetAuthTokenRequest.ProtoReflect.Descriptor instead.
 func (*GetAuthTokenRequest) Descriptor() ([]byte, []int) {
-	return file_api_proto_rawDescGZIP(), []int{6}
+	return file_api_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *GetAuthTokenRequest) GetCode() string {
@@ -448,7 +508,7 @@ type GetAuthTokenResponse struct {
 
 func (x *GetAuthTokenResponse) Reset() {
 	*x = GetAuthTokenResponse{}
-	mi := &file_api_proto_msgTypes[7]
+	mi := &file_api_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -460,7 +520,7 @@ func (x *GetAuthTokenResponse) String() string {
 func (*GetAuthTokenResponse) ProtoMessage() {}
 
 func (x *GetAuthTokenResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_msgTypes[7]
+	mi := &file_api_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -473,7 +533,7 @@ func (x *GetAuthTokenResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetAuthTokenResponse.ProtoReflect.Descriptor instead.
 func (*GetAuthTokenResponse) Descriptor() ([]byte, []int) {
-	return file_api_proto_rawDescGZIP(), []int{7}
+	return file_api_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *GetAuthTokenResponse) GetCode() string {
@@ -491,7 +551,7 @@ type HealthyRequest struct {
 
 func (x *HealthyRequest) Reset() {
 	*x = HealthyRequest{}
-	mi := &file_api_proto_msgTypes[8]
+	mi := &file_api_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -503,7 +563,7 @@ func (x *HealthyRequest) String() string {
 func (*HealthyRequest) ProtoMessage() {}
 
 func (x *HealthyRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_msgTypes[8]
+	mi := &file_api_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -516,7 +576,7 @@ func (x *HealthyRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use HealthyRequest.ProtoReflect.Descriptor instead.
 func (*HealthyRequest) Descriptor() ([]byte, []int) {
-	return file_api_proto_rawDescGZIP(), []int{8}
+	return file_api_proto_rawDescGZIP(), []int{9}
 }
 
 type HealthyResponse struct {
@@ -527,7 +587,7 @@ type HealthyResponse struct {
 
 func (x *HealthyResponse) Reset() {
 	*x = HealthyResponse{}
-	mi := &file_api_proto_msgTypes[9]
+	mi := &file_api_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -539,7 +599,7 @@ func (x *HealthyResponse) String() string {
 func (*HealthyResponse) ProtoMessage() {}
 
 func (x *HealthyResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_msgTypes[9]
+	mi := &file_api_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -552,7 +612,7 @@ func (x *HealthyResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use HealthyResponse.ProtoReflect.Descriptor instead.
 func (*HealthyResponse) Descriptor() ([]byte, []int) {
-	return file_api_proto_rawDescGZIP(), []int{9}
+	return file_api_proto_rawDescGZIP(), []int{10}
 }
 
 type GetCellarRequest struct {
@@ -563,7 +623,7 @@ type GetCellarRequest struct {
 
 func (x *GetCellarRequest) Reset() {
 	*x = GetCellarRequest{}
-	mi := &file_api_proto_msgTypes[10]
+	mi := &file_api_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -575,7 +635,7 @@ func (x *GetCellarRequest) String() string {
 func (*GetCellarRequest) ProtoMessage() {}
 
 func (x *GetCellarRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_msgTypes[10]
+	mi := &file_api_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -588,7 +648,7 @@ func (x *GetCellarRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetCellarRequest.ProtoReflect.Descriptor instead.
 func (*GetCellarRequest) Descriptor() ([]byte, []int) {
-	return file_api_proto_rawDescGZIP(), []int{10}
+	return file_api_proto_rawDescGZIP(), []int{11}
 }
 
 type GetCellarResponse struct {
@@ -600,7 +660,7 @@ type GetCellarResponse struct {
 
 func (x *GetCellarResponse) Reset() {
 	*x = GetCellarResponse{}
-	mi := &file_api_proto_msgTypes[11]
+	mi := &file_api_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -612,7 +672,7 @@ func (x *GetCellarResponse) String() string {
 func (*GetCellarResponse) ProtoMessage() {}
 
 func (x *GetCellarResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_msgTypes[11]
+	mi := &file_api_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -625,7 +685,7 @@ func (x *GetCellarResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetCellarResponse.ProtoReflect.Descriptor instead.
 func (*GetCellarResponse) Descriptor() ([]byte, []int) {
-	return file_api_proto_rawDescGZIP(), []int{11}
+	return file_api_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *GetCellarResponse) GetBeers() []*Beer {
@@ -645,7 +705,7 @@ type GetBeerRequest struct {
 
 func (x *GetBeerRequest) Reset() {
 	*x = GetBeerRequest{}
-	mi := &file_api_proto_msgTypes[12]
+	mi := &file_api_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -657,7 +717,7 @@ func (x *GetBeerRequest) String() string {
 func (*GetBeerRequest) ProtoMessage() {}
 
 func (x *GetBeerRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_msgTypes[12]
+	mi := &file_api_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -670,7 +730,7 @@ func (x *GetBeerRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetBeerRequest.ProtoReflect.Descriptor instead.
 func (*GetBeerRequest) Descriptor() ([]byte, []int) {
-	return file_api_proto_rawDescGZIP(), []int{12}
+	return file_api_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *GetBeerRequest) GetRequirements() []*BeerRequirement {
@@ -696,7 +756,7 @@ type GetBeerResponse struct {
 
 func (x *GetBeerResponse) Reset() {
 	*x = GetBeerResponse{}
-	mi := &file_api_proto_msgTypes[13]
+	mi := &file_api_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -708,7 +768,7 @@ func (x *GetBeerResponse) String() string {
 func (*GetBeerResponse) ProtoMessage() {}
 
 func (x *GetBeerResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_msgTypes[13]
+	mi := &file_api_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -721,7 +781,7 @@ func (x *GetBeerResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetBeerResponse.ProtoReflect.Descriptor instead.
 func (*GetBeerResponse) Descriptor() ([]byte, []int) {
-	return file_api_proto_rawDescGZIP(), []int{13}
+	return file_api_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *GetBeerResponse) GetBeers() []*Beer {
@@ -741,7 +801,7 @@ type BeerRequirement struct {
 
 func (x *BeerRequirement) Reset() {
 	*x = BeerRequirement{}
-	mi := &file_api_proto_msgTypes[14]
+	mi := &file_api_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -753,7 +813,7 @@ func (x *BeerRequirement) String() string {
 func (*BeerRequirement) ProtoMessage() {}
 
 func (x *BeerRequirement) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_msgTypes[14]
+	mi := &file_api_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -766,7 +826,7 @@ func (x *BeerRequirement) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use BeerRequirement.ProtoReflect.Descriptor instead.
 func (*BeerRequirement) Descriptor() ([]byte, []int) {
-	return file_api_proto_rawDescGZIP(), []int{14}
+	return file_api_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *BeerRequirement) GetMaxUnits() int32 {
@@ -783,6 +843,166 @@ func (x *BeerRequirement) GetStrategy() BeerRequirement_PickStrategy {
 	return BeerRequirement_STRATEGY_RANDOM
 }
 
+type GetDrunkRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetDrunkRequest) Reset() {
+	*x = GetDrunkRequest{}
+	mi := &file_api_proto_msgTypes[16]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetDrunkRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetDrunkRequest) ProtoMessage() {}
+
+func (x *GetDrunkRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_api_proto_msgTypes[16]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetDrunkRequest.ProtoReflect.Descriptor instead.
+func (*GetDrunkRequest) Descriptor() ([]byte, []int) {
+	return file_api_proto_rawDescGZIP(), []int{16}
+}
+
+type GetDrunkResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Drunk         map[int64]int64        `protobuf:"bytes,1,rep,name=drunk,proto3" json:"drunk,omitempty" protobuf_key:"varint,1,opt,name=key" protobuf_val:"varint,2,opt,name=value"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetDrunkResponse) Reset() {
+	*x = GetDrunkResponse{}
+	mi := &file_api_proto_msgTypes[17]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetDrunkResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetDrunkResponse) ProtoMessage() {}
+
+func (x *GetDrunkResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_api_proto_msgTypes[17]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetDrunkResponse.ProtoReflect.Descriptor instead.
+func (*GetDrunkResponse) Descriptor() ([]byte, []int) {
+	return file_api_proto_rawDescGZIP(), []int{17}
+}
+
+func (x *GetDrunkResponse) GetDrunk() map[int64]int64 {
+	if x != nil {
+		return x.Drunk
+	}
+	return nil
+}
+
+type DrinkBeerRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	BeerId        int64                  `protobuf:"varint,1,opt,name=beer_id,json=beerId,proto3" json:"beer_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DrinkBeerRequest) Reset() {
+	*x = DrinkBeerRequest{}
+	mi := &file_api_proto_msgTypes[18]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DrinkBeerRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DrinkBeerRequest) ProtoMessage() {}
+
+func (x *DrinkBeerRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_api_proto_msgTypes[18]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DrinkBeerRequest.ProtoReflect.Descriptor instead.
+func (*DrinkBeerRequest) Descriptor() ([]byte, []int) {
+	return file_api_proto_rawDescGZIP(), []int{18}
+}
+
+func (x *DrinkBeerRequest) GetBeerId() int64 {
+	if x != nil {
+		return x.BeerId
+	}
+	return 0
+}
+
+type DrinkBeerResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DrinkBeerResponse) Reset() {
+	*x = DrinkBeerResponse{}
+	mi := &file_api_proto_msgTypes[19]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DrinkBeerResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DrinkBeerResponse) ProtoMessage() {}
+
+func (x *DrinkBeerResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_api_proto_msgTypes[19]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DrinkBeerResponse.ProtoReflect.Descriptor instead.
+func (*DrinkBeerResponse) Descriptor() ([]byte, []int) {
+	return file_api_proto_rawDescGZIP(), []int{19}
+}
+
 type SetRedirectRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Url           string                 `protobuf:"bytes,1,opt,name=url,proto3" json:"url,omitempty"`
@@ -792,7 +1012,7 @@ type SetRedirectRequest struct {
 
 func (x *SetRedirectRequest) Reset() {
 	*x = SetRedirectRequest{}
-	mi := &file_api_proto_msgTypes[15]
+	mi := &file_api_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -804,7 +1024,7 @@ func (x *SetRedirectRequest) String() string {
 func (*SetRedirectRequest) ProtoMessage() {}
 
 func (x *SetRedirectRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_msgTypes[15]
+	mi := &file_api_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -817,7 +1037,7 @@ func (x *SetRedirectRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SetRedirectRequest.ProtoReflect.Descriptor instead.
 func (*SetRedirectRequest) Descriptor() ([]byte, []int) {
-	return file_api_proto_rawDescGZIP(), []int{15}
+	return file_api_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *SetRedirectRequest) GetUrl() string {
@@ -835,7 +1055,7 @@ type SetRedirectResponse struct {
 
 func (x *SetRedirectResponse) Reset() {
 	*x = SetRedirectResponse{}
-	mi := &file_api_proto_msgTypes[16]
+	mi := &file_api_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -847,7 +1067,7 @@ func (x *SetRedirectResponse) String() string {
 func (*SetRedirectResponse) ProtoMessage() {}
 
 func (x *SetRedirectResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_msgTypes[16]
+	mi := &file_api_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -860,7 +1080,87 @@ func (x *SetRedirectResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SetRedirectResponse.ProtoReflect.Descriptor instead.
 func (*SetRedirectResponse) Descriptor() ([]byte, []int) {
-	return file_api_proto_rawDescGZIP(), []int{16}
+	return file_api_proto_rawDescGZIP(), []int{21}
+}
+
+type RefreshUserRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Username      string                 `protobuf:"bytes,1,opt,name=username,proto3" json:"username,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RefreshUserRequest) Reset() {
+	*x = RefreshUserRequest{}
+	mi := &file_api_proto_msgTypes[22]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RefreshUserRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RefreshUserRequest) ProtoMessage() {}
+
+func (x *RefreshUserRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_api_proto_msgTypes[22]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RefreshUserRequest.ProtoReflect.Descriptor instead.
+func (*RefreshUserRequest) Descriptor() ([]byte, []int) {
+	return file_api_proto_rawDescGZIP(), []int{22}
+}
+
+func (x *RefreshUserRequest) GetUsername() string {
+	if x != nil {
+		return x.Username
+	}
+	return ""
+}
+
+type RefreshUserResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RefreshUserResponse) Reset() {
+	*x = RefreshUserResponse{}
+	mi := &file_api_proto_msgTypes[23]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RefreshUserResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RefreshUserResponse) ProtoMessage() {}
+
+func (x *RefreshUserResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_api_proto_msgTypes[23]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RefreshUserResponse.ProtoReflect.Descriptor instead.
+func (*RefreshUserResponse) Descriptor() ([]byte, []int) {
+	return file_api_proto_rawDescGZIP(), []int{23}
 }
 
 var File_api_proto protoreflect.FileDescriptor
@@ -869,19 +1169,26 @@ const file_api_proto_rawDesc = "" +
 	"\n" +
 	"\tapi.proto\x12\n" +
 	"beerkellar\x1a\n" +
-	"beer.proto\"\xa6\x01\n" +
+	"beer.proto\"\xbf\x01\n" +
 	"\x04User\x12\x12\n" +
 	"\x04auth\x18\x01 \x01(\tR\x04auth\x12!\n" +
 	"\faccess_token\x18\x02 \x01(\tR\vaccessToken\x12\x1a\n" +
-	"\busername\x18\x03 \x01(\tR\busername\x12%\n" +
-	"\x0elatest_checkin\x18\x04 \x01(\x03R\rlatestCheckin\x12$\n" +
-	"\x0elast_feed_pull\x18\x05 \x01(\x03R\flastFeedPull\"m\n" +
+	"\busername\x18\x03 \x01(\tR\busername\x12\x17\n" +
+	"\auser_id\x18\x04 \x01(\x03R\x06userId\x12%\n" +
+	"\x0elatest_checkin\x18\x05 \x01(\x03R\rlatestCheckin\x12$\n" +
+	"\x0elast_feed_pull\x18\x06 \x01(\x03R\flastFeedPull\"m\n" +
 	"\aCheckin\x12\x1d\n" +
 	"\n" +
 	"checkin_id\x18\x01 \x01(\x03R\tcheckinId\x12\x17\n" +
 	"\abeer_id\x18\x02 \x01(\x03R\x06beerId\x12\x12\n" +
 	"\x04date\x18\x03 \x01(\x03R\x04date\x12\x16\n" +
-	"\x06rating\x18\x04 \x01(\x05R\x06rating\"c\n" +
+	"\x06rating\x18\x04 \x01(\x05R\x06rating\"\xbc\x01\n" +
+	"\fLastCheckins\x12\x1a\n" +
+	"\busername\x18\x01 \x01(\tR\busername\x12O\n" +
+	"\rlast_checkins\x18\x02 \x03(\v2*.beerkellar.LastCheckins.LastCheckinsEntryR\flastCheckins\x1a?\n" +
+	"\x11LastCheckinsEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\x03R\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\x03R\x05value:\x028\x01\"c\n" +
 	"\x0eAddBeerRequest\x12\x17\n" +
 	"\abeer_id\x18\x01 \x01(\x03R\x06beerId\x12\x1a\n" +
 	"\bquantity\x18\x02 \x01(\x05R\bquantity\x12\x1c\n" +
@@ -911,20 +1218,36 @@ const file_api_proto_rawDesc = "" +
 	"\bstrategy\x18\x02 \x01(\x0e2(.beerkellar.BeerRequirement.PickStrategyR\bstrategy\"8\n" +
 	"\fPickStrategy\x12\x13\n" +
 	"\x0fSTRATEGY_RANDOM\x10\x00\x12\x13\n" +
-	"\x0fSTRATEGY_OLDEST\x10\x01\"&\n" +
+	"\x0fSTRATEGY_OLDEST\x10\x01\"\x11\n" +
+	"\x0fGetDrunkRequest\"\x8b\x01\n" +
+	"\x10GetDrunkResponse\x12=\n" +
+	"\x05drunk\x18\x01 \x03(\v2'.beerkellar.GetDrunkResponse.DrunkEntryR\x05drunk\x1a8\n" +
+	"\n" +
+	"DrunkEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\x03R\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\x03R\x05value:\x028\x01\"+\n" +
+	"\x10DrinkBeerRequest\x12\x17\n" +
+	"\abeer_id\x18\x01 \x01(\x03R\x06beerId\"\x13\n" +
+	"\x11DrinkBeerResponse\"&\n" +
 	"\x12SetRedirectRequest\x12\x10\n" +
 	"\x03url\x18\x01 \x01(\tR\x03url\"\x15\n" +
-	"\x13SetRedirectResponse2\xc8\x03\n" +
+	"\x13SetRedirectResponse\"0\n" +
+	"\x12RefreshUserRequest\x12\x1a\n" +
+	"\busername\x18\x01 \x01(\tR\busername\"\x15\n" +
+	"\x13RefreshUserResponse2\xdd\x04\n" +
 	"\n" +
 	"BeerKeller\x12D\n" +
-	"\aAddBeer\x12\x1a.beerkellar.AddBeerRequest\x1a\x1b.beerkellar.AddBeerResponse\"\x00\x12G\n" +
+	"\aAddBeer\x12\x1a.beerkellar.AddBeerRequest\x1a\x1b.beerkellar.AddBeerResponse\"\x00\x12J\n" +
+	"\tDrinkBeer\x12\x1c.beerkellar.DrinkBeerRequest\x1a\x1d.beerkellar.DrinkBeerResponse\"\x00\x12G\n" +
 	"\bGetLogin\x12\x1b.beerkellar.GetLoginRequest\x1a\x1c.beerkellar.GetLoginResponse\"\x00\x12S\n" +
 	"\fGetAuthToken\x12\x1f.beerkellar.GetAuthTokenRequest\x1a .beerkellar.GetAuthTokenResponse\"\x00\x12J\n" +
 	"\tGetCellar\x12\x1c.beerkellar.GetCellarRequest\x1a\x1d.beerkellar.GetCellarResponse\"\x00\x12D\n" +
-	"\aGetBeer\x12\x1a.beerkellar.GetBeerRequest\x1a\x1b.beerkellar.GetBeerResponse\"\x00\x12D\n" +
-	"\aHealthy\x12\x1a.beerkellar.HealthyRequest\x1a\x1b.beerkellar.HealthyResponse\"\x002c\n" +
+	"\aGetBeer\x12\x1a.beerkellar.GetBeerRequest\x1a\x1b.beerkellar.GetBeerResponse\"\x00\x12G\n" +
+	"\bGetDrunk\x12\x1b.beerkellar.GetDrunkRequest\x1a\x1c.beerkellar.GetDrunkResponse\"\x00\x12D\n" +
+	"\aHealthy\x12\x1a.beerkellar.HealthyRequest\x1a\x1b.beerkellar.HealthyResponse\"\x002\xb5\x01\n" +
 	"\x0fBeerKellerAdmin\x12P\n" +
-	"\vSetRedirect\x12\x1e.beerkellar.SetRedirectRequest\x1a\x1f.beerkellar.SetRedirectResponse\"\x00B*Z(github.com/brotherlogic/beerkellar/protob\x06proto3"
+	"\vSetRedirect\x12\x1e.beerkellar.SetRedirectRequest\x1a\x1f.beerkellar.SetRedirectResponse\"\x00\x12P\n" +
+	"\vRefreshUser\x12\x1e.beerkellar.RefreshUserRequest\x1a\x1f.beerkellar.RefreshUserResponse\"\x00B*Z(github.com/brotherlogic/beerkellar/protob\x06proto3"
 
 var (
 	file_api_proto_rawDescOnce sync.Once
@@ -939,52 +1262,69 @@ func file_api_proto_rawDescGZIP() []byte {
 }
 
 var file_api_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_api_proto_msgTypes = make([]protoimpl.MessageInfo, 17)
+var file_api_proto_msgTypes = make([]protoimpl.MessageInfo, 26)
 var file_api_proto_goTypes = []any{
 	(BeerRequirement_PickStrategy)(0), // 0: beerkellar.BeerRequirement.PickStrategy
 	(*User)(nil),                      // 1: beerkellar.User
 	(*Checkin)(nil),                   // 2: beerkellar.Checkin
-	(*AddBeerRequest)(nil),            // 3: beerkellar.AddBeerRequest
-	(*AddBeerResponse)(nil),           // 4: beerkellar.AddBeerResponse
-	(*GetLoginRequest)(nil),           // 5: beerkellar.GetLoginRequest
-	(*GetLoginResponse)(nil),          // 6: beerkellar.GetLoginResponse
-	(*GetAuthTokenRequest)(nil),       // 7: beerkellar.GetAuthTokenRequest
-	(*GetAuthTokenResponse)(nil),      // 8: beerkellar.GetAuthTokenResponse
-	(*HealthyRequest)(nil),            // 9: beerkellar.HealthyRequest
-	(*HealthyResponse)(nil),           // 10: beerkellar.HealthyResponse
-	(*GetCellarRequest)(nil),          // 11: beerkellar.GetCellarRequest
-	(*GetCellarResponse)(nil),         // 12: beerkellar.GetCellarResponse
-	(*GetBeerRequest)(nil),            // 13: beerkellar.GetBeerRequest
-	(*GetBeerResponse)(nil),           // 14: beerkellar.GetBeerResponse
-	(*BeerRequirement)(nil),           // 15: beerkellar.BeerRequirement
-	(*SetRedirectRequest)(nil),        // 16: beerkellar.SetRedirectRequest
-	(*SetRedirectResponse)(nil),       // 17: beerkellar.SetRedirectResponse
-	(*Beer)(nil),                      // 18: beerkellar.Beer
+	(*LastCheckins)(nil),              // 3: beerkellar.LastCheckins
+	(*AddBeerRequest)(nil),            // 4: beerkellar.AddBeerRequest
+	(*AddBeerResponse)(nil),           // 5: beerkellar.AddBeerResponse
+	(*GetLoginRequest)(nil),           // 6: beerkellar.GetLoginRequest
+	(*GetLoginResponse)(nil),          // 7: beerkellar.GetLoginResponse
+	(*GetAuthTokenRequest)(nil),       // 8: beerkellar.GetAuthTokenRequest
+	(*GetAuthTokenResponse)(nil),      // 9: beerkellar.GetAuthTokenResponse
+	(*HealthyRequest)(nil),            // 10: beerkellar.HealthyRequest
+	(*HealthyResponse)(nil),           // 11: beerkellar.HealthyResponse
+	(*GetCellarRequest)(nil),          // 12: beerkellar.GetCellarRequest
+	(*GetCellarResponse)(nil),         // 13: beerkellar.GetCellarResponse
+	(*GetBeerRequest)(nil),            // 14: beerkellar.GetBeerRequest
+	(*GetBeerResponse)(nil),           // 15: beerkellar.GetBeerResponse
+	(*BeerRequirement)(nil),           // 16: beerkellar.BeerRequirement
+	(*GetDrunkRequest)(nil),           // 17: beerkellar.GetDrunkRequest
+	(*GetDrunkResponse)(nil),          // 18: beerkellar.GetDrunkResponse
+	(*DrinkBeerRequest)(nil),          // 19: beerkellar.DrinkBeerRequest
+	(*DrinkBeerResponse)(nil),         // 20: beerkellar.DrinkBeerResponse
+	(*SetRedirectRequest)(nil),        // 21: beerkellar.SetRedirectRequest
+	(*SetRedirectResponse)(nil),       // 22: beerkellar.SetRedirectResponse
+	(*RefreshUserRequest)(nil),        // 23: beerkellar.RefreshUserRequest
+	(*RefreshUserResponse)(nil),       // 24: beerkellar.RefreshUserResponse
+	nil,                               // 25: beerkellar.LastCheckins.LastCheckinsEntry
+	nil,                               // 26: beerkellar.GetDrunkResponse.DrunkEntry
+	(*Beer)(nil),                      // 27: beerkellar.Beer
 }
 var file_api_proto_depIdxs = []int32{
-	18, // 0: beerkellar.GetCellarResponse.beers:type_name -> beerkellar.Beer
-	15, // 1: beerkellar.GetBeerRequest.requirements:type_name -> beerkellar.BeerRequirement
-	18, // 2: beerkellar.GetBeerResponse.beers:type_name -> beerkellar.Beer
-	0,  // 3: beerkellar.BeerRequirement.strategy:type_name -> beerkellar.BeerRequirement.PickStrategy
-	3,  // 4: beerkellar.BeerKeller.AddBeer:input_type -> beerkellar.AddBeerRequest
-	5,  // 5: beerkellar.BeerKeller.GetLogin:input_type -> beerkellar.GetLoginRequest
-	7,  // 6: beerkellar.BeerKeller.GetAuthToken:input_type -> beerkellar.GetAuthTokenRequest
-	11, // 7: beerkellar.BeerKeller.GetCellar:input_type -> beerkellar.GetCellarRequest
-	13, // 8: beerkellar.BeerKeller.GetBeer:input_type -> beerkellar.GetBeerRequest
-	9,  // 9: beerkellar.BeerKeller.Healthy:input_type -> beerkellar.HealthyRequest
-	16, // 10: beerkellar.BeerKellerAdmin.SetRedirect:input_type -> beerkellar.SetRedirectRequest
-	4,  // 11: beerkellar.BeerKeller.AddBeer:output_type -> beerkellar.AddBeerResponse
-	6,  // 12: beerkellar.BeerKeller.GetLogin:output_type -> beerkellar.GetLoginResponse
-	8,  // 13: beerkellar.BeerKeller.GetAuthToken:output_type -> beerkellar.GetAuthTokenResponse
-	12, // 14: beerkellar.BeerKeller.GetCellar:output_type -> beerkellar.GetCellarResponse
-	14, // 15: beerkellar.BeerKeller.GetBeer:output_type -> beerkellar.GetBeerResponse
-	10, // 16: beerkellar.BeerKeller.Healthy:output_type -> beerkellar.HealthyResponse
-	17, // 17: beerkellar.BeerKellerAdmin.SetRedirect:output_type -> beerkellar.SetRedirectResponse
-	11, // [11:18] is the sub-list for method output_type
-	4,  // [4:11] is the sub-list for method input_type
-	4,  // [4:4] is the sub-list for extension type_name
-	4,  // [4:4] is the sub-list for extension extendee
-	0,  // [0:4] is the sub-list for field type_name
+	25, // 0: beerkellar.LastCheckins.last_checkins:type_name -> beerkellar.LastCheckins.LastCheckinsEntry
+	27, // 1: beerkellar.GetCellarResponse.beers:type_name -> beerkellar.Beer
+	16, // 2: beerkellar.GetBeerRequest.requirements:type_name -> beerkellar.BeerRequirement
+	27, // 3: beerkellar.GetBeerResponse.beers:type_name -> beerkellar.Beer
+	0,  // 4: beerkellar.BeerRequirement.strategy:type_name -> beerkellar.BeerRequirement.PickStrategy
+	26, // 5: beerkellar.GetDrunkResponse.drunk:type_name -> beerkellar.GetDrunkResponse.DrunkEntry
+	4,  // 6: beerkellar.BeerKeller.AddBeer:input_type -> beerkellar.AddBeerRequest
+	19, // 7: beerkellar.BeerKeller.DrinkBeer:input_type -> beerkellar.DrinkBeerRequest
+	6,  // 8: beerkellar.BeerKeller.GetLogin:input_type -> beerkellar.GetLoginRequest
+	8,  // 9: beerkellar.BeerKeller.GetAuthToken:input_type -> beerkellar.GetAuthTokenRequest
+	12, // 10: beerkellar.BeerKeller.GetCellar:input_type -> beerkellar.GetCellarRequest
+	14, // 11: beerkellar.BeerKeller.GetBeer:input_type -> beerkellar.GetBeerRequest
+	17, // 12: beerkellar.BeerKeller.GetDrunk:input_type -> beerkellar.GetDrunkRequest
+	10, // 13: beerkellar.BeerKeller.Healthy:input_type -> beerkellar.HealthyRequest
+	21, // 14: beerkellar.BeerKellerAdmin.SetRedirect:input_type -> beerkellar.SetRedirectRequest
+	23, // 15: beerkellar.BeerKellerAdmin.RefreshUser:input_type -> beerkellar.RefreshUserRequest
+	5,  // 16: beerkellar.BeerKeller.AddBeer:output_type -> beerkellar.AddBeerResponse
+	20, // 17: beerkellar.BeerKeller.DrinkBeer:output_type -> beerkellar.DrinkBeerResponse
+	7,  // 18: beerkellar.BeerKeller.GetLogin:output_type -> beerkellar.GetLoginResponse
+	9,  // 19: beerkellar.BeerKeller.GetAuthToken:output_type -> beerkellar.GetAuthTokenResponse
+	13, // 20: beerkellar.BeerKeller.GetCellar:output_type -> beerkellar.GetCellarResponse
+	15, // 21: beerkellar.BeerKeller.GetBeer:output_type -> beerkellar.GetBeerResponse
+	18, // 22: beerkellar.BeerKeller.GetDrunk:output_type -> beerkellar.GetDrunkResponse
+	11, // 23: beerkellar.BeerKeller.Healthy:output_type -> beerkellar.HealthyResponse
+	22, // 24: beerkellar.BeerKellerAdmin.SetRedirect:output_type -> beerkellar.SetRedirectResponse
+	24, // 25: beerkellar.BeerKellerAdmin.RefreshUser:output_type -> beerkellar.RefreshUserResponse
+	16, // [16:26] is the sub-list for method output_type
+	6,  // [6:16] is the sub-list for method input_type
+	6,  // [6:6] is the sub-list for extension type_name
+	6,  // [6:6] is the sub-list for extension extendee
+	0,  // [0:6] is the sub-list for field type_name
 }
 
 func init() { file_api_proto_init() }
@@ -999,7 +1339,7 @@ func file_api_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_api_proto_rawDesc), len(file_api_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   17,
+			NumMessages:   26,
 			NumExtensions: 0,
 			NumServices:   2,
 		},

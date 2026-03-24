@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+
+	pb "github.com/brotherlogic/beerkellar/proto"
 )
 
 const (
@@ -24,6 +26,7 @@ var (
 )
 
 type Server struct {
+	checkins []*pb.Checkin
 }
 
 // This handles the initial request
@@ -60,9 +63,13 @@ func (s *Server) HandleOauth2(w http.ResponseWriter, r *http.Request) {
 func main() {
 	log.Printf("Launching fake untappd")
 	s := &Server{}
+
 	http.Handle("/oauth/authenticate", http.HandlerFunc(s.HandleOauth1))
 	http.Handle("/oauth/authorize", http.HandlerFunc(s.HandleOauth2))
 	http.Handle("/v4/beer/info/", http.HandlerFunc(s.HandleGetBeer))
+	http.Handle("/checkin/", http.HandlerFunc(s.HandleCheckin))
+	http.Handle("/v4/user/checkins/", http.HandlerFunc(s.HandleCheckins))
+
 	err := http.ListenAndServe(fmt.Sprintf(":%v", *port), nil)
 	log.Fatalf("Beerkellar is unable to serve metrics: %v", err)
 
