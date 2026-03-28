@@ -277,7 +277,11 @@ func (s *Server) RefreshUser(ctx context.Context, req *pb.RefreshUserRequest) (*
 	cellar, err := s.db.GetCellar(ctx, user.GetUserId())
 	cellarChanged := false
 	if err != nil {
-		return nil, fmt.Errorf("unable to get cellar: %w", err)
+		if status.Code(err) == codes.NotFound {
+			cellar = &pb.Cellar{}
+		} else {
+			return nil, fmt.Errorf("unable to get cellar: %w", err)
+		}
 	}
 
 	log.Printf("Found %v checkins", len(checkins))
@@ -344,4 +348,36 @@ func (s *Server) DrinkBeer(ctx context.Context, req *pb.DrinkBeerRequest) (*pb.D
 
 	_, err = s.RefreshUser(ctx, &pb.RefreshUserRequest{Username: user.GetUsername()})
 	return &pb.DrinkBeerResponse{}, err
+}
+
+func (s *Server) StartBackgroundTasks(ctx context.Context) {
+	go func() {
+		ticker := time.NewTicker(time.Hour)
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				s.runRefresh(ctx)
+			}
+		}
+	}()
+}
+
+func (s *Server) runRefresh(ctx context.Context) {
+	users, err := s.db.GetUsers(ctx)
+	if err != nil {
+		log.Printf("Unable to get users for refresh: %v", err)
+		return
+	}
+
+	for _, user := range users {
+		if time.Now().Unix()-user.GetLastFeedPull() > 2*3600 {
+			log.Printf("Refreshing user %v", user.GetUsername())
+			_, err := s.RefreshUser(ctx, &pb.RefreshUserRequest{Username: user.GetUsername()})
+			if err != nil {
+				log.Printf("Unable to refresh user %v: %v", user.GetUsername(), err)
+			}
+		}
+	}
 }

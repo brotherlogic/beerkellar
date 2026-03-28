@@ -57,6 +57,7 @@ func main() {
 		os.Getenv("client_secret"),
 		os.Getenv("redirect_url"),
 		db, ut)
+	s.StartBackgroundTasks(context.Background())
 
 	http.Handle("/metrics", promhttp.Handler())
 	go func() {
