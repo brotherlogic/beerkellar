@@ -22,7 +22,11 @@
 	"postCreateCommand": "./postCreate.sh",
 	// "customizations": {},
 	// Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
-	// "remoteUser": "root"
+    // "remoteUser": "root"
+    "runArgs": [
+		"--security-opt",
+		"label=disable",
+	],
 	"mounts": [
 		{
 			"source": "${localEnv:HOME}/.ssh",
