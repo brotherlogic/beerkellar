@@ -15,6 +15,14 @@ message User {
 
     int64 latest_checkin = 5;
     int64 last_feed_pull = 6;
+
+    enum UserState {
+        STATE_UNKNOWN = 0;
+        STATE_CREATED = 1;
+        STATE_AUTHENTICATED = 2;
+        STATE_LOGGED_IN = 3;
+    }
+    UserState state = 7;
 }
 
 message Checkin {

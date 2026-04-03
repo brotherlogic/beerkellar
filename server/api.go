@@ -93,7 +93,16 @@ func (s *Server) getUser(ctx context.Context) (*pb.User, error) {
 		return nil, err
 	}
 
-	return s.db.GetUser(ctx, key)
+	user, err := s.db.GetUser(ctx, key)
+	if err != nil {
+		return nil, err
+	}
+
+	if user.GetState() != pb.User_STATE_LOGGED_IN {
+		return nil, status.Errorf(codes.PermissionDenied, "User is not logged in (current state: %v)", user.GetState())
+	}
+
+	return user, nil
 }
 
 func (s *Server) GetBeer(ctx context.Context, req *pb.GetBeerRequest) (*pb.GetBeerResponse, error) {
@@ -217,7 +226,8 @@ func (s *Server) AddBeer(ctx context.Context, req *pb.AddBeerRequest) (*pb.AddBe
 func (s *Server) GetLogin(ctx context.Context, req *pb.GetLoginRequest) (*pb.GetLoginResponse, error) {
 	tmpToken := fmt.Sprintf("%v-%v", time.Now().UnixNano(), rand.Int63())
 	user := &pb.User{
-		Auth: tmpToken,
+		Auth:  tmpToken,
+		State: pb.User_STATE_CREATED,
 	}
 	err := s.db.SaveUser(ctx, user)
 	if err != nil {
@@ -236,12 +246,28 @@ func (s *Server) GetAuthToken(ctx context.Context, req *pb.GetAuthTokenRequest) 
 		return nil, err
 	}
 
-	if len(user.GetAccessToken()) > 0 {
+	if user.GetState() == pb.User_STATE_AUTHENTICATED {
+		nut := s.untappd.Upgrade(user.GetAccessToken())
+		username, userId, err := nut.GetUserInfo(ctx)
+		if err != nil {
+			return nil, status.Errorf(codes.Unavailable, "Unable to fetch user info: %v (retryable)", err)
+		}
+
+		user.Username = username
+		user.UserId = userId
+		user.State = pb.User_STATE_LOGGED_IN
+		err = s.db.SaveUser(ctx, user)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if user.GetState() == pb.User_STATE_LOGGED_IN {
 		return &pb.GetAuthTokenResponse{
 			Code: req.GetCode(),
 		}, nil
 	}
-	return &pb.GetAuthTokenResponse{}, status.Errorf(codes.NotFound, "User is not fully authenticated")
+	return &pb.GetAuthTokenResponse{}, status.Errorf(codes.NotFound, "User is not fully authenticated (current state: %v)", user.GetState())
 }
 
 func convertToLitres(flOz int32) float32 {
@@ -267,7 +293,11 @@ func (s *Server) RefreshUser(ctx context.Context, req *pb.RefreshUserRequest) (*
 		return nil, fmt.Errorf("unable to locate user %v -> %w", req.GetUsername(), err)
 	}
 
-	nut := s.untappd.Upgrade(user.GetAuth())
+	if user.GetState() != pb.User_STATE_LOGGED_IN {
+		return nil, status.Errorf(codes.PermissionDenied, "User %v is not logged in", req.GetUsername())
+	}
+
+	nut := s.untappd.Upgrade(user.GetAccessToken())
 
 	checkins, err := nut.GetCheckins(ctx)
 	if err != nil {

@@ -87,3 +87,46 @@ func TestGetBeerWithNoMulitples(t *testing.T) {
 		t.Errorf("Wrong beer returned: %v", r)
 	}
 }
+
+func TestAuthFlow(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+	defer cancel()
+
+	s := getTestServer(ctx)
+
+	// 1. GetLogin should create a user in STATE_CREATED
+	loginResp, err := s.GetLogin(ctx, &pb.GetLoginRequest{})
+	if err != nil {
+		t.Fatalf("GetLogin failed: %v", err)
+	}
+
+	user, err := s.db.GetUser(ctx, loginResp.GetCode())
+	if err != nil {
+		t.Fatalf("Unable to get user: %v", err)
+	}
+	if user.GetState() != pb.User_STATE_CREATED {
+		t.Errorf("Expected state CREATED, got %v", user.GetState())
+	}
+
+	// 2. Simulate callback which sets STATE_AUTHENTICATED
+	user.AccessToken = "access-token"
+	user.State = pb.User_STATE_AUTHENTICATED
+	err = s.db.SaveUser(ctx, user)
+	if err != nil {
+		t.Fatalf("SaveUser failed: %v", err)
+	}
+
+	// 3. GetAuthToken should fetch info and set STATE_LOGGED_IN
+	_, err = s.GetAuthToken(ctx, &pb.GetAuthTokenRequest{Code: loginResp.GetCode()})
+	if err != nil {
+		t.Fatalf("GetAuthToken failed: %v", err)
+	}
+
+	user, err = s.db.GetUser(ctx, loginResp.GetCode())
+	if err != nil {
+		t.Fatalf("Unable to get user: %v", err)
+	}
+	if user.GetState() != pb.User_STATE_LOGGED_IN {
+		t.Errorf("Expected state LOGGED_IN, got %v", user.GetState())
+	}
+}
