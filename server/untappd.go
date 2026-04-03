@@ -22,6 +22,7 @@ type UntappdAPI interface {
 	handleAuthResponse(ctx context.Context, db Database, code, token string) (*pb.User, error)
 	GetCheckins(ctx context.Context) ([]*pb.Checkin, error)
 	Checkin(ctx context.Context, beerId int64) error
+	GetUserInfo(ctx context.Context) (string, int64, error)
 }
 
 type Untappd struct {
@@ -71,6 +72,10 @@ func (tu *TestUntappd) Checkin(ctx context.Context, beerId int64) error {
 
 func (_ *TestUntappd) handleAuthResponse(ctx context.Context, db Database, code, token string) (*pb.User, error) {
 	return &pb.User{}, nil
+}
+
+func (_ *TestUntappd) GetUserInfo(ctx context.Context) (string, int64, error) {
+	return "testuser", 123, nil
 }
 
 func GetUntappd(api, auth, retAuth string, clientId, clientSecret, redirectURL string) *Untappd {
@@ -163,8 +168,30 @@ func (u *Untappd) handleAuthResponse(ctx context.Context, db Database, code, tok
 	}
 
 	user.AccessToken = resp.Response.AccessToken
+	user.State = pb.User_STATE_AUTHENTICATED
 	err = db.SaveUser(ctx, user)
 	return user, err
+}
+
+type UserInfo struct {
+	Uid      int64  `json:"uid"`
+	UserName string `json:"user_name"`
+}
+
+type UserInfoResponse struct {
+	Response struct {
+		User UserInfo `json:"user"`
+	} `json:"response"`
+}
+
+func (u *Untappd) GetUserInfo(ctx context.Context) (string, int64, error) {
+	resp := &UserInfoResponse{}
+	err := u.get("/v4/user/info", resp)
+	if err != nil {
+		return "", 0, err
+	}
+
+	return resp.Response.User.UserName, resp.Response.User.Uid, nil
 }
 
 type CheckinResponse struct {

@@ -12,11 +12,11 @@ func TestRunRefresh(t *testing.T) {
 	ctx := context.Background()
 	s := getTestServer(ctx)
 
-	// Add a user who needs refresh (LastFeedPull = 0)
 	err := s.db.SaveUser(ctx, &pb.User{
 		Username:     "user1",
 		Auth:         "auth1",
 		LastFeedPull: 0,
+		State:        pb.User_STATE_LOGGED_IN,
 	})
 	if err != nil {
 		t.Fatalf("Unable to save user: %v", err)
@@ -28,6 +28,7 @@ func TestRunRefresh(t *testing.T) {
 		Username:     "user2",
 		Auth:         "auth2",
 		LastFeedPull: now,
+		State:        pb.User_STATE_LOGGED_IN,
 	})
 	if err != nil {
 		t.Fatalf("Unable to save user: %v", err)
