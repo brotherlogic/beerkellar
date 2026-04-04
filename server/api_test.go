@@ -104,13 +104,13 @@ func TestAuthFlow(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Unable to get user: %v", err)
 	}
-	if user.GetState() != pb.User_STATE_CREATED {
-		t.Errorf("Expected state CREATED, got %v", user.GetState())
+	if user.GetState() != pb.User_STATE_LOGGING_IN {
+		t.Errorf("Expected state LOGGING_IN, got %v", user.GetState())
 	}
 
 	// 2. Simulate callback which sets STATE_AUTHENTICATED
 	user.AccessToken = "access-token"
-	user.State = pb.User_STATE_AUTHENTICATED
+	user.State = pb.User_STATE_LOGGED_IN
 	err = s.db.SaveUser(ctx, user)
 	if err != nil {
 		t.Fatalf("SaveUser failed: %v", err)
@@ -126,7 +126,7 @@ func TestAuthFlow(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Unable to get user: %v", err)
 	}
-	if user.GetState() != pb.User_STATE_LOGGED_IN {
-		t.Errorf("Expected state LOGGED_IN, got %v", user.GetState())
+	if user.GetState() != pb.User_STATE_AUTHORIZED {
+		t.Errorf("Expected state AUTHORIZED, got %v", user.GetState())
 	}
 }

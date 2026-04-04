@@ -23,7 +23,15 @@ Beerkellar is a CLI tool and backend service for managing a personal beer cellar
 
 ## Documentation
 
-For a detailed overview of the project architecture and features, see [OVERVIEW.md](overview.md).
+## User States
+
+Beerkellar tracks user authentication through three primary states:
+- **LOGGING_IN**: User has initiated the login process.
+- **LOGGED_IN**: User has authenticated with Untappd and we have received an access token.
+- **AUTHORIZED**: The system has successfully retrieved the user's profile information from Untappd (username and user ID).
+
+All API methods (except login-related ones) require the user to be in the **AUTHORIZED** state.
+
 
 ## Development
 

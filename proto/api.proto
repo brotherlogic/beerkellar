@@ -18,9 +18,9 @@ message User {
 
     enum UserState {
         STATE_UNKNOWN = 0;
-        STATE_CREATED = 1;
-        STATE_AUTHENTICATED = 2;
-        STATE_LOGGED_IN = 3;
+        STATE_LOGGING_IN = 1;
+        STATE_LOGGED_IN = 2;
+        STATE_AUTHORIZED = 3;
     }
     UserState state = 7;
 }

@@ -55,7 +55,7 @@ func NewTestDatabase(ctx context.Context) Database {
 
 	// Because this is the test database, add a test user
 
-	err := db.SaveUser(context.Background(), &pb.User{Username: "testuser", Auth: "testuser", State: pb.User_STATE_LOGGED_IN})
+	err := db.SaveUser(context.Background(), &pb.User{Username: "testuser", Auth: "testuser", State: pb.User_STATE_AUTHORIZED})
 	if err != nil {
 		panic(err)
 	}

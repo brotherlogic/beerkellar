@@ -24,25 +24,25 @@ const (
 type User_UserState int32
 
 const (
-	User_STATE_UNKNOWN       User_UserState = 0
-	User_STATE_CREATED       User_UserState = 1
-	User_STATE_AUTHENTICATED User_UserState = 2
-	User_STATE_LOGGED_IN     User_UserState = 3
+	User_STATE_UNKNOWN    User_UserState = 0
+	User_STATE_LOGGING_IN User_UserState = 1
+	User_STATE_LOGGED_IN  User_UserState = 2
+	User_STATE_AUTHORIZED User_UserState = 3
 )
 
 // Enum value maps for User_UserState.
 var (
 	User_UserState_name = map[int32]string{
 		0: "STATE_UNKNOWN",
-		1: "STATE_CREATED",
-		2: "STATE_AUTHENTICATED",
-		3: "STATE_LOGGED_IN",
+		1: "STATE_LOGGING_IN",
+		2: "STATE_LOGGED_IN",
+		3: "STATE_AUTHORIZED",
 	}
 	User_UserState_value = map[string]int32{
-		"STATE_UNKNOWN":       0,
-		"STATE_CREATED":       1,
-		"STATE_AUTHENTICATED": 2,
-		"STATE_LOGGED_IN":     3,
+		"STATE_UNKNOWN":    0,
+		"STATE_LOGGING_IN": 1,
+		"STATE_LOGGED_IN":  2,
+		"STATE_AUTHORIZED": 3,
 	}
 )
 
@@ -1239,10 +1239,10 @@ const file_api_proto_rawDesc = "" +
 	"\x0elast_feed_pull\x18\x06 \x01(\x03R\flastFeedPull\x120\n" +
 	"\x05state\x18\a \x01(\x0e2\x1a.beerkellar.User.UserStateR\x05state\"_\n" +
 	"\tUserState\x12\x11\n" +
-	"\rSTATE_UNKNOWN\x10\x00\x12\x11\n" +
-	"\rSTATE_CREATED\x10\x01\x12\x17\n" +
-	"\x13STATE_AUTHENTICATED\x10\x02\x12\x13\n" +
-	"\x0fSTATE_LOGGED_IN\x10\x03\"m\n" +
+	"\rSTATE_UNKNOWN\x10\x00\x12\x14\n" +
+	"\x10STATE_LOGGING_IN\x10\x01\x12\x13\n" +
+	"\x0fSTATE_LOGGED_IN\x10\x02\x12\x14\n" +
+	"\x10STATE_AUTHORIZED\x10\x03\"m\n" +
 	"\aCheckin\x12\x1d\n" +
 	"\n" +
 	"checkin_id\x18\x01 \x01(\x03R\tcheckinId\x12\x17\n" +
