@@ -16,7 +16,7 @@ func TestRunRefresh(t *testing.T) {
 		Username:     "user1",
 		Auth:         "auth1",
 		LastFeedPull: 0,
-		State:        pb.User_STATE_LOGGED_IN,
+		State:        pb.User_STATE_AUTHORIZED,
 	})
 	if err != nil {
 		t.Fatalf("Unable to save user: %v", err)
@@ -28,7 +28,7 @@ func TestRunRefresh(t *testing.T) {
 		Username:     "user2",
 		Auth:         "auth2",
 		LastFeedPull: now,
-		State:        pb.User_STATE_LOGGED_IN,
+		State:        pb.User_STATE_AUTHORIZED,
 	})
 	if err != nil {
 		t.Fatalf("Unable to save user: %v", err)

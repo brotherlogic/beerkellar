@@ -168,7 +168,7 @@ func (u *Untappd) handleAuthResponse(ctx context.Context, db Database, code, tok
 	}
 
 	user.AccessToken = resp.Response.AccessToken
-	user.State = pb.User_STATE_AUTHENTICATED
+	user.State = pb.User_STATE_LOGGED_IN
 	err = db.SaveUser(ctx, user)
 	return user, err
 }
