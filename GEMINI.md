@@ -14,6 +14,4 @@ facilitate the integration tests, we use the fake_untappd server to act as an Un
 
 ## Coding style
 
-All changes should be pushed to a feature branch - github actions then take care
-of running tests and validating the code. If these actions pass then the PR is 
-merged with the main branch.
+Once a change is complete and all tasks are done, follow the finish.md workflow
