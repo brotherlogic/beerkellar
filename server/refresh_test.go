@@ -15,6 +15,7 @@ func TestRunRefresh(t *testing.T) {
 	err := s.db.SaveUser(ctx, &pb.User{
 		Username:     "user1",
 		Auth:         "auth1",
+		UserId:       101,
 		LastFeedPull: 0,
 		State:        pb.User_STATE_AUTHORIZED,
 	})
@@ -27,6 +28,7 @@ func TestRunRefresh(t *testing.T) {
 	err = s.db.SaveUser(ctx, &pb.User{
 		Username:     "user2",
 		Auth:         "auth2",
+		UserId:       102,
 		LastFeedPull: now,
 		State:        pb.User_STATE_AUTHORIZED,
 	})

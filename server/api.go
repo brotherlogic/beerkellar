@@ -113,7 +113,15 @@ func (s *Server) GetBeer(ctx context.Context, req *pb.GetBeerRequest) (*pb.GetBe
 
 	cellar, err := s.db.GetCellar(ctx, user.GetUserId())
 	if err != nil {
-		return nil, err
+		if status.Code(err) == codes.NotFound && user.GetUserId() > 0 {
+			cellar = &pb.Cellar{}
+			err = s.db.SaveCellar(ctx, user.GetUserId(), cellar)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			return nil, err
+		}
 	}
 
 	log.Printf("Found: %v", cellar)
@@ -172,7 +180,15 @@ func (s *Server) GetCellar(ctx context.Context, _ *pb.GetCellarRequest) (*pb.Get
 
 	cellar, err := s.db.GetCellar(ctx, user.GetUserId())
 	if err != nil {
-		return nil, err
+		if status.Code(err) == codes.NotFound && user.GetUserId() > 0 {
+			cellar = &pb.Cellar{}
+			err = s.db.SaveCellar(ctx, user.GetUserId(), cellar)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			return nil, err
+		}
 	}
 
 	var beers []*pb.Beer
@@ -199,7 +215,7 @@ func (s *Server) AddBeer(ctx context.Context, req *pb.AddBeerRequest) (*pb.AddBe
 	cellar, err := s.db.GetCellar(ctx, user.GetUserId())
 	if err != nil {
 		// OutOfRange is cannot be found in DB
-		if status.Code(err) == codes.NotFound {
+		if status.Code(err) == codes.NotFound && user.GetUserId() > 0 {
 			cellar = &pb.Cellar{}
 		} else {
 			return nil, err
@@ -307,7 +323,7 @@ func (s *Server) RefreshUser(ctx context.Context, req *pb.RefreshUserRequest) (*
 	cellar, err := s.db.GetCellar(ctx, user.GetUserId())
 	cellarChanged := false
 	if err != nil {
-		if status.Code(err) == codes.NotFound {
+		if status.Code(err) == codes.NotFound && user.GetUserId() > 0 {
 			cellar = &pb.Cellar{}
 		} else {
 			return nil, fmt.Errorf("unable to get cellar: %w", err)
@@ -357,10 +373,15 @@ func (s *Server) GetDrunk(ctx context.Context, req *pb.GetDrunkRequest) (*pb.Get
 
 	drunks, err := s.db.GetDrunk(ctx, user.GetUserId())
 	if err != nil {
-		if status.Code(err) == codes.NotFound {
-			return &pb.GetDrunkResponse{Drunk: make(map[int64]int64)}, nil
+		if status.Code(err) == codes.NotFound && user.GetUserId() > 0 {
+			drunks = &pb.LastCheckins{LastCheckins: make(map[int64]int64)}
+			err = s.db.SaveDrunk(ctx, user.GetUserId(), drunks)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			return nil, err
 		}
-		return nil, err
 	}
 
 	return &pb.GetDrunkResponse{Drunk: drunks.GetLastCheckins()}, nil

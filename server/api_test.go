@@ -130,3 +130,36 @@ func TestAuthFlow(t *testing.T) {
 		t.Errorf("Expected state AUTHORIZED, got %v", user.GetState())
 	}
 }
+
+func TestGetCellarReturnsEmptyForNewUser(t *testing.T) {
+	ctx, cancel := GetTestContext(context.Background(), time.Minute)
+	defer cancel()
+
+	s := getTestServer(ctx)
+
+	r, err := s.GetCellar(ctx, &pb.GetCellarRequest{})
+	if err != nil {
+		t.Fatalf("Unable to get cellar: %v", err)
+	}
+
+	if len(r.GetBeers()) != 0 {
+		t.Fatalf("Beers returned for empty cellar: %v", r)
+	}
+}
+
+func TestGetDrunkReturnsEmptyForNewUser(t *testing.T) {
+	ctx, cancel := GetTestContext(context.Background(), time.Minute)
+	defer cancel()
+
+	s := getTestServer(ctx)
+
+	r, err := s.GetDrunk(ctx, &pb.GetDrunkRequest{})
+	if err != nil {
+		t.Fatalf("Unable to get drunk records: %v", err)
+	}
+
+	if len(r.GetDrunk()) != 0 {
+		t.Fatalf("Records returned for empty drunk archive: %v", r)
+	}
+}
+
