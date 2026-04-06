@@ -29,6 +29,7 @@ type Database interface {
 	SaveBeer(ctx context.Context, beer *pb.Beer) error
 
 	GetDrunk(ctx context.Context, userId int64) (*pb.LastCheckins, error)
+	SaveDrunk(ctx context.Context, userId int64, drunks *pb.LastCheckins) error
 
 	SaveCheckin(ctx context.Context, userId int64, checkin *pb.Checkin) error
 }
@@ -55,7 +56,7 @@ func NewTestDatabase(ctx context.Context) Database {
 
 	// Because this is the test database, add a test user
 
-	err := db.SaveUser(context.Background(), &pb.User{Username: "testuser", Auth: "testuser", State: pb.User_STATE_AUTHORIZED})
+	err := db.SaveUser(context.Background(), &pb.User{Username: "testuser", Auth: "testuser", State: pb.User_STATE_AUTHORIZED, UserId: 100})
 	if err != nil {
 		panic(err)
 	}
@@ -188,3 +189,8 @@ func (d *DB) GetDrunk(ctx context.Context, userId int64) (*pb.LastCheckins, erro
 	err = proto.Unmarshal(data, darchive)
 	return darchive, err
 }
+
+func (d *DB) SaveDrunk(ctx context.Context, userId int64, drunks *pb.LastCheckins) error {
+	return d.save(ctx, fmt.Sprintf("beerkellar/darchive/%v", userId), drunks)
+}
+

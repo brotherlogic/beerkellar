@@ -32,6 +32,9 @@ Beerkellar tracks user authentication through three primary states:
 
 All API methods (except login-related ones) require the user to be in the **AUTHORIZED** state.
 
+## Default Initialization
+
+If a user gets placed into the **AUTHORIZED** state and attempts to access an empty cellar or view their drunk history, the system will now automatically provision and store underlying empty objects upon first query. This prevents downstream apps or the client interface from running into confusing `NotFound` scenarios.
 
 ## Development
 
