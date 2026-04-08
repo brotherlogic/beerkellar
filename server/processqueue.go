@@ -97,7 +97,7 @@ func (q *Queue) RunQueue() {
 					backoff -= time.Second
 				}
 			}
-			log.Printf("Ran Queue Element %+v", f)
+			log.Printf("Ran Queue Element %+v -> %v", f, err)
 			cancel()
 			q.flushLock.Unlock()
 		}
