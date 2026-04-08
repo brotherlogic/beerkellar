@@ -22,10 +22,11 @@
 	// Uncomment to connect as root instead. More info: https://aka.ms/dev-containers-non-root.
 	// "remoteUser": "root"
 	"workspaceFolder": "/workspaces/beerkellar",
+	"workingDir": "/workspaces/beerkellar",
 	"initializeCommand": "echo \"GH_TOKEN=$(gh auth token)\" > .devcontainer/.env.auth",
 	"runArgs": [
 		"--security-opt",
-		"label=disable",
+		"label=disable"
 	],
 	"containerEnv": {
 		"GH_GIT_PROTOCOL": "ssh"
