@@ -253,7 +253,7 @@ const (
       ]
     }
   }
-}`
+}}`
 	responsePale = `{
   "meta": {
     "http_code": 200
@@ -494,5 +494,5 @@ const (
       ]
     }
   }
-}`
+}}`
 )

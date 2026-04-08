@@ -195,7 +195,9 @@ func (u *Untappd) GetUserInfo(ctx context.Context) (string, int64, error) {
 }
 
 type CheckinResponse struct {
-	Checkins []Checkin `json:"items"`
+	Response struct {
+		Checkins []Checkin `json:"items"`
+	} `json:"response"`
 }
 
 type Checkin struct {
@@ -223,7 +225,7 @@ func (u *Untappd) GetCheckins(ctx context.Context) ([]*pb.Checkin, error) {
 	log.Printf("Checkins resp: %+v", resp)
 
 	var checkins []*pb.Checkin
-	for _, c := range resp.Checkins {
+	for _, c := range resp.Response.Checkins {
 		checkins = append(checkins, &pb.Checkin{
 			CheckinId: int64(c.CheckinId),
 			BeerId:    int64(c.Beer.Bid),
