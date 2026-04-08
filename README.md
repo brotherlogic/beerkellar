@@ -42,6 +42,9 @@ When managing beers interacting with the Untappd API, all calls are securely pus
 
 ## Development
 
+### Dev Container
+This project includes a VS Code Dev Container configuration for a consistent development environment. It is configured to automatically set the working directory to `/workspaces/beerkellar`.
+
 ### Prerequisites
 - Go 1.22+
 - Docker (for integration tests)
