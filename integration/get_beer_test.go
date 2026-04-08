@@ -42,18 +42,18 @@ func TestGetBeer(t *testing.T) {
 	ctx, cancel = GetTestContext(context.Background(), time.Minute*5)
 	defer cancel()
 
-	// Add a beer
 	_, err = client.AddBeer(ctx, &pb.AddBeerRequest{
 		BeerId:   16630, // Sierra Nevada Celebration Ale
-		Quantity: 1})
+		Quantity: 1,
+		SizeFlOz: 12})
 	if err != nil {
 		t.Fatalf("Unable to add beer: %v", err)
 	}
 
-	// Add a beer
 	_, err = client.AddBeer(ctx, &pb.AddBeerRequest{
 		BeerId:   6284, // Sierra Nevada Celebration Ale
-		Quantity: 1})
+		Quantity: 1,
+		SizeFlOz: 12})
 	if err != nil {
 		t.Fatalf("Unable to add beer: %v", err)
 	}

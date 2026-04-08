@@ -12,9 +12,9 @@ Beerkellar is a CLI tool and backend service for managing a personal beer cellar
    ```bash
    beerkellar_cli login
    ```
-3. Add a beer:
+3. Add a beer (requires ID, quantity, and size in fl oz):
    ```bash
-   beerkellar_cli add --id <beer_id> --quantity 1
+   beerkellar_cli add --id <beer_id> --quantity 1 --size 12
    ```
 4. View your cellar:
    ```bash

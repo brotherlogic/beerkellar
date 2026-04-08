@@ -163,3 +163,19 @@ func TestGetDrunkReturnsEmptyForNewUser(t *testing.T) {
 	}
 }
 
+func TestAddBeerRequiresSize(t *testing.T) {
+	ctx, cancel := GetTestContext(context.Background(), time.Minute)
+	defer cancel()
+
+	s := getTestServer(ctx)
+
+	_, err := s.AddBeer(ctx, &pb.AddBeerRequest{
+		BeerId:   123,
+		Quantity: 1,
+		// SizeFlOz: 0 is default
+	})
+	if err == nil {
+		t.Fatalf("Should have failed to add beer without size")
+	}
+}
+
