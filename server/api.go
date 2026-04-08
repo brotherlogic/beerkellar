@@ -125,6 +125,14 @@ func (s *Server) GetBeer(ctx context.Context, req *pb.GetBeerRequest) (*pb.GetBe
 	}
 
 	log.Printf("Found: %v", cellar)
+	drunks, err := s.db.GetDrunk(ctx, user.GetUserId())
+	if err != nil && status.Code(err) != codes.NotFound {
+		return nil, err
+	}
+	lastDrunks := make(map[int64]int64)
+	if drunks != nil {
+		lastDrunks = drunks.GetLastCheckins()
+	}
 
 	bcache := make(map[int64]*pb.Beer)
 	for _, entry := range cellar.GetEntries() {
@@ -141,13 +149,24 @@ func (s *Server) GetBeer(ctx context.Context, req *pb.GetBeerRequest) (*pb.GetBe
 		var ncellar []*pb.CellarEntry
 		var pBeer *pb.Beer
 		oldest := int64(math.MaxInt64)
+		leastRecent := int64(math.MaxInt64)
 		for _, entry := range cellar.GetEntries() {
 			if beer, ok := bcache[entry.GetBeerId()]; ok {
-				if requirement.GetMaxUnits() == 0 || convertToLitres(entry.GetSizeFlOz())*beer.GetAbv() < float32(requirement.GetMaxUnits()) {
+				if requirement.GetMaxUnits() == 0 || convertToLitres(entry.GetSizeFlOz())*beer.GetAbv() < requirement.GetMaxUnits() {
 					ncellar = append(ncellar, entry)
 					if requirement.GetStrategy() == pb.BeerRequirement_STRATEGY_OLDEST && entry.GetDateAdded() < oldest {
 						oldest = entry.GetDateAdded()
 						pBeer = bcache[entry.GetBeerId()]
+					} else if requirement.GetStrategy() == pb.BeerRequirement_STRATEGY_LEAST_RECENTLY_DRUNK {
+						lastDrunk := lastDrunks[entry.GetBeerId()]
+						if lastDrunk < leastRecent {
+							leastRecent = lastDrunk
+							oldest = entry.GetDateAdded()
+							pBeer = bcache[entry.GetBeerId()]
+						} else if lastDrunk == leastRecent && entry.GetDateAdded() < oldest {
+							oldest = entry.GetDateAdded()
+							pBeer = bcache[entry.GetBeerId()]
+						}
 					}
 				}
 			} else {

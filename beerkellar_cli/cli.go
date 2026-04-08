@@ -85,6 +85,33 @@ func main() {
 		for i, beer := range cellar.GetBeers() {
 			log.Printf("%v. %v - %v (%v) [%v]", i+1, beer.GetBrewery(), beer.GetName(), beer.GetAbv(), beer.GetId())
 		}
+	case "pull":
+		pullSet := flag.NewFlagSet("pull_beer", flag.ExitOnError)
+		weekday := pullSet.Bool("weekday", false, "Whether it's a weekday (limit to 2.5 units)")
+		if err := pullSet.Parse(os.Args[2:]); err == nil {
+			req := &pb.GetBeerRequest{
+				NoRepeat: true,
+				Requirements: []*pb.BeerRequirement{
+					{
+						Strategy: pb.BeerRequirement_STRATEGY_LEAST_RECENTLY_DRUNK,
+					},
+				},
+			}
+			if *weekday {
+				req.Requirements[0].MaxUnits = 2.5
+			}
+
+			res, err := client.GetBeer(ctx, req)
+			if err != nil {
+				log.Fatalf("Error pulling beer: %v", err)
+			}
+			if len(res.GetBeers()) > 0 {
+				beer := res.GetBeers()[0]
+				log.Printf("Pulled beer: %v - %v (%v%% ABV) [%v]", beer.GetBrewery(), beer.GetName(), beer.GetAbv(), beer.GetId())
+			} else {
+				log.Printf("No beers found matching requirements")
+			}
+		}
 	case "login":
 		url, err := client.GetLogin(context.Background(), &pb.GetLoginRequest{})
 		if err != nil {

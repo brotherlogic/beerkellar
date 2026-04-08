@@ -79,10 +79,11 @@ message GetBeerResponse{
 }
 
 message BeerRequirement {
-  int32 max_units = 1;
+  float max_units = 1;
   enum PickStrategy {
     STRATEGY_RANDOM = 0;
     STRATEGY_OLDEST = 1;
+    STRATEGY_LEAST_RECENTLY_DRUNK = 2;
   }
   PickStrategy strategy = 2;
 }

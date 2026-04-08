@@ -76,8 +76,9 @@ func (User_UserState) EnumDescriptor() ([]byte, []int) {
 type BeerRequirement_PickStrategy int32
 
 const (
-	BeerRequirement_STRATEGY_RANDOM BeerRequirement_PickStrategy = 0
-	BeerRequirement_STRATEGY_OLDEST BeerRequirement_PickStrategy = 1
+	BeerRequirement_STRATEGY_RANDOM               BeerRequirement_PickStrategy = 0
+	BeerRequirement_STRATEGY_OLDEST               BeerRequirement_PickStrategy = 1
+	BeerRequirement_STRATEGY_LEAST_RECENTLY_DRUNK BeerRequirement_PickStrategy = 2
 )
 
 // Enum value maps for BeerRequirement_PickStrategy.
@@ -85,10 +86,12 @@ var (
 	BeerRequirement_PickStrategy_name = map[int32]string{
 		0: "STRATEGY_RANDOM",
 		1: "STRATEGY_OLDEST",
+		2: "STRATEGY_LEAST_RECENTLY_DRUNK",
 	}
 	BeerRequirement_PickStrategy_value = map[string]int32{
-		"STRATEGY_RANDOM": 0,
-		"STRATEGY_OLDEST": 1,
+		"STRATEGY_RANDOM":               0,
+		"STRATEGY_OLDEST":               1,
+		"STRATEGY_LEAST_RECENTLY_DRUNK": 2,
 	}
 )
 
@@ -853,7 +856,7 @@ func (x *GetBeerResponse) GetBeers() []*Beer {
 
 type BeerRequirement struct {
 	state         protoimpl.MessageState       `protogen:"open.v1"`
-	MaxUnits      int32                        `protobuf:"varint,1,opt,name=max_units,json=maxUnits,proto3" json:"max_units,omitempty"`
+	MaxUnits      float32                      `protobuf:"fixed32,1,opt,name=max_units,json=maxUnits,proto3" json:"max_units,omitempty"`
 	Strategy      BeerRequirement_PickStrategy `protobuf:"varint,2,opt,name=strategy,proto3,enum=beerkellar.BeerRequirement_PickStrategy" json:"strategy,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
@@ -889,7 +892,7 @@ func (*BeerRequirement) Descriptor() ([]byte, []int) {
 	return file_api_proto_rawDescGZIP(), []int{15}
 }
 
-func (x *BeerRequirement) GetMaxUnits() int32 {
+func (x *BeerRequirement) GetMaxUnits() float32 {
 	if x != nil {
 		return x.MaxUnits
 	}
@@ -1278,13 +1281,14 @@ const file_api_proto_rawDesc = "" +
 	"\frequirements\x18\x01 \x03(\v2\x1b.beerkellar.BeerRequirementR\frequirements\x12\x1b\n" +
 	"\tno_repeat\x18\x02 \x01(\bR\bnoRepeat\"9\n" +
 	"\x0fGetBeerResponse\x12&\n" +
-	"\x05beers\x18\x01 \x03(\v2\x10.beerkellar.BeerR\x05beers\"\xae\x01\n" +
+	"\x05beers\x18\x01 \x03(\v2\x10.beerkellar.BeerR\x05beers\"\xd1\x01\n" +
 	"\x0fBeerRequirement\x12\x1b\n" +
-	"\tmax_units\x18\x01 \x01(\x05R\bmaxUnits\x12D\n" +
-	"\bstrategy\x18\x02 \x01(\x0e2(.beerkellar.BeerRequirement.PickStrategyR\bstrategy\"8\n" +
+	"\tmax_units\x18\x01 \x01(\x02R\bmaxUnits\x12D\n" +
+	"\bstrategy\x18\x02 \x01(\x0e2(.beerkellar.BeerRequirement.PickStrategyR\bstrategy\"[\n" +
 	"\fPickStrategy\x12\x13\n" +
 	"\x0fSTRATEGY_RANDOM\x10\x00\x12\x13\n" +
-	"\x0fSTRATEGY_OLDEST\x10\x01\"\x11\n" +
+	"\x0fSTRATEGY_OLDEST\x10\x01\x12!\n" +
+	"\x1dSTRATEGY_LEAST_RECENTLY_DRUNK\x10\x02\"\x11\n" +
 	"\x0fGetDrunkRequest\"\x8b\x01\n" +
 	"\x10GetDrunkResponse\x12=\n" +
 	"\x05drunk\x18\x01 \x03(\v2'.beerkellar.GetDrunkResponse.DrunkEntryR\x05drunk\x1a8\n" +
