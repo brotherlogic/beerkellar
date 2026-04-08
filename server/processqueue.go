@@ -56,8 +56,9 @@ type CacheBeer struct {
 
 func (c CacheBeer) run(ctx context.Context) error {
 	// Let's see if we have this in the cache already
-	_, err := c.d.GetBeer(ctx, c.beerId)
+	b, err := c.d.GetBeer(ctx, c.beerId)
 	if err == nil {
+		log.Printf("Already have beer %v", b)
 		return nil
 	}
 
