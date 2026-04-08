@@ -14,7 +14,11 @@ func (s *Server) HandleGetBeer(w http.ResponseWriter, r *http.Request) {
 
 const (
 	response = `{
-  "beer": {
+  "meta": {
+    "http_code": 200
+  },
+  "response": {
+    "beer": {
     "bid": 16630,
     "beer_name": "Celebration Ale",
     "beer_label": "https://d1c8v1qci5en44.cloudfront.net/site/beer_logos/beer-_16630_sm_96f50e03ae848a4a368a787b38f989.jpeg",
@@ -251,7 +255,11 @@ const (
   }
 }`
 	responsePale = `{
-  "beer": {
+  "meta": {
+    "http_code": 200
+  },
+  "response": {
+    "beer": {
     "bid": 6284,
     "beer_name": "Pale Ale",
     "beer_label": "https://d1c8v1qci5en44.cloudfront.net/site/beer_logos/beer-_16630_sm_96f50e03ae848a4a368a787b38f989.jpeg",

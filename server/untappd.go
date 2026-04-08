@@ -244,24 +244,26 @@ func (u *Untappd) getBeerFromUntappd(ctx context.Context, beerId int64) (*pb.Bee
 	}
 	return &pb.Beer{
 		Id:      beerId,
-		Name:    resp.Beer.BeerName,
-		Abv:     resp.Beer.BeerAbv,
-		Brewery: resp.Beer.Brewery.BreweryName,
+		Name:    resp.Response.Beer.BeerName,
+		Abv:     resp.Response.Beer.BeerAbv,
+		Brewery: resp.Response.Beer.Brewery.BreweryName,
 	}, nil
 }
 
 type BreweryResponse struct {
-	BreweryName string
+	BreweryName string `json:"brewery_name"`
 }
 
 type BeerResponse struct {
-	BeerName    string  `json:"beer_name"`
-	BeerAbv     float32 `json:"beer_abv"`
-	Brewery     BreweryResponse
-	RatingScore float32 `json:"rating_score"`
-	Bid         int     `json:"bid"`
+	BeerName    string          `json:"beer_name"`
+	BeerAbv     float32         `json:"beer_abv"`
+	Brewery     BreweryResponse `json:"brewery"`
+	RatingScore float32         `json:"rating_score"`
+	Bid         int             `json:"bid"`
 }
 
 type BeerInfoResponse struct {
-	Beer BeerResponse
+	Response struct {
+		Beer BeerResponse `json:"beer"`
+	} `json:"response"`
 }
