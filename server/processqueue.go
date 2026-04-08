@@ -59,7 +59,9 @@ func (c CacheBeer) run(ctx context.Context) error {
 	b, err := c.d.GetBeer(ctx, c.beerId)
 	if err == nil {
 		log.Printf("Already have beer %v", b)
-		return nil
+		if b.GetAbv() > 0 {
+			return nil
+		}
 	}
 
 	beer, err := c.u.getBeerFromUntappd(ctx, c.beerId)
