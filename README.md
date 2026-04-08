@@ -36,6 +36,10 @@ All API methods (except login-related ones) require the user to be in the **AUTH
 
 If a user gets placed into the **AUTHORIZED** state and attempts to access an empty cellar or view their drunk history, the system will now automatically provision and store underlying empty objects upon first query. This prevents downstream apps or the client interface from running into confusing `NotFound` scenarios.
 
+## Caching and Offline Updates
+
+When managing beers interacting with the Untappd API, all calls are securely pushed to a background process queue to avoid quota limits. To ensure robust fetching, failed metadata calls will be transparently retried the next time a user opens their cellar view.
+
 ## Development
 
 ### Prerequisites
