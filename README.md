@@ -20,6 +20,11 @@ Beerkellar is a CLI tool and backend service for managing a personal beer cellar
    ```bash
    beerkellar_cli cellar
    ```
+5. Pull a beer to drink:
+   ```bash
+   beerkellar_cli pull [--weekday]
+   ```
+   The `pull` command chooses a beer you haven't drunk recently (or at all). Use `--weekday` to limit choices to beers with 2.5 units of alcohol or less.
 
 ## Documentation
 
