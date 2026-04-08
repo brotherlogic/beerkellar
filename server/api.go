@@ -93,7 +93,16 @@ func (s *Server) getUser(ctx context.Context) (*pb.User, error) {
 		return nil, err
 	}
 
-	return s.db.GetUser(ctx, key)
+	user, err := s.db.GetUser(ctx, key)
+	if err != nil {
+		return nil, err
+	}
+
+	if user.GetState() != pb.User_STATE_AUTHORIZED {
+		return nil, status.Errorf(codes.PermissionDenied, "User is not authorized (current state: %v)", user.GetState())
+	}
+
+	return user, nil
 }
 
 func (s *Server) GetBeer(ctx context.Context, req *pb.GetBeerRequest) (*pb.GetBeerResponse, error) {
@@ -104,10 +113,26 @@ func (s *Server) GetBeer(ctx context.Context, req *pb.GetBeerRequest) (*pb.GetBe
 
 	cellar, err := s.db.GetCellar(ctx, user.GetUserId())
 	if err != nil {
-		return nil, err
+		if status.Code(err) == codes.NotFound && user.GetUserId() > 0 {
+			cellar = &pb.Cellar{}
+			err = s.db.SaveCellar(ctx, user.GetUserId(), cellar)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			return nil, err
+		}
 	}
 
 	log.Printf("Found: %v", cellar)
+	drunks, err := s.db.GetDrunk(ctx, user.GetUserId())
+	if err != nil && status.Code(err) != codes.NotFound {
+		return nil, err
+	}
+	lastDrunks := make(map[int64]int64)
+	if drunks != nil {
+		lastDrunks = drunks.GetLastCheckins()
+	}
 
 	bcache := make(map[int64]*pb.Beer)
 	for _, entry := range cellar.GetEntries() {
@@ -124,13 +149,24 @@ func (s *Server) GetBeer(ctx context.Context, req *pb.GetBeerRequest) (*pb.GetBe
 		var ncellar []*pb.CellarEntry
 		var pBeer *pb.Beer
 		oldest := int64(math.MaxInt64)
+		leastRecent := int64(math.MaxInt64)
 		for _, entry := range cellar.GetEntries() {
 			if beer, ok := bcache[entry.GetBeerId()]; ok {
-				if requirement.GetMaxUnits() == 0 || convertToLitres(entry.GetSizeFlOz())*beer.GetAbv() < float32(requirement.GetMaxUnits()) {
+				if requirement.GetMaxUnits() == 0 || convertToLitres(entry.GetSizeFlOz())*beer.GetAbv() < requirement.GetMaxUnits() {
 					ncellar = append(ncellar, entry)
 					if requirement.GetStrategy() == pb.BeerRequirement_STRATEGY_OLDEST && entry.GetDateAdded() < oldest {
 						oldest = entry.GetDateAdded()
 						pBeer = bcache[entry.GetBeerId()]
+					} else if requirement.GetStrategy() == pb.BeerRequirement_STRATEGY_LEAST_RECENTLY_DRUNK {
+						lastDrunk := lastDrunks[entry.GetBeerId()]
+						if lastDrunk < leastRecent {
+							leastRecent = lastDrunk
+							oldest = entry.GetDateAdded()
+							pBeer = bcache[entry.GetBeerId()]
+						} else if lastDrunk == leastRecent && entry.GetDateAdded() < oldest {
+							oldest = entry.GetDateAdded()
+							pBeer = bcache[entry.GetBeerId()]
+						}
 					}
 				}
 			} else {
@@ -163,15 +199,24 @@ func (s *Server) GetCellar(ctx context.Context, _ *pb.GetCellarRequest) (*pb.Get
 
 	cellar, err := s.db.GetCellar(ctx, user.GetUserId())
 	if err != nil {
-		return nil, err
+		if status.Code(err) == codes.NotFound && user.GetUserId() > 0 {
+			cellar = &pb.Cellar{}
+			err = s.db.SaveCellar(ctx, user.GetUserId(), cellar)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			return nil, err
+		}
 	}
 
 	var beers []*pb.Beer
 	for _, b := range cellar.GetEntries() {
 		beer, err := s.db.GetBeer(ctx, b.BeerId)
-		if err != nil {
-			// Trigger a retry to cache
-			s.q.Enqueue(&CacheBeer{beerId: b.BeerId, u: s.untappd, d: s.db})
+		if err != nil || beer.GetName() == "" {
+			// Trigger a retry to cache, utilizing upgraded client
+			nut := s.untappd.Upgrade(user.GetAccessToken())
+			s.q.Enqueue(CacheBeer{beerId: b.BeerId, u: nut, d: s.db})
 
 			beers = append(beers, &pb.Beer{Id: b.BeerId})
 		} else {
@@ -187,10 +232,14 @@ func (s *Server) AddBeer(ctx context.Context, req *pb.AddBeerRequest) (*pb.AddBe
 	if err != nil {
 		return nil, err
 	}
+	if req.GetSizeFlOz() <= 0 {
+		return nil, status.Errorf(codes.InvalidArgument, "size_fl_oz must be specified and greater than zero")
+	}
+
 	cellar, err := s.db.GetCellar(ctx, user.GetUserId())
 	if err != nil {
 		// OutOfRange is cannot be found in DB
-		if status.Code(err) == codes.NotFound {
+		if status.Code(err) == codes.NotFound && user.GetUserId() > 0 {
 			cellar = &pb.Cellar{}
 		} else {
 			return nil, err
@@ -217,7 +266,8 @@ func (s *Server) AddBeer(ctx context.Context, req *pb.AddBeerRequest) (*pb.AddBe
 func (s *Server) GetLogin(ctx context.Context, req *pb.GetLoginRequest) (*pb.GetLoginResponse, error) {
 	tmpToken := fmt.Sprintf("%v-%v", time.Now().UnixNano(), rand.Int63())
 	user := &pb.User{
-		Auth: tmpToken,
+		Auth:  tmpToken,
+		State: pb.User_STATE_LOGGING_IN,
 	}
 	err := s.db.SaveUser(ctx, user)
 	if err != nil {
@@ -236,12 +286,28 @@ func (s *Server) GetAuthToken(ctx context.Context, req *pb.GetAuthTokenRequest) 
 		return nil, err
 	}
 
-	if len(user.GetAccessToken()) > 0 {
+	if user.GetState() == pb.User_STATE_LOGGED_IN {
+		nut := s.untappd.Upgrade(user.GetAccessToken())
+		username, userId, err := nut.GetUserInfo(ctx)
+		if err != nil {
+			return nil, status.Errorf(codes.Unavailable, "Unable to fetch user info: %v (retryable)", err)
+		}
+
+		user.Username = username
+		user.UserId = userId
+		user.State = pb.User_STATE_AUTHORIZED
+		err = s.db.SaveUser(ctx, user)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if user.GetState() == pb.User_STATE_AUTHORIZED {
 		return &pb.GetAuthTokenResponse{
 			Code: req.GetCode(),
 		}, nil
 	}
-	return &pb.GetAuthTokenResponse{}, status.Errorf(codes.NotFound, "User is not fully authenticated")
+	return &pb.GetAuthTokenResponse{}, status.Errorf(codes.NotFound, "User is not fully authenticated (current state: %v)", user.GetState())
 }
 
 func convertToLitres(flOz int32) float32 {
@@ -267,7 +333,11 @@ func (s *Server) RefreshUser(ctx context.Context, req *pb.RefreshUserRequest) (*
 		return nil, fmt.Errorf("unable to locate user %v -> %w", req.GetUsername(), err)
 	}
 
-	nut := s.untappd.Upgrade(user.GetAuth())
+	if user.GetState() != pb.User_STATE_AUTHORIZED {
+		return nil, status.Errorf(codes.PermissionDenied, "User %v is not logged in", req.GetUsername())
+	}
+
+	nut := s.untappd.Upgrade(user.GetAccessToken())
 
 	checkins, err := nut.GetCheckins(ctx)
 	if err != nil {
@@ -277,7 +347,7 @@ func (s *Server) RefreshUser(ctx context.Context, req *pb.RefreshUserRequest) (*
 	cellar, err := s.db.GetCellar(ctx, user.GetUserId())
 	cellarChanged := false
 	if err != nil {
-		if status.Code(err) == codes.NotFound {
+		if status.Code(err) == codes.NotFound && user.GetUserId() > 0 {
 			cellar = &pb.Cellar{}
 		} else {
 			return nil, fmt.Errorf("unable to get cellar: %w", err)
@@ -327,10 +397,15 @@ func (s *Server) GetDrunk(ctx context.Context, req *pb.GetDrunkRequest) (*pb.Get
 
 	drunks, err := s.db.GetDrunk(ctx, user.GetUserId())
 	if err != nil {
-		if status.Code(err) == codes.NotFound {
-			return &pb.GetDrunkResponse{Drunk: make(map[int64]int64)}, nil
+		if status.Code(err) == codes.NotFound && user.GetUserId() > 0 {
+			drunks = &pb.LastCheckins{LastCheckins: make(map[int64]int64)}
+			err = s.db.SaveDrunk(ctx, user.GetUserId(), drunks)
+			if err != nil {
+				return nil, err
+			}
+		} else {
+			return nil, err
 		}
-		return nil, err
 	}
 
 	return &pb.GetDrunkResponse{Drunk: drunks.GetLastCheckins()}, nil

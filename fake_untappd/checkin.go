@@ -57,7 +57,9 @@ func (s *Server) HandleCheckins(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
-	jsonData, err := json.Marshal(res)
+	jsonData, err := json.Marshal(struct {
+		Response Checkins `json:"response"`
+	}{Response: res})
 	if err != nil {
 		panic(err)
 	}

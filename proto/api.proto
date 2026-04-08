@@ -15,6 +15,14 @@ message User {
 
     int64 latest_checkin = 5;
     int64 last_feed_pull = 6;
+
+    enum UserState {
+        STATE_UNKNOWN = 0;
+        STATE_LOGGING_IN = 1;
+        STATE_LOGGED_IN = 2;
+        STATE_AUTHORIZED = 3;
+    }
+    UserState state = 7;
 }
 
 message Checkin {
@@ -71,10 +79,11 @@ message GetBeerResponse{
 }
 
 message BeerRequirement {
-  int32 max_units = 1;
+  float max_units = 1;
   enum PickStrategy {
     STRATEGY_RANDOM = 0;
     STRATEGY_OLDEST = 1;
+    STRATEGY_LEAST_RECENTLY_DRUNK = 2;
   }
   PickStrategy strategy = 2;
 }

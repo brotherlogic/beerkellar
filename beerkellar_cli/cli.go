@@ -61,10 +61,16 @@ func main() {
 		bid := addSet.Int64("id", -1, "The id of the beer to add")
 		quantity := addSet.Int64("quantity", -1, "The number of beers to add")
 
+		size := addSet.Int64("size", -1, "The size of the beer in fluid ounces")
 		if err := addSet.Parse(os.Args[2:]); err == nil {
+			if *size <= 0 {
+				log.Fatalf("You must specify a size for the beer (-size)")
+			}
+
 			res, err := client.AddBeer(ctx, &pb.AddBeerRequest{
 				BeerId:   *bid,
 				Quantity: int32(*quantity),
+				SizeFlOz: int32(*size),
 			})
 			if err != nil {
 				log.Fatalf("Error adding beers: %v", err)
@@ -78,6 +84,33 @@ func main() {
 		}
 		for i, beer := range cellar.GetBeers() {
 			log.Printf("%v. %v - %v (%v) [%v]", i+1, beer.GetBrewery(), beer.GetName(), beer.GetAbv(), beer.GetId())
+		}
+	case "pull":
+		pullSet := flag.NewFlagSet("pull_beer", flag.ExitOnError)
+		weekday := pullSet.Bool("weekday", false, "Whether it's a weekday (limit to 2.5 units)")
+		if err := pullSet.Parse(os.Args[2:]); err == nil {
+			req := &pb.GetBeerRequest{
+				NoRepeat: true,
+				Requirements: []*pb.BeerRequirement{
+					{
+						Strategy: pb.BeerRequirement_STRATEGY_LEAST_RECENTLY_DRUNK,
+					},
+				},
+			}
+			if *weekday {
+				req.Requirements[0].MaxUnits = 2.5
+			}
+
+			res, err := client.GetBeer(ctx, req)
+			if err != nil {
+				log.Fatalf("Error pulling beer: %v", err)
+			}
+			if len(res.GetBeers()) > 0 {
+				beer := res.GetBeers()[0]
+				log.Printf("Pulled beer: %v - %v (%v%% ABV) [%v]", beer.GetBrewery(), beer.GetName(), beer.GetAbv(), beer.GetId())
+			} else {
+				log.Printf("No beers found matching requirements")
+			}
 		}
 	case "login":
 		url, err := client.GetLogin(context.Background(), &pb.GetLoginRequest{})

@@ -56,9 +56,12 @@ type CacheBeer struct {
 
 func (c CacheBeer) run(ctx context.Context) error {
 	// Let's see if we have this in the cache already
-	_, err := c.d.GetBeer(ctx, c.beerId)
+	b, err := c.d.GetBeer(ctx, c.beerId)
 	if err == nil {
-		return nil
+		log.Printf("Already have beer %v", b)
+		if b.GetAbv() > 0 {
+			return nil
+		}
 	}
 
 	beer, err := c.u.getBeerFromUntappd(ctx, c.beerId)
@@ -97,7 +100,7 @@ func (q *Queue) RunQueue() {
 					backoff -= time.Second
 				}
 			}
-			log.Printf("Ran Queue Element %+v", f)
+			log.Printf("Ran Queue Element %+v -> %v", f, err)
 			cancel()
 			q.flushLock.Unlock()
 		}

@@ -22,6 +22,7 @@ type UntappdAPI interface {
 	handleAuthResponse(ctx context.Context, db Database, code, token string) (*pb.User, error)
 	GetCheckins(ctx context.Context) ([]*pb.Checkin, error)
 	Checkin(ctx context.Context, beerId int64) error
+	GetUserInfo(ctx context.Context) (string, int64, error)
 }
 
 type Untappd struct {
@@ -71,6 +72,10 @@ func (tu *TestUntappd) Checkin(ctx context.Context, beerId int64) error {
 
 func (_ *TestUntappd) handleAuthResponse(ctx context.Context, db Database, code, token string) (*pb.User, error) {
 	return &pb.User{}, nil
+}
+
+func (_ *TestUntappd) GetUserInfo(ctx context.Context) (string, int64, error) {
+	return "testuser", 123, nil
 }
 
 func GetUntappd(api, auth, retAuth string, clientId, clientSecret, redirectURL string) *Untappd {
@@ -163,12 +168,36 @@ func (u *Untappd) handleAuthResponse(ctx context.Context, db Database, code, tok
 	}
 
 	user.AccessToken = resp.Response.AccessToken
+	user.State = pb.User_STATE_LOGGED_IN
 	err = db.SaveUser(ctx, user)
 	return user, err
 }
 
+type UserInfo struct {
+	Uid      int64  `json:"uid"`
+	UserName string `json:"user_name"`
+}
+
+type UserInfoResponse struct {
+	Response struct {
+		User UserInfo `json:"user"`
+	} `json:"response"`
+}
+
+func (u *Untappd) GetUserInfo(ctx context.Context) (string, int64, error) {
+	resp := &UserInfoResponse{}
+	err := u.get("/v4/user/info", resp)
+	if err != nil {
+		return "", 0, err
+	}
+
+	return resp.Response.User.UserName, resp.Response.User.Uid, nil
+}
+
 type CheckinResponse struct {
-	Checkins []Checkin `json:"items"`
+	Response struct {
+		Checkins []Checkin `json:"items"`
+	} `json:"response"`
 }
 
 type Checkin struct {
@@ -196,7 +225,7 @@ func (u *Untappd) GetCheckins(ctx context.Context) ([]*pb.Checkin, error) {
 	log.Printf("Checkins resp: %+v", resp)
 
 	var checkins []*pb.Checkin
-	for _, c := range resp.Checkins {
+	for _, c := range resp.Response.Checkins {
 		checkins = append(checkins, &pb.Checkin{
 			CheckinId: int64(c.CheckinId),
 			BeerId:    int64(c.Beer.Bid),
@@ -217,24 +246,26 @@ func (u *Untappd) getBeerFromUntappd(ctx context.Context, beerId int64) (*pb.Bee
 	}
 	return &pb.Beer{
 		Id:      beerId,
-		Name:    resp.Beer.BeerName,
-		Abv:     resp.Beer.BeerAbv,
-		Brewery: resp.Beer.Brewery.BreweryName,
+		Name:    resp.Response.Beer.BeerName,
+		Abv:     resp.Response.Beer.BeerAbv,
+		Brewery: resp.Response.Beer.Brewery.BreweryName,
 	}, nil
 }
 
 type BreweryResponse struct {
-	BreweryName string
+	BreweryName string `json:"brewery_name"`
 }
 
 type BeerResponse struct {
-	BeerName    string  `json:"beer_name"`
-	BeerAbv     float32 `json:"beer_abv"`
-	Brewery     BreweryResponse
-	RatingScore float32 `json:"rating_score"`
-	Bid         int     `json:"bid"`
+	BeerName    string          `json:"beer_name"`
+	BeerAbv     float32         `json:"beer_abv"`
+	Brewery     BreweryResponse `json:"brewery"`
+	RatingScore float32         `json:"rating_score"`
+	Bid         int             `json:"bid"`
 }
 
 type BeerInfoResponse struct {
-	Beer BeerResponse
+	Response struct {
+		Beer BeerResponse `json:"beer"`
+	} `json:"response"`
 }

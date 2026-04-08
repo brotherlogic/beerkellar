@@ -12,20 +12,43 @@ Beerkellar is a CLI tool and backend service for managing a personal beer cellar
    ```bash
    beerkellar_cli login
    ```
-3. Add a beer:
+3. Add a beer (requires ID, quantity, and size in fl oz):
    ```bash
-   beerkellar_cli add --id <beer_id> --quantity 1
+   beerkellar_cli add --id <beer_id> --quantity 1 --size 12
    ```
 4. View your cellar:
    ```bash
    beerkellar_cli cellar
    ```
+5. Pull a beer to drink:
+   ```bash
+   beerkellar_cli pull [--weekday]
+   ```
+   The `pull` command chooses a beer you haven't drunk recently (or at all). Use `--weekday` to limit choices to beers with 2.5 units of alcohol or less.
 
 ## Documentation
 
-For a detailed overview of the project architecture and features, see [OVERVIEW.md](overview.md).
+## User States
+
+Beerkellar tracks user authentication through three primary states:
+- **LOGGING_IN**: User has initiated the login process.
+- **LOGGED_IN**: User has authenticated with Untappd and we have received an access token.
+- **AUTHORIZED**: The system has successfully retrieved the user's profile information from Untappd (username and user ID).
+
+All API methods (except login-related ones) require the user to be in the **AUTHORIZED** state.
+
+## Default Initialization
+
+If a user gets placed into the **AUTHORIZED** state and attempts to access an empty cellar or view their drunk history, the system will now automatically provision and store underlying empty objects upon first query. This prevents downstream apps or the client interface from running into confusing `NotFound` scenarios.
+
+## Caching and Offline Updates
+
+When managing beers interacting with the Untappd API, all calls are securely pushed to a background process queue to avoid quota limits. To ensure robust fetching, failed metadata calls will be transparently retried the next time a user opens their cellar view.
 
 ## Development
+
+### Dev Container
+This project includes a VS Code Dev Container configuration for a consistent development environment. It is configured to automatically set the working directory to `/workspaces/beerkellar`. Detailed project guidance for AI assistants is available in `GEMINI.md`.
 
 ### Prerequisites
 - Go 1.22+
