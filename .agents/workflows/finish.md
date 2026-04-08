@@ -1,5 +1,5 @@
 ---
-description: description: Commit and push changes to a new branch, and trigger a review
+description: Commit and push changes to a new branch, and trigger a review
 ---
 
 When finishing a task, run the following steps:
