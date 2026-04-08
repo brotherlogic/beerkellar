@@ -213,6 +213,10 @@ func (s *Server) AddBeer(ctx context.Context, req *pb.AddBeerRequest) (*pb.AddBe
 	if err != nil {
 		return nil, err
 	}
+	if req.GetSizeFlOz() <= 0 {
+		return nil, status.Errorf(codes.InvalidArgument, "size_fl_oz must be specified and greater than zero")
+	}
+
 	cellar, err := s.db.GetCellar(ctx, user.GetUserId())
 	if err != nil {
 		// OutOfRange is cannot be found in DB

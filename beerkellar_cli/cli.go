@@ -61,10 +61,16 @@ func main() {
 		bid := addSet.Int64("id", -1, "The id of the beer to add")
 		quantity := addSet.Int64("quantity", -1, "The number of beers to add")
 
+		size := addSet.Int64("size", -1, "The size of the beer in fluid ounces")
 		if err := addSet.Parse(os.Args[2:]); err == nil {
+			if *size <= 0 {
+				log.Fatalf("You must specify a size for the beer (-size)")
+			}
+
 			res, err := client.AddBeer(ctx, &pb.AddBeerRequest{
 				BeerId:   *bid,
 				Quantity: int32(*quantity),
+				SizeFlOz: int32(*size),
 			})
 			if err != nil {
 				log.Fatalf("Error adding beers: %v", err)
