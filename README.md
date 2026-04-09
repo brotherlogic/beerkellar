@@ -45,6 +45,8 @@ If a user gets placed into the **AUTHORIZED** state and attempts to access an em
 
 When managing beers interacting with the Untappd API, all calls are securely pushed to a background process queue to avoid quota limits. To ensure robust fetching, failed metadata calls will be transparently retried the next time a user opens their cellar view.
 
+Background tasks, such as automated user refreshes, now include a one-minute initial delay upon server startup to ensure all systems are fully initialized before processing begins.
+
 ## Development
 
 ### Dev Container
