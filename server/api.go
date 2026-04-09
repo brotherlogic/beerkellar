@@ -224,7 +224,11 @@ func (s *Server) GetCellar(ctx context.Context, _ *pb.GetCellarRequest) (*pb.Get
 		}
 	}
 
-	return &pb.GetCellarResponse{Beers: beers}, nil
+	return &pb.GetCellarResponse{
+		Beers:    beers,
+		Username: user.GetUsername(),
+		State:    user.GetState(),
+	}, nil
 }
 
 func (s *Server) AddBeer(ctx context.Context, req *pb.AddBeerRequest) (*pb.AddBeerResponse, error) {
