@@ -48,6 +48,11 @@ func TestRunRefresh(t *testing.T) {
 		t.Fatalf("Unable to save user: %v", err)
 	}
 
+	// Mock a checkin so that LastFeedPull advances
+	s.untappd.(*TestUntappd).checkins = []*pb.Checkin{
+		{CheckinId: 1001, BeerId: 1, Date: time.Now().Unix()},
+	}
+
 	s.runRefresh(ctx)
 
 	// Check if user1 was refreshed (LastFeedPull should be updated)
