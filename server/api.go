@@ -447,6 +447,10 @@ func (s *Server) runRefresh(ctx context.Context) {
 	}
 
 	for _, user := range users {
+		if user.GetState() != pb.User_STATE_AUTHORIZED {
+			continue
+		}
+
 		if time.Now().Unix()-user.GetLastFeedPull() > 2*3600 {
 			log.Printf("Refreshing user %v", user.GetUsername())
 			_, err := s.RefreshUser(ctx, &pb.RefreshUserRequest{Username: user.GetUsername()})
