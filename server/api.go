@@ -359,10 +359,15 @@ func (s *Server) RefreshUser(ctx context.Context, req *pb.RefreshUserRequest) (*
 	}
 
 	log.Printf("Found %v checkins", len(checkins))
+	maxDate := user.GetLastFeedPull()
 	for _, checkin := range checkins {
 		err = s.db.SaveCheckin(ctx, user.GetUserId(), checkin)
 		if err != nil {
 			return nil, fmt.Errorf("unable to save checkins: %w", err)
+		}
+
+		if checkin.GetDate() > maxDate {
+			maxDate = checkin.GetDate()
 		}
 
 		// Remove the beer from the cellar if it's recent
@@ -388,7 +393,7 @@ func (s *Server) RefreshUser(ctx context.Context, req *pb.RefreshUserRequest) (*
 		}
 	}
 
-	user.LastFeedPull = time.Now().Unix()
+	user.LastFeedPull = maxDate
 
 	return &pb.RefreshUserResponse{}, s.db.SaveUser(ctx, user)
 }
