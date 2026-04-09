@@ -224,7 +224,11 @@ func (s *Server) GetCellar(ctx context.Context, _ *pb.GetCellarRequest) (*pb.Get
 		}
 	}
 
-	return &pb.GetCellarResponse{Beers: beers}, nil
+	return &pb.GetCellarResponse{
+		Beers:    beers,
+		Username: user.GetUsername(),
+		State:    user.GetState(),
+	}, nil
 }
 
 func (s *Server) AddBeer(ctx context.Context, req *pb.AddBeerRequest) (*pb.AddBeerResponse, error) {
@@ -355,10 +359,15 @@ func (s *Server) RefreshUser(ctx context.Context, req *pb.RefreshUserRequest) (*
 	}
 
 	log.Printf("Found %v checkins", len(checkins))
+	maxDate := user.GetLastFeedPull()
 	for _, checkin := range checkins {
 		err = s.db.SaveCheckin(ctx, user.GetUserId(), checkin)
 		if err != nil {
 			return nil, fmt.Errorf("unable to save checkins: %w", err)
+		}
+
+		if checkin.GetDate() > maxDate {
+			maxDate = checkin.GetDate()
 		}
 
 		// Remove the beer from the cellar if it's recent
@@ -384,7 +393,7 @@ func (s *Server) RefreshUser(ctx context.Context, req *pb.RefreshUserRequest) (*
 		}
 	}
 
-	user.LastFeedPull = time.Now().Unix()
+	user.LastFeedPull = maxDate
 
 	return &pb.RefreshUserResponse{}, s.db.SaveUser(ctx, user)
 }
@@ -427,7 +436,16 @@ func (s *Server) DrinkBeer(ctx context.Context, req *pb.DrinkBeerRequest) (*pb.D
 
 func (s *Server) StartBackgroundTasks(ctx context.Context) {
 	go func() {
+		// Wait for 1 minute before starting the refresh
+		select {
+		case <-ctx.Done():
+			return
+		case <-time.After(time.Minute):
+			s.runRefresh(ctx)
+		}
+
 		ticker := time.NewTicker(time.Hour)
+		defer ticker.Stop()
 		for {
 			select {
 			case <-ctx.Done():
@@ -447,6 +465,10 @@ func (s *Server) runRefresh(ctx context.Context) {
 	}
 
 	for _, user := range users {
+		if user.GetState() != pb.User_STATE_AUTHORIZED {
+			continue
+		}
+
 		if time.Now().Unix()-user.GetLastFeedPull() > 2*3600 {
 			log.Printf("Refreshing user %v", user.GetUsername())
 			_, err := s.RefreshUser(ctx, &pb.RefreshUserRequest{Username: user.GetUsername()})

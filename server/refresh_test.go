@@ -36,6 +36,23 @@ func TestRunRefresh(t *testing.T) {
 		t.Fatalf("Unable to save user: %v", err)
 	}
 
+	// Add an unauthorized user
+	err = s.db.SaveUser(ctx, &pb.User{
+		Username:     "user3",
+		Auth:         "auth3",
+		UserId:       103,
+		LastFeedPull: 0,
+		State:        pb.User_STATE_LOGGING_IN,
+	})
+	if err != nil {
+		t.Fatalf("Unable to save user: %v", err)
+	}
+
+	// Mock a checkin so that LastFeedPull advances
+	s.untappd.(*TestUntappd).checkins = []*pb.Checkin{
+		{CheckinId: 1001, BeerId: 1, Date: time.Now().Unix()},
+	}
+
 	s.runRefresh(ctx)
 
 	// Check if user1 was refreshed (LastFeedPull should be updated)
@@ -54,5 +71,14 @@ func TestRunRefresh(t *testing.T) {
 	}
 	if u2.GetLastFeedPull() != now {
 		t.Errorf("User2 was refreshed when it shouldn't have been: %v vs %v", u2.GetLastFeedPull(), now)
+	}
+
+	// Check if user3 was NOT refreshed (LastFeedPull should be the same)
+	u3, err := s.db.GetUserByName(ctx, "user3")
+	if err != nil {
+		t.Fatalf("Unable to get user3: %v", err)
+	}
+	if u3.GetLastFeedPull() != 0 {
+		t.Errorf("Unauthorized user was refreshed: %v", u3.GetLastFeedPull())
 	}
 }

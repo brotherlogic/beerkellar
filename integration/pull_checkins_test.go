@@ -50,7 +50,7 @@ func TestPullCheckins(t *testing.T) {
 		t.Fatalf("Unable to add beer: %v", err)
 	}
 
-	time.Sleep(time.Minute)
+	time.Sleep(70 * time.Second)
 
 	cellar, err := client.GetCellar(ctx, &pb.GetCellarRequest{})
 	if err != nil {
