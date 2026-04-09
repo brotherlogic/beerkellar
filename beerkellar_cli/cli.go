@@ -82,6 +82,7 @@ func main() {
 		if err != nil {
 			log.Fatalf("Unable to get cellar: %v", err)
 		}
+		log.Printf("User: %v (State: %v)", cellar.GetUsername(), cellar.GetState())
 		for i, beer := range cellar.GetBeers() {
 			log.Printf("%v. %v - %v (%v) [%v]", i+1, beer.GetBrewery(), beer.GetName(), beer.GetAbv(), beer.GetId())
 		}

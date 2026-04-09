@@ -68,6 +68,8 @@ message HealthyResponse {}
 message GetCellarRequest{}
 message GetCellarResponse{
   repeated Beer beers = 1;
+  string username = 2;
+  User.UserState state = 3;
 }
 
 message GetBeerRequest{

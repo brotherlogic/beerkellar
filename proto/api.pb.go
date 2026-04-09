@@ -717,6 +717,8 @@ func (*GetCellarRequest) Descriptor() ([]byte, []int) {
 type GetCellarResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Beers         []*Beer                `protobuf:"bytes,1,rep,name=beers,proto3" json:"beers,omitempty"`
+	Username      string                 `protobuf:"bytes,2,opt,name=username,proto3" json:"username,omitempty"`
+	State         User_UserState         `protobuf:"varint,3,opt,name=state,proto3,enum=beerkellar.User_UserState" json:"state,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -756,6 +758,20 @@ func (x *GetCellarResponse) GetBeers() []*Beer {
 		return x.Beers
 	}
 	return nil
+}
+
+func (x *GetCellarResponse) GetUsername() string {
+	if x != nil {
+		return x.Username
+	}
+	return ""
+}
+
+func (x *GetCellarResponse) GetState() User_UserState {
+	if x != nil {
+		return x.State
+	}
+	return User_STATE_UNKNOWN
 }
 
 type GetBeerRequest struct {
@@ -1274,9 +1290,11 @@ const file_api_proto_rawDesc = "" +
 	"\x04code\x18\x02 \x01(\tR\x04code\"\x10\n" +
 	"\x0eHealthyRequest\"\x11\n" +
 	"\x0fHealthyResponse\"\x12\n" +
-	"\x10GetCellarRequest\";\n" +
+	"\x10GetCellarRequest\"\x89\x01\n" +
 	"\x11GetCellarResponse\x12&\n" +
-	"\x05beers\x18\x01 \x03(\v2\x10.beerkellar.BeerR\x05beers\"n\n" +
+	"\x05beers\x18\x01 \x03(\v2\x10.beerkellar.BeerR\x05beers\x12\x1a\n" +
+	"\busername\x18\x02 \x01(\tR\busername\x120\n" +
+	"\x05state\x18\x03 \x01(\x0e2\x1a.beerkellar.User.UserStateR\x05state\"n\n" +
 	"\x0eGetBeerRequest\x12?\n" +
 	"\frequirements\x18\x01 \x03(\v2\x1b.beerkellar.BeerRequirementR\frequirements\x12\x1b\n" +
 	"\tno_repeat\x18\x02 \x01(\bR\bnoRepeat\"9\n" +
@@ -1368,35 +1386,36 @@ var file_api_proto_depIdxs = []int32{
 	0,  // 0: beerkellar.User.state:type_name -> beerkellar.User.UserState
 	26, // 1: beerkellar.LastCheckins.last_checkins:type_name -> beerkellar.LastCheckins.LastCheckinsEntry
 	28, // 2: beerkellar.GetCellarResponse.beers:type_name -> beerkellar.Beer
-	17, // 3: beerkellar.GetBeerRequest.requirements:type_name -> beerkellar.BeerRequirement
-	28, // 4: beerkellar.GetBeerResponse.beers:type_name -> beerkellar.Beer
-	1,  // 5: beerkellar.BeerRequirement.strategy:type_name -> beerkellar.BeerRequirement.PickStrategy
-	27, // 6: beerkellar.GetDrunkResponse.drunk:type_name -> beerkellar.GetDrunkResponse.DrunkEntry
-	5,  // 7: beerkellar.BeerKeller.AddBeer:input_type -> beerkellar.AddBeerRequest
-	20, // 8: beerkellar.BeerKeller.DrinkBeer:input_type -> beerkellar.DrinkBeerRequest
-	7,  // 9: beerkellar.BeerKeller.GetLogin:input_type -> beerkellar.GetLoginRequest
-	9,  // 10: beerkellar.BeerKeller.GetAuthToken:input_type -> beerkellar.GetAuthTokenRequest
-	13, // 11: beerkellar.BeerKeller.GetCellar:input_type -> beerkellar.GetCellarRequest
-	15, // 12: beerkellar.BeerKeller.GetBeer:input_type -> beerkellar.GetBeerRequest
-	18, // 13: beerkellar.BeerKeller.GetDrunk:input_type -> beerkellar.GetDrunkRequest
-	11, // 14: beerkellar.BeerKeller.Healthy:input_type -> beerkellar.HealthyRequest
-	22, // 15: beerkellar.BeerKellerAdmin.SetRedirect:input_type -> beerkellar.SetRedirectRequest
-	24, // 16: beerkellar.BeerKellerAdmin.RefreshUser:input_type -> beerkellar.RefreshUserRequest
-	6,  // 17: beerkellar.BeerKeller.AddBeer:output_type -> beerkellar.AddBeerResponse
-	21, // 18: beerkellar.BeerKeller.DrinkBeer:output_type -> beerkellar.DrinkBeerResponse
-	8,  // 19: beerkellar.BeerKeller.GetLogin:output_type -> beerkellar.GetLoginResponse
-	10, // 20: beerkellar.BeerKeller.GetAuthToken:output_type -> beerkellar.GetAuthTokenResponse
-	14, // 21: beerkellar.BeerKeller.GetCellar:output_type -> beerkellar.GetCellarResponse
-	16, // 22: beerkellar.BeerKeller.GetBeer:output_type -> beerkellar.GetBeerResponse
-	19, // 23: beerkellar.BeerKeller.GetDrunk:output_type -> beerkellar.GetDrunkResponse
-	12, // 24: beerkellar.BeerKeller.Healthy:output_type -> beerkellar.HealthyResponse
-	23, // 25: beerkellar.BeerKellerAdmin.SetRedirect:output_type -> beerkellar.SetRedirectResponse
-	25, // 26: beerkellar.BeerKellerAdmin.RefreshUser:output_type -> beerkellar.RefreshUserResponse
-	17, // [17:27] is the sub-list for method output_type
-	7,  // [7:17] is the sub-list for method input_type
-	7,  // [7:7] is the sub-list for extension type_name
-	7,  // [7:7] is the sub-list for extension extendee
-	0,  // [0:7] is the sub-list for field type_name
+	0,  // 3: beerkellar.GetCellarResponse.state:type_name -> beerkellar.User.UserState
+	17, // 4: beerkellar.GetBeerRequest.requirements:type_name -> beerkellar.BeerRequirement
+	28, // 5: beerkellar.GetBeerResponse.beers:type_name -> beerkellar.Beer
+	1,  // 6: beerkellar.BeerRequirement.strategy:type_name -> beerkellar.BeerRequirement.PickStrategy
+	27, // 7: beerkellar.GetDrunkResponse.drunk:type_name -> beerkellar.GetDrunkResponse.DrunkEntry
+	5,  // 8: beerkellar.BeerKeller.AddBeer:input_type -> beerkellar.AddBeerRequest
+	20, // 9: beerkellar.BeerKeller.DrinkBeer:input_type -> beerkellar.DrinkBeerRequest
+	7,  // 10: beerkellar.BeerKeller.GetLogin:input_type -> beerkellar.GetLoginRequest
+	9,  // 11: beerkellar.BeerKeller.GetAuthToken:input_type -> beerkellar.GetAuthTokenRequest
+	13, // 12: beerkellar.BeerKeller.GetCellar:input_type -> beerkellar.GetCellarRequest
+	15, // 13: beerkellar.BeerKeller.GetBeer:input_type -> beerkellar.GetBeerRequest
+	18, // 14: beerkellar.BeerKeller.GetDrunk:input_type -> beerkellar.GetDrunkRequest
+	11, // 15: beerkellar.BeerKeller.Healthy:input_type -> beerkellar.HealthyRequest
+	22, // 16: beerkellar.BeerKellerAdmin.SetRedirect:input_type -> beerkellar.SetRedirectRequest
+	24, // 17: beerkellar.BeerKellerAdmin.RefreshUser:input_type -> beerkellar.RefreshUserRequest
+	6,  // 18: beerkellar.BeerKeller.AddBeer:output_type -> beerkellar.AddBeerResponse
+	21, // 19: beerkellar.BeerKeller.DrinkBeer:output_type -> beerkellar.DrinkBeerResponse
+	8,  // 20: beerkellar.BeerKeller.GetLogin:output_type -> beerkellar.GetLoginResponse
+	10, // 21: beerkellar.BeerKeller.GetAuthToken:output_type -> beerkellar.GetAuthTokenResponse
+	14, // 22: beerkellar.BeerKeller.GetCellar:output_type -> beerkellar.GetCellarResponse
+	16, // 23: beerkellar.BeerKeller.GetBeer:output_type -> beerkellar.GetBeerResponse
+	19, // 24: beerkellar.BeerKeller.GetDrunk:output_type -> beerkellar.GetDrunkResponse
+	12, // 25: beerkellar.BeerKeller.Healthy:output_type -> beerkellar.HealthyResponse
+	23, // 26: beerkellar.BeerKellerAdmin.SetRedirect:output_type -> beerkellar.SetRedirectResponse
+	25, // 27: beerkellar.BeerKellerAdmin.RefreshUser:output_type -> beerkellar.RefreshUserResponse
+	18, // [18:28] is the sub-list for method output_type
+	8,  // [8:18] is the sub-list for method input_type
+	8,  // [8:8] is the sub-list for extension type_name
+	8,  // [8:8] is the sub-list for extension extendee
+	0,  // [0:8] is the sub-list for field type_name
 }
 
 func init() { file_api_proto_init() }
