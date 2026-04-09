@@ -4,3 +4,4 @@ fake_untappd/fake_untappd
 
 .gemini/
 gha-creds-*.json
+.devcontainer/.env.auth

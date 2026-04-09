@@ -89,8 +89,17 @@ func TestPullCheckins(t *testing.T) {
 		t.Fatalf("Unable to get drunks: %v", err)
 	}
 
-	if time.Since(time.Unix(drunk.GetDrunk()[16630], 0)) < time.Hour {
-		t.Fatalf("The drunk map is broken: %v", drunk)
+	found := false
+	for _, d := range drunk.GetDrunk() {
+		if d.GetBeerId() == 16630 {
+			found = true
+			if d.GetDate() == 0 {
+				t.Fatalf("The drunk record has no date: %v", d)
+			}
+		}
+	}
+	if !found {
+		t.Fatalf("Beer 16630 not found in drunk records: %v", drunk)
 	}
 
 	// Second, we should have a smaller cellar

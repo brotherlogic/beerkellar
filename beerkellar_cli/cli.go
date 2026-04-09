@@ -148,5 +148,24 @@ func main() {
 			}
 			break
 		}
+	case "drunk":
+		drunkSet := flag.NewFlagSet("drunk_beers", flag.ExitOnError)
+		count := drunkSet.Int("count", 10, "The number of drunk beers to return")
+		if err := drunkSet.Parse(os.Args[2:]); err == nil {
+			res, err := client.GetDrunk(ctx, &pb.GetDrunkRequest{
+				Count: int32(*count),
+			})
+			if err != nil {
+				log.Fatalf("Error getting drunk beers: %v", err)
+			}
+			for _, beer := range res.GetDrunk() {
+				dateStr := time.Unix(beer.GetDate(), 0).Format("2006-01-02")
+				if beer.GetName() == "" {
+					log.Printf("%v Unknown - Unknown [%v]", dateStr, beer.GetBeerId())
+				} else {
+					log.Printf("%v %v - %v (%.2f units)", dateStr, beer.GetBrewery(), beer.GetName(), beer.GetUnits())
+				}
+			}
+		}
 	}
 }

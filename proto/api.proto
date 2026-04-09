@@ -30,6 +30,7 @@ message Checkin {
   int64 beer_id = 2;
   int64 date = 3;
   int32 rating = 4;
+  int32 size_fl_oz = 5;
 }
 
 message LastCheckins {
@@ -90,9 +91,22 @@ message BeerRequirement {
   PickStrategy strategy = 2;
 }
 
-message GetDrunkRequest {}
+message GetDrunkRequest {
+  int32 count = 1;
+}
+
+message DrunkBeer {
+  int64 beer_id = 1;
+  string name = 2;
+  string brewery = 3;
+  float abv = 4;
+  int32 size_fl_oz = 5;
+  int64 date = 6;
+  float units = 7;
+}
+
 message GetDrunkResponse {
-  map<int64, int64> drunk = 1;
+  repeated DrunkBeer drunk = 1;
 }
 
 message DrinkBeerRequest {

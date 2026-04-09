@@ -304,3 +304,56 @@ func TestGetBeer_WeekdayLogic(t *testing.T) {
 	}
 }
 
+func TestGetDrunk(t *testing.T) {
+	ctx, cancel := GetTestContext(context.Background(), time.Minute)
+	defer cancel()
+
+	s := getTestServer(ctx)
+
+	// Add a beer to cellar
+	_, err := s.AddBeer(ctx, &pb.AddBeerRequest{
+		BeerId:   123,
+		SizeFlOz: 12,
+		Quantity: 1,
+	})
+	if err != nil {
+		t.Fatalf("Unable to add beer: %v", err)
+	}
+	s.db.SaveBeer(ctx, &pb.Beer{Id: 123, Name: "Test Beer", Abv: 5.0})
+
+	// Simulate a checkin matching the cellar entry
+	ut := s.untappd.(*TestUntappd)
+	checkinDate := time.Now().Unix()
+	ut.checkins = []*pb.Checkin{
+		{CheckinId: 1, BeerId: 123, Date: checkinDate, Rating: 4},
+	}
+
+	// Refresh user to process checkin
+	_, err = s.RefreshUser(ctx, &pb.RefreshUserRequest{Username: "testuser"})
+	if err != nil {
+		t.Fatalf("RefreshUser failed: %v", err)
+	}
+
+	// Get drunk beers
+	r, err := s.GetDrunk(ctx, &pb.GetDrunkRequest{Count: 10})
+	if err != nil {
+		t.Fatalf("GetDrunk failed: %v", err)
+	}
+
+	if len(r.GetDrunk()) != 1 {
+		t.Fatalf("Expected 1 drunk beer, got %v", len(r.GetDrunk()))
+	}
+
+	if r.GetDrunk()[0].GetBeerId() != 123 {
+		t.Errorf("Wrong beer ID: %v", r.GetDrunk()[0].GetBeerId())
+	}
+
+	if r.GetDrunk()[0].GetSizeFlOz() != 12 {
+		t.Errorf("Size not captured: %v", r.GetDrunk()[0].GetSizeFlOz())
+	}
+
+	// Units should be conversion(12) * 5.0 = (12 * 0.029574) * 5.0 = 1.77444
+	if r.GetDrunk()[0].GetUnits() < 1.7 || r.GetDrunk()[0].GetUnits() > 1.8 {
+		t.Errorf("Wrong units: %v", r.GetDrunk()[0].GetUnits())
+	}
+}
