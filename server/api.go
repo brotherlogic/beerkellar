@@ -431,7 +431,16 @@ func (s *Server) DrinkBeer(ctx context.Context, req *pb.DrinkBeerRequest) (*pb.D
 
 func (s *Server) StartBackgroundTasks(ctx context.Context) {
 	go func() {
+		// Wait for 1 minute before starting the refresh
+		select {
+		case <-ctx.Done():
+			return
+		case <-time.After(time.Minute):
+			s.runRefresh(ctx)
+		}
+
 		ticker := time.NewTicker(time.Hour)
+		defer ticker.Stop()
 		for {
 			select {
 			case <-ctx.Done():
