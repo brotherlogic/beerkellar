@@ -196,14 +196,16 @@ func (u *Untappd) GetUserInfo(ctx context.Context) (string, int64, error) {
 
 type CheckinResponse struct {
 	Response struct {
-		Checkins []Checkin `json:"items"`
+		Checkins struct {
+			Items []Checkin `json:"items"`
+		} `json:"checkins"`
 	} `json:"response"`
 }
 
 type Checkin struct {
-	CheckinId   int    `json:"checkin_id"`
-	CreatedAt   string `json:"created_at"`
-	RatingScore int    `json:"rating_score"`
+	CheckinId   int64   `json:"checkin_id"`
+	CreatedAt   string  `json:"created_at"`
+	RatingScore float32 `json:"rating_score"`
 	Beer        BeerResponse
 }
 
@@ -225,9 +227,9 @@ func (u *Untappd) GetCheckins(ctx context.Context) ([]*pb.Checkin, error) {
 	log.Printf("Checkins resp: %+v", resp)
 
 	var checkins []*pb.Checkin
-	for _, c := range resp.Response.Checkins {
+	for _, c := range resp.Response.Checkins.Items {
 		checkins = append(checkins, &pb.Checkin{
-			CheckinId: int64(c.CheckinId),
+			CheckinId: c.CheckinId,
 			BeerId:    int64(c.Beer.Bid),
 			Rating:    int32(c.RatingScore),
 			Date:      parseDate(c.CreatedAt),

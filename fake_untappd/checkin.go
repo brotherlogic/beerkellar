@@ -38,8 +38,8 @@ type Checkins struct {
 }
 
 type Checkin struct {
-	Checkin_id int    `json:"checkin_id"`
-	Created_at string `json:"created_at"`
+	CheckinId  int64  `json:"checkin_id"`
+	CreatedAt  string `json:"created_at"`
 	Beer       Beer   `json:"beer"`
 }
 
@@ -51,15 +51,19 @@ func (s *Server) HandleCheckins(w http.ResponseWriter, r *http.Request) {
 	res := Checkins{Count: len(s.checkins)}
 	for _, checkin := range s.checkins {
 		res.Items = append(res.Items, Checkin{
-			Checkin_id: int(checkin.GetCheckinId()),
-			Created_at: time.Unix(checkin.GetDate(), 0).Format("Mon, 2 Jan 2006 15:04:05 -0700"),
-			Beer:       Beer{Bid: int(checkin.GetBeerId())},
+			CheckinId: checkin.GetCheckinId(),
+			CreatedAt: time.Unix(checkin.GetDate(), 0).Format("Mon, 2 Jan 2006 15:04:05 -0700"),
+			Beer:      Beer{Bid: int(checkin.GetBeerId())},
 		})
 	}
 
 	jsonData, err := json.Marshal(struct {
-		Response Checkins `json:"response"`
-	}{Response: res})
+		Response struct {
+			Checkins Checkins `json:"checkins"`
+		} `json:"response"`
+	}{Response: struct {
+		Checkins Checkins `json:"checkins"`
+	}{Checkins: res}})
 	if err != nil {
 		panic(err)
 	}
