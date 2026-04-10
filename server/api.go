@@ -369,6 +369,9 @@ func (s *Server) RefreshUser(ctx context.Context, req *pb.RefreshUserRequest) (*
 	if drunks == nil {
 		drunks = &pb.LastCheckins{LastCheckins: make(map[int64]int64)}
 	}
+	if drunks.LastCheckins == nil {
+		drunks.LastCheckins = make(map[int64]int64)
+	}
 
 	for _, checkin := range checkins {
 		if checkin.GetDate() > drunks.GetLastCheckins()[checkin.GetBeerId()] {

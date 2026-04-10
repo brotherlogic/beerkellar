@@ -357,3 +357,41 @@ func TestGetDrunk(t *testing.T) {
 		t.Errorf("Wrong units: %v", r.GetDrunk()[0].GetUnits())
 	}
 }
+
+func TestRefreshUser_NilMapPanic(t *testing.T) {
+	ctx, cancel := GetTestContext(context.Background(), time.Minute)
+	defer cancel()
+
+	s := getTestServer(ctx)
+
+	// Pre-save a LastCheckins object with a nil/empty map to trigger the scenario.
+	// In proto3, if we don't initialize the map, it will be nil when unmarshaled.
+	err := s.db.SaveDrunk(ctx, 100, &pb.LastCheckins{
+		Username: "testuser",
+	})
+	if err != nil {
+		t.Fatalf("Failed to save drunk: %v", err)
+	}
+
+	// Add a beer to cellar so RefreshUser has something to do if checkins are found
+	_, err = s.AddBeer(ctx, &pb.AddBeerRequest{
+		BeerId:   123,
+		SizeFlOz: 12,
+		Quantity: 1,
+	})
+	if err != nil {
+		t.Fatalf("Unable to add beer: %v", err)
+	}
+
+	// Simulate a checkin
+	ut := s.untappd.(*TestUntappd)
+	ut.checkins = []*pb.Checkin{
+		{CheckinId: 1, BeerId: 123, Date: time.Now().Unix(), Rating: 4},
+	}
+
+	// This should NOT panic now
+	_, err = s.RefreshUser(ctx, &pb.RefreshUserRequest{Username: "testuser"})
+	if err != nil {
+		t.Fatalf("RefreshUser failed: %v", err)
+	}
+}
