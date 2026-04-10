@@ -25,6 +25,11 @@ Beerkellar is a CLI tool and backend service for managing a personal beer cellar
    beerkellar_cli pull [--weekday]
    ```
    The `pull` command chooses a beer you haven't drunk recently (or at all). Use `--weekday` to limit choices to beers with 2.5 units of alcohol or less.
+6. View your drunk history:
+   ```bash
+   beerkellar_cli drunk [--count 10]
+   ```
+   Shows your recently consumed beers, including date and alcohol units.
 
 ## Documentation
 
