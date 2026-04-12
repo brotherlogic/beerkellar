@@ -395,3 +395,36 @@ func TestRefreshUser_NilMapPanic(t *testing.T) {
 		t.Fatalf("RefreshUser failed: %v", err)
 	}
 }
+
+func TestGetCellar_WithUnits(t *testing.T) {
+	ctx, cancel := GetTestContext(context.Background(), time.Minute)
+	defer cancel()
+
+	s := getTestServer(ctx)
+
+	// Add a beer with 12 fl oz and 5.0% ABV
+	// 12 * 0.029574 * 5.0 = 1.77444
+	_, err := s.AddBeer(ctx, &pb.AddBeerRequest{
+		BeerId:   123,
+		SizeFlOz: 12,
+		Quantity: 1,
+	})
+	if err != nil {
+		t.Fatalf("Unable to add beer: %v", err)
+	}
+	s.db.SaveBeer(ctx, &pb.Beer{Id: 123, Name: "Test Beer", Abv: 5.0})
+
+	r, err := s.GetCellar(ctx, &pb.GetCellarRequest{})
+	if err != nil {
+		t.Fatalf("Unable to get cellar: %v", err)
+	}
+
+	if len(r.GetBeers()) != 1 {
+		t.Fatalf("Expected 1 beer, got %v", len(r.GetBeers()))
+	}
+
+	units := r.GetBeers()[0].GetUnits()
+	if units < 1.7 || units > 1.8 {
+		t.Errorf("Wrong units returned: %v (expected ~1.77)", units)
+	}
+}

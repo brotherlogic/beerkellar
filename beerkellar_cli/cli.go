@@ -84,7 +84,7 @@ func main() {
 		}
 		log.Printf("User: %v (State: %v)", cellar.GetUsername(), cellar.GetState())
 		for i, beer := range cellar.GetBeers() {
-			log.Printf("%v. %v - %v (%v) [%v]", i+1, beer.GetBrewery(), beer.GetName(), beer.GetAbv(), beer.GetId())
+			log.Printf("%v. %v - %v (%v) [%v] [%.2f units]", i+1, beer.GetBrewery(), beer.GetName(), beer.GetAbv(), beer.GetId(), beer.GetUnits())
 		}
 	case "pull":
 		pullSet := flag.NewFlagSet("pull_beer", flag.ExitOnError)
