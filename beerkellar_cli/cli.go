@@ -108,7 +108,7 @@ func main() {
 			}
 			if len(res.GetBeers()) > 0 {
 				beer := res.GetBeers()[0]
-				log.Printf("Pulled beer: %v - %v (%v%% ABV) [%v]", beer.GetBrewery(), beer.GetName(), beer.GetAbv(), beer.GetId())
+				log.Printf("Pulled beer: %v - %v (%v%% ABV) [%v] [%.2f units]", beer.GetBrewery(), beer.GetName(), beer.GetAbv(), beer.GetId(), beer.GetUnits())
 			} else {
 				log.Printf("No beers found matching requirements")
 			}
