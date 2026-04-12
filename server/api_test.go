@@ -428,3 +428,59 @@ func TestGetCellar_WithUnits(t *testing.T) {
 		t.Errorf("Wrong units returned: %v (expected ~1.77)", units)
 	}
 }
+
+func TestGetBeer_UnitsAndFiltering(t *testing.T) {
+	ctx, cancel := GetTestContext(context.Background(), time.Minute)
+	defer cancel()
+
+	s := getTestServer(ctx)
+
+	// Add a heavy beer (12oz, 10% ABV = 3.54 units)
+	_, err := s.AddBeer(ctx, &pb.AddBeerRequest{
+		BeerId:   1,
+		SizeFlOz: 12,
+		Quantity: 1,
+	})
+	if err != nil {
+		t.Fatalf("Unable to add beer 1: %v", err)
+	}
+	s.db.SaveBeer(ctx, &pb.Beer{Id: 1, Name: "Heavy", Abv: 10.0})
+
+	// Add a light beer (12oz, 5% ABV = 1.77 units)
+	_, err = s.AddBeer(ctx, &pb.AddBeerRequest{
+		BeerId:   2,
+		SizeFlOz: 12,
+		Quantity: 1,
+	})
+	if err != nil {
+		t.Fatalf("Unable to add beer 2: %v", err)
+	}
+	s.db.SaveBeer(ctx, &pb.Beer{Id: 2, Name: "Light", Abv: 5.0})
+
+	// Call GetBeer with MaxUnits = 2.5
+	r, err := s.GetBeer(ctx, &pb.GetBeerRequest{
+		Requirements: []*pb.BeerRequirement{
+			{MaxUnits: 2.5, Strategy: pb.BeerRequirement_STRATEGY_LEAST_RECENTLY_DRUNK},
+		},
+	})
+	if err != nil {
+		t.Fatalf("Unable to get beer: %v", err)
+	}
+
+	if len(r.GetBeers()) == 0 {
+		t.Fatalf("No beers returned")
+	}
+
+	for _, beer := range r.GetBeers() {
+		if beer.GetId() == 1 {
+			t.Errorf("Returned beer 1 which is over 2.5 units (3.54 units)")
+		}
+		if beer.GetUnits() == 0 {
+			t.Errorf("Units not populated for beer %v", beer.GetId())
+		}
+		expectedUnits := float32(12) * 0.029574 * 5.0
+		if beer.GetId() == 2 && (beer.GetUnits() < expectedUnits-0.01 || beer.GetUnits() > expectedUnits+0.01) {
+			t.Errorf("Wrong units for beer 2: %v (expected ~%v)", beer.GetUnits(), expectedUnits)
+		}
+	}
+}

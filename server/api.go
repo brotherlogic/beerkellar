@@ -15,6 +15,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	pstore_client "github.com/brotherlogic/pstore/client"
+	"google.golang.org/protobuf/proto"
 )
 
 const (
@@ -149,26 +150,33 @@ func (s *Server) GetBeer(ctx context.Context, req *pb.GetBeerRequest) (*pb.GetBe
 		// Filter out beers
 		var ncellar []*pb.CellarEntry
 		var pBeer *pb.Beer
+		var pUnits float32
 		oldest := int64(math.MaxInt64)
 		leastRecent := int64(math.MaxInt64)
 		for _, entry := range cellar.GetEntries() {
 			if beer, ok := bcache[entry.GetBeerId()]; ok {
-				if requirement.GetMaxUnits() == 0 || convertToLitres(entry.GetSizeFlOz())*beer.GetAbv() < requirement.GetMaxUnits() {
+				units := convertToLitres(entry.GetSizeFlOz()) * beer.GetAbv()
+				if requirement.GetMaxUnits() == 0 || units < requirement.GetMaxUnits() {
 					ncellar = append(ncellar, entry)
 					if requirement.GetStrategy() == pb.BeerRequirement_STRATEGY_OLDEST && entry.GetDateAdded() < oldest {
 						oldest = entry.GetDateAdded()
 						pBeer = bcache[entry.GetBeerId()]
+						pUnits = units
 					} else if requirement.GetStrategy() == pb.BeerRequirement_STRATEGY_LEAST_RECENTLY_DRUNK {
 						lastDrunk := lastDrunks[entry.GetBeerId()]
 						if lastDrunk < leastRecent {
 							leastRecent = lastDrunk
 							oldest = entry.GetDateAdded()
 							pBeer = bcache[entry.GetBeerId()]
+							pUnits = units
 						} else if lastDrunk == leastRecent && entry.GetDateAdded() < oldest {
 							oldest = entry.GetDateAdded()
 							pBeer = bcache[entry.GetBeerId()]
+							pUnits = units
 						}
 					}
+				} else {
+					log.Printf("Beer %v fails unit check: %v >= %v", entry.GetBeerId(), units, requirement.GetMaxUnits())
 				}
 			} else {
 				log.Printf("Beer %v has no details", entry)
@@ -178,15 +186,22 @@ func (s *Server) GetBeer(ctx context.Context, req *pb.GetBeerRequest) (*pb.GetBe
 		// Pick a beer at random
 		if pBeer == nil && len(ncellar) > 0 {
 			log.Printf("CELLAR: %v", len(ncellar))
-			pBeer = bcache[ncellar[rand.Intn(len(ncellar))].GetBeerId()]
+			pickedEntry := ncellar[rand.Intn(len(ncellar))]
+			pBeer = bcache[pickedEntry.GetBeerId()]
+			pUnits = convertToLitres(pickedEntry.GetSizeFlOz()) * pBeer.GetAbv()
 		}
 
-		// If we don't want to repeat beers, we can just remove it from the cache
-		if req.GetNoRepeat() {
-			delete(bcache, pBeer.GetId())
-		}
 		if pBeer != nil {
-			beers = append(beers, pBeer)
+			// Clone the beer so we don't modify the cache version
+			nBeer := proto.Clone(pBeer).(*pb.Beer)
+			nBeer.Units = pUnits
+
+			// If we don't want to repeat beers, we can just remove it from the cache
+			if req.GetNoRepeat() {
+				delete(bcache, pBeer.GetId())
+			}
+
+			beers = append(beers, nBeer)
 		}
 	}
 	return &pb.GetBeerResponse{Beers: beers}, nil
