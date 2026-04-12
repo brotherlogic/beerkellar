@@ -108,6 +108,7 @@ func (s *Server) getUser(ctx context.Context) (*pb.User, error) {
 }
 
 func (s *Server) GetBeer(ctx context.Context, req *pb.GetBeerRequest) (*pb.GetBeerResponse, error) {
+	log.Printf("GetBeer Request: %+v", req)
 	user, err := s.getUser(ctx)
 	if err != nil {
 		return nil, err
@@ -156,6 +157,7 @@ func (s *Server) GetBeer(ctx context.Context, req *pb.GetBeerRequest) (*pb.GetBe
 		for _, entry := range cellar.GetEntries() {
 			if beer, ok := bcache[entry.GetBeerId()]; ok {
 				units := convertToLitres(entry.GetSizeFlOz()) * beer.GetAbv()
+				log.Printf("Considering %v (%v%% ABV, %voz): %v units (Limit: %v)", beer.GetName(), beer.GetAbv(), entry.GetSizeFlOz(), units, requirement.GetMaxUnits())
 				if requirement.GetMaxUnits() == 0 || units < requirement.GetMaxUnits() {
 					ncellar = append(ncellar, entry)
 					if requirement.GetStrategy() == pb.BeerRequirement_STRATEGY_OLDEST && entry.GetDateAdded() < oldest {
