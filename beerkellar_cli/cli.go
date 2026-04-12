@@ -98,9 +98,11 @@ func main() {
 					},
 				},
 			}
+			log.Printf("Weekday flag: %v", *weekday)
 			if *weekday {
 				req.Requirements[0].MaxUnits = 2.5
 			}
+			log.Printf("Requirement 0: %+v", req.Requirements[0])
 
 			res, err := client.GetBeer(ctx, req)
 			if err != nil {
