@@ -221,7 +221,13 @@ func (s *Server) GetCellar(ctx context.Context, _ *pb.GetCellarRequest) (*pb.Get
 
 			beers = append(beers, &pb.Beer{Id: b.BeerId})
 		} else {
-			beers = append(beers, &pb.Beer{Id: b.BeerId, Brewery: beer.GetBrewery(), Name: beer.GetName(), Abv: beer.GetAbv()})
+			beers = append(beers, &pb.Beer{
+				Id:      b.BeerId,
+				Brewery: beer.GetBrewery(),
+				Name:    beer.GetName(),
+				Abv:     beer.GetAbv(),
+				Units:   convertToLitres(b.GetSizeFlOz()) * beer.GetAbv(),
+			})
 		}
 	}
 
