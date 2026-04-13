@@ -88,7 +88,7 @@ func main() {
 		}
 	case "pull":
 		pullSet := flag.NewFlagSet("pull_beer", flag.ExitOnError)
-		weekday := pullSet.Bool("weekday", false, "Whether it's a weekday (limit to 2.5 units)")
+		weekday := pullSet.Bool("weekday", true, "Whether it's a weekday (limit to 2.5 units)")
 		if err := pullSet.Parse(os.Args[2:]); err == nil {
 			req := &pb.GetBeerRequest{
 				NoRepeat: true,
