@@ -65,3 +65,8 @@ This project includes a VS Code Dev Container configuration for a consistent dev
 ### Commands
 - Build: `go build ./...`
 - Test: `go test ./...`
+
+## Skills
+
+### Grill Me
+The "Grill Me" skill (based on Matt Pocock's workflow) is installed in this workspace. It provides a deep-dive design review process where the agent interviews you one question at a time to surface assumptions and edge cases before implementation. Trigger it by asking the agent to "Grill me" on a feature.
