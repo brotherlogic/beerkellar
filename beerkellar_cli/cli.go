@@ -83,9 +83,16 @@ func main() {
 			log.Fatalf("Unable to get cellar: %v", err)
 		}
 		log.Printf("User: %v (State: %v)", cellar.GetUsername(), cellar.GetState())
+		var weekday, nonWeekday int
 		for i, beer := range cellar.GetBeers() {
 			log.Printf("%v. %v - %v (%v) [%v] [%.2f units]", i+1, beer.GetBrewery(), beer.GetName(), beer.GetAbv(), beer.GetId(), beer.GetUnits())
+			if beer.GetUnits() < 2.5 {
+				weekday++
+			} else {
+				nonWeekday++
+			}
 		}
+		log.Printf("Summary: %v weekday beers, %v non-weekday beers", weekday, nonWeekday)
 	case "pull":
 		pullSet := flag.NewFlagSet("pull_beer", flag.ExitOnError)
 		weekday := pullSet.Bool("weekday", true, "Whether it's a weekday (limit to 2.5 units)")

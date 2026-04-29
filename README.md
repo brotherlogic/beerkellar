@@ -16,10 +16,11 @@ Beerkellar is a CLI tool and backend service for managing a personal beer cellar
    ```bash
    beerkellar_cli add --id <beer_id> --quantity 1 --size 12
    ```
-4. View your cellar:
+4. View your cellar and a summary of beer types:
    ```bash
    beerkellar_cli cellar
    ```
+   Shows all beers in your cellar along with a summary of the number of weekday (< 2.5 units) and non-weekday beers.
 5. Pull a beer to drink:
    ```bash
    beerkellar_cli pull [--weekday]
