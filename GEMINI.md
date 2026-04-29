@@ -31,5 +31,12 @@ The Untappd API has strict rate limiting. All background calls to external APIs 
 ### Environment
 Development must occur within the project's Dev Container. The workspace root must be `/workspaces/beerkellar`. The container is configured with the correct `workingDir` to ensure consistency.
 
+### Development Workflow
+After every change, you MUST:
+1. Push the change to a new feature branch.
+2. Allow GitHub to create a Pull Request from the branch push.
+3. Track and address any comments or issues raised on that PR.
+4. Once the PR is submitted (merged), reset your local environment to HEAD and sync with the remote repository.
+
 ### Finishing Tasks
 Once a change is complete and all tasks are done, follow the `/finish` workflow (`.agents/workflows/finish.md`). This handles building, documenting, and triggering the review process.
