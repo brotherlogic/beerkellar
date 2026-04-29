@@ -84,11 +84,11 @@ func main() {
 		}
 		log.Printf("User: %v (State: %v)", cellar.GetUsername(), cellar.GetState())
 		for i, beer := range cellar.GetBeers() {
-			log.Printf("%v. %v - %v (%v) [%v]", i+1, beer.GetBrewery(), beer.GetName(), beer.GetAbv(), beer.GetId())
+			log.Printf("%v. %v - %v (%v) [%v] [%.2f units]", i+1, beer.GetBrewery(), beer.GetName(), beer.GetAbv(), beer.GetId(), beer.GetUnits())
 		}
 	case "pull":
 		pullSet := flag.NewFlagSet("pull_beer", flag.ExitOnError)
-		weekday := pullSet.Bool("weekday", false, "Whether it's a weekday (limit to 2.5 units)")
+		weekday := pullSet.Bool("weekday", true, "Whether it's a weekday (limit to 2.5 units)")
 		if err := pullSet.Parse(os.Args[2:]); err == nil {
 			req := &pb.GetBeerRequest{
 				NoRepeat: true,
@@ -98,9 +98,11 @@ func main() {
 					},
 				},
 			}
+			log.Printf("Weekday flag: %v", *weekday)
 			if *weekday {
 				req.Requirements[0].MaxUnits = 2.5
 			}
+			log.Printf("Requirement 0: %+v", req.Requirements[0])
 
 			res, err := client.GetBeer(ctx, req)
 			if err != nil {
@@ -108,7 +110,7 @@ func main() {
 			}
 			if len(res.GetBeers()) > 0 {
 				beer := res.GetBeers()[0]
-				log.Printf("Pulled beer: %v - %v (%v%% ABV) [%v]", beer.GetBrewery(), beer.GetName(), beer.GetAbv(), beer.GetId())
+				log.Printf("Pulled beer: %v - %v (%v%% ABV) [%v] [%.2f units]", beer.GetBrewery(), beer.GetName(), beer.GetAbv(), beer.GetId(), beer.GetUnits())
 			} else {
 				log.Printf("No beers found matching requirements")
 			}
@@ -147,6 +149,25 @@ func main() {
 				log.Fatalf("Unable to save token")
 			}
 			break
+		}
+	case "drunk":
+		drunkSet := flag.NewFlagSet("drunk_beers", flag.ExitOnError)
+		count := drunkSet.Int("count", 10, "The number of drunk beers to return")
+		if err := drunkSet.Parse(os.Args[2:]); err == nil {
+			res, err := client.GetDrunk(ctx, &pb.GetDrunkRequest{
+				Count: int32(*count),
+			})
+			if err != nil {
+				log.Fatalf("Error getting drunk beers: %v", err)
+			}
+			for _, beer := range res.GetDrunk() {
+				dateStr := time.Unix(beer.GetDate(), 0).Format("2006-01-02")
+				if beer.GetName() == "" {
+					log.Printf("%v Unknown - Unknown [%v]", dateStr, beer.GetBeerId())
+				} else {
+					log.Printf("%v %v - %v (%.2f units)", dateStr, beer.GetBrewery(), beer.GetName(), beer.GetUnits())
+				}
+			}
 		}
 	}
 }

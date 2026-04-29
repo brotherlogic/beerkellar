@@ -6,6 +6,7 @@ import (
 	"log"
 	"math"
 	"math/rand"
+	"sort"
 	"time"
 
 	pb "github.com/brotherlogic/beerkellar/proto"
@@ -14,6 +15,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	pstore_client "github.com/brotherlogic/pstore/client"
+	"google.golang.org/protobuf/proto"
 )
 
 const (
@@ -106,6 +108,7 @@ func (s *Server) getUser(ctx context.Context) (*pb.User, error) {
 }
 
 func (s *Server) GetBeer(ctx context.Context, req *pb.GetBeerRequest) (*pb.GetBeerResponse, error) {
+	log.Printf("GetBeer Request: %+v", req)
 	user, err := s.getUser(ctx)
 	if err != nil {
 		return nil, err
@@ -148,26 +151,34 @@ func (s *Server) GetBeer(ctx context.Context, req *pb.GetBeerRequest) (*pb.GetBe
 		// Filter out beers
 		var ncellar []*pb.CellarEntry
 		var pBeer *pb.Beer
+		var pUnits float32
 		oldest := int64(math.MaxInt64)
 		leastRecent := int64(math.MaxInt64)
 		for _, entry := range cellar.GetEntries() {
 			if beer, ok := bcache[entry.GetBeerId()]; ok {
-				if requirement.GetMaxUnits() == 0 || convertToLitres(entry.GetSizeFlOz())*beer.GetAbv() < requirement.GetMaxUnits() {
+				units := convertToLitres(entry.GetSizeFlOz()) * beer.GetAbv()
+				log.Printf("Considering %v (%v%% ABV, %voz): %v units (Limit: %v)", beer.GetName(), beer.GetAbv(), entry.GetSizeFlOz(), units, requirement.GetMaxUnits())
+				if requirement.GetMaxUnits() == 0 || units < requirement.GetMaxUnits() {
 					ncellar = append(ncellar, entry)
 					if requirement.GetStrategy() == pb.BeerRequirement_STRATEGY_OLDEST && entry.GetDateAdded() < oldest {
 						oldest = entry.GetDateAdded()
 						pBeer = bcache[entry.GetBeerId()]
+						pUnits = units
 					} else if requirement.GetStrategy() == pb.BeerRequirement_STRATEGY_LEAST_RECENTLY_DRUNK {
 						lastDrunk := lastDrunks[entry.GetBeerId()]
 						if lastDrunk < leastRecent {
 							leastRecent = lastDrunk
 							oldest = entry.GetDateAdded()
 							pBeer = bcache[entry.GetBeerId()]
+							pUnits = units
 						} else if lastDrunk == leastRecent && entry.GetDateAdded() < oldest {
 							oldest = entry.GetDateAdded()
 							pBeer = bcache[entry.GetBeerId()]
+							pUnits = units
 						}
 					}
+				} else {
+					log.Printf("Beer %v fails unit check: %v >= %v", entry.GetBeerId(), units, requirement.GetMaxUnits())
 				}
 			} else {
 				log.Printf("Beer %v has no details", entry)
@@ -177,15 +188,22 @@ func (s *Server) GetBeer(ctx context.Context, req *pb.GetBeerRequest) (*pb.GetBe
 		// Pick a beer at random
 		if pBeer == nil && len(ncellar) > 0 {
 			log.Printf("CELLAR: %v", len(ncellar))
-			pBeer = bcache[ncellar[rand.Intn(len(ncellar))].GetBeerId()]
+			pickedEntry := ncellar[rand.Intn(len(ncellar))]
+			pBeer = bcache[pickedEntry.GetBeerId()]
+			pUnits = convertToLitres(pickedEntry.GetSizeFlOz()) * pBeer.GetAbv()
 		}
 
-		// If we don't want to repeat beers, we can just remove it from the cache
-		if req.GetNoRepeat() {
-			delete(bcache, pBeer.GetId())
-		}
 		if pBeer != nil {
-			beers = append(beers, pBeer)
+			// Clone the beer so we don't modify the cache version
+			nBeer := proto.Clone(pBeer).(*pb.Beer)
+			nBeer.Units = pUnits
+
+			// If we don't want to repeat beers, we can just remove it from the cache
+			if req.GetNoRepeat() {
+				delete(bcache, pBeer.GetId())
+			}
+
+			beers = append(beers, nBeer)
 		}
 	}
 	return &pb.GetBeerResponse{Beers: beers}, nil
@@ -220,7 +238,13 @@ func (s *Server) GetCellar(ctx context.Context, _ *pb.GetCellarRequest) (*pb.Get
 
 			beers = append(beers, &pb.Beer{Id: b.BeerId})
 		} else {
-			beers = append(beers, &pb.Beer{Id: b.BeerId, Brewery: beer.GetBrewery(), Name: beer.GetName(), Abv: beer.GetAbv()})
+			beers = append(beers, &pb.Beer{
+				Id:      b.BeerId,
+				Brewery: beer.GetBrewery(),
+				Name:    beer.GetName(),
+				Abv:     beer.GetAbv(),
+				Units:   convertToLitres(b.GetSizeFlOz()) * beer.GetAbv(),
+			})
 		}
 	}
 
@@ -360,10 +384,21 @@ func (s *Server) RefreshUser(ctx context.Context, req *pb.RefreshUserRequest) (*
 
 	log.Printf("Found %v checkins", len(checkins))
 	maxDate := user.GetLastFeedPull()
+
+	drunks, err := s.db.GetDrunk(ctx, user.GetUserId())
+	if err != nil && status.Code(err) != codes.NotFound {
+		return nil, err
+	}
+	if drunks == nil {
+		drunks = &pb.LastCheckins{LastCheckins: make(map[int64]int64)}
+	}
+	if drunks.LastCheckins == nil {
+		drunks.LastCheckins = make(map[int64]int64)
+	}
+
 	for _, checkin := range checkins {
-		err = s.db.SaveCheckin(ctx, user.GetUserId(), checkin)
-		if err != nil {
-			return nil, fmt.Errorf("unable to save checkins: %w", err)
+		if checkin.GetDate() > drunks.GetLastCheckins()[checkin.GetBeerId()] {
+			drunks.LastCheckins[checkin.GetBeerId()] = checkin.GetDate()
 		}
 
 		if checkin.GetDate() > maxDate {
@@ -380,10 +415,21 @@ func (s *Server) RefreshUser(ctx context.Context, req *pb.RefreshUserRequest) (*
 				} else {
 					found = true
 					cellarChanged = true
+					checkin.SizeFlOz = entry.GetSizeFlOz()
 				}
 			}
 			cellar.Entries = nbeers
 		}
+
+		err = s.db.SaveCheckin(ctx, user.GetUserId(), checkin)
+		if err != nil {
+			return nil, fmt.Errorf("unable to save checkins: %w", err)
+		}
+	}
+
+	err = s.db.SaveDrunk(ctx, user.GetUserId(), drunks)
+	if err != nil {
+		return nil, err
 	}
 
 	if cellarChanged {
@@ -404,20 +450,52 @@ func (s *Server) GetDrunk(ctx context.Context, req *pb.GetDrunkRequest) (*pb.Get
 		return nil, err
 	}
 
-	drunks, err := s.db.GetDrunk(ctx, user.GetUserId())
+	checkins, err := s.db.GetCheckins(ctx, user.GetUserId())
 	if err != nil {
-		if status.Code(err) == codes.NotFound && user.GetUserId() > 0 {
-			drunks = &pb.LastCheckins{LastCheckins: make(map[int64]int64)}
-			err = s.db.SaveDrunk(ctx, user.GetUserId(), drunks)
-			if err != nil {
-				return nil, err
-			}
+		return nil, err
+	}
+
+	sort.Slice(checkins, func(i, j int) bool {
+		return checkins[i].GetDate() > checkins[j].GetDate()
+	})
+
+	limit := req.GetCount()
+	if limit <= 0 {
+		limit = 10
+	}
+	if limit > 50 {
+		limit = 50
+	}
+
+	if int32(len(checkins)) > limit {
+		checkins = checkins[:limit]
+	}
+
+	var drunks []*pb.DrunkBeer
+	for _, checkin := range checkins {
+		beer, err := s.db.GetBeer(ctx, checkin.GetBeerId())
+		if err != nil || beer.GetName() == "" {
+			// Trigger a retry to cache, utilizing upgraded client
+			nut := s.untappd.Upgrade(user.GetAccessToken())
+			s.q.Enqueue(CacheBeer{beerId: checkin.GetBeerId(), u: nut, d: s.db})
+			drunks = append(drunks, &pb.DrunkBeer{
+				BeerId: checkin.GetBeerId(),
+				Date:   checkin.GetDate(),
+			})
 		} else {
-			return nil, err
+			drunks = append(drunks, &pb.DrunkBeer{
+				BeerId:   checkin.GetBeerId(),
+				Name:     beer.GetName(),
+				Brewery:  beer.GetBrewery(),
+				Abv:      beer.GetAbv(),
+				SizeFlOz: checkin.GetSizeFlOz(),
+				Date:     checkin.GetDate(),
+				Units:    convertToLitres(checkin.GetSizeFlOz()) * beer.GetAbv(),
+			})
 		}
 	}
 
-	return &pb.GetDrunkResponse{Drunk: drunks.GetLastCheckins()}, nil
+	return &pb.GetDrunkResponse{Drunk: drunks}, nil
 }
 func (s *Server) DrinkBeer(ctx context.Context, req *pb.DrinkBeerRequest) (*pb.DrinkBeerResponse, error) {
 	err := s.untappd.Checkin(ctx, req.GetBeerId())

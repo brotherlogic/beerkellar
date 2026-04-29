@@ -32,6 +32,7 @@ type Database interface {
 	SaveDrunk(ctx context.Context, userId int64, drunks *pb.LastCheckins) error
 
 	SaveCheckin(ctx context.Context, userId int64, checkin *pb.Checkin) error
+	GetCheckins(ctx context.Context, userId int64) ([]*pb.Checkin, error)
 }
 
 type DB struct {
@@ -194,3 +195,25 @@ func (d *DB) SaveDrunk(ctx context.Context, userId int64, drunks *pb.LastCheckin
 	return d.save(ctx, fmt.Sprintf("beerkellar/darchive/%v", userId), drunks)
 }
 
+func (d *DB) GetCheckins(ctx context.Context, userId int64) ([]*pb.Checkin, error) {
+	keys, err := d.client.GetKeys(ctx, &pspb.GetKeysRequest{Prefix: fmt.Sprintf("beerkellar/checkin/%v/", userId)})
+	if err != nil {
+		return nil, err
+	}
+
+	var checkins []*pb.Checkin
+	for _, key := range keys.GetKeys() {
+		data, err := d.load(ctx, key)
+		if err != nil {
+			return nil, err
+		}
+		checkin := &pb.Checkin{}
+		err = proto.Unmarshal(data, checkin)
+		if err != nil {
+			return nil, err
+		}
+		checkins = append(checkins, checkin)
+	}
+
+	return checkins, nil
+}

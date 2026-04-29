@@ -28,6 +28,7 @@ type Beer struct {
 	Abv           float32                `protobuf:"fixed32,3,opt,name=abv,proto3" json:"abv,omitempty"`
 	Brewery       string                 `protobuf:"bytes,4,opt,name=brewery,proto3" json:"brewery,omitempty"`
 	GlobalScore   float32                `protobuf:"fixed32,5,opt,name=global_score,json=globalScore,proto3" json:"global_score,omitempty"`
+	Units         float32                `protobuf:"fixed32,6,opt,name=units,proto3" json:"units,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -97,19 +98,27 @@ func (x *Beer) GetGlobalScore() float32 {
 	return 0
 }
 
+func (x *Beer) GetUnits() float32 {
+	if x != nil {
+		return x.Units
+	}
+	return 0
+}
+
 var File_beer_proto protoreflect.FileDescriptor
 
 const file_beer_proto_rawDesc = "" +
 	"\n" +
 	"\n" +
 	"beer.proto\x12\n" +
-	"beerkellar\"y\n" +
+	"beerkellar\"\x8f\x01\n" +
 	"\x04Beer\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x10\n" +
 	"\x03abv\x18\x03 \x01(\x02R\x03abv\x12\x18\n" +
 	"\abrewery\x18\x04 \x01(\tR\abrewery\x12!\n" +
-	"\fglobal_score\x18\x05 \x01(\x02R\vglobalScoreB*Z(github.com/brotherlogic/beerkellar/protob\x06proto3"
+	"\fglobal_score\x18\x05 \x01(\x02R\vglobalScore\x12\x14\n" +
+	"\x05units\x18\x06 \x01(\x02R\x05unitsB*Z(github.com/brotherlogic/beerkellar/protob\x06proto3"
 
 var (
 	file_beer_proto_rawDescOnce sync.Once
