@@ -34,7 +34,7 @@ Development must occur within the project's Dev Container. The workspace root mu
 ### Development Workflow
 After every change, you MUST:
 1. Push the change to a new feature branch.
-2. Allow GitHub to create a Pull Request from the branch push.
+2. Wait for GitHub to automatically create a Pull Request from the branch push (DO NOT use `gh pr create`).
 3. Track and address any comments or issues raised on that PR.
 4. Once the PR is submitted (merged), reset your local environment to HEAD and sync with the remote repository.
 
