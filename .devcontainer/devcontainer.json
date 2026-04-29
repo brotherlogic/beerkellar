@@ -27,7 +27,9 @@
 	"runArgs": [
 		"--security-opt",
 	    "label=disable",
-	    "--network=host"
+	    "--network=host",
+	    "--env-file",
+		"${localWorkspaceFolder}/.devcontainer/.env.auth"
 	],
 	"containerEnv": {
 		"GH_GIT_PROTOCOL": "ssh"
