@@ -123,16 +123,21 @@ func (BeerRequirement_PickStrategy) EnumDescriptor() ([]byte, []int) {
 }
 
 type User struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Auth          string                 `protobuf:"bytes,1,opt,name=auth,proto3" json:"auth,omitempty"`
-	AccessToken   string                 `protobuf:"bytes,2,opt,name=access_token,json=accessToken,proto3" json:"access_token,omitempty"`
-	Username      string                 `protobuf:"bytes,3,opt,name=username,proto3" json:"username,omitempty"`
-	UserId        int64                  `protobuf:"varint,4,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-	LatestCheckin int64                  `protobuf:"varint,5,opt,name=latest_checkin,json=latestCheckin,proto3" json:"latest_checkin,omitempty"`
-	LastFeedPull  int64                  `protobuf:"varint,6,opt,name=last_feed_pull,json=lastFeedPull,proto3" json:"last_feed_pull,omitempty"`
-	State         User_UserState         `protobuf:"varint,7,opt,name=state,proto3,enum=beerkellar.User_UserState" json:"state,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state              protoimpl.MessageState `protogen:"open.v1"`
+	Auth               string                 `protobuf:"bytes,1,opt,name=auth,proto3" json:"auth,omitempty"`
+	AccessToken        string                 `protobuf:"bytes,2,opt,name=access_token,json=accessToken,proto3" json:"access_token,omitempty"`
+	Username           string                 `protobuf:"bytes,3,opt,name=username,proto3" json:"username,omitempty"`
+	UserId             int64                  `protobuf:"varint,4,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+	LatestCheckin      int64                  `protobuf:"varint,5,opt,name=latest_checkin,json=latestCheckin,proto3" json:"latest_checkin,omitempty"`
+	LastFeedPull       int64                  `protobuf:"varint,6,opt,name=last_feed_pull,json=lastFeedPull,proto3" json:"last_feed_pull,omitempty"`
+	GoogleAccessToken  string                 `protobuf:"bytes,8,opt,name=google_access_token,json=googleAccessToken,proto3" json:"google_access_token,omitempty"`
+	GoogleRefreshToken string                 `protobuf:"bytes,9,opt,name=google_refresh_token,json=googleRefreshToken,proto3" json:"google_refresh_token,omitempty"`
+	GoogleTasksEnabled bool                   `protobuf:"varint,10,opt,name=google_tasks_enabled,json=googleTasksEnabled,proto3" json:"google_tasks_enabled,omitempty"`
+	GoogleTaskActive   bool                   `protobuf:"varint,11,opt,name=google_task_active,json=googleTaskActive,proto3" json:"google_task_active,omitempty"`
+	GoogleAuthState    string                 `protobuf:"bytes,12,opt,name=google_auth_state,json=googleAuthState,proto3" json:"google_auth_state,omitempty"`
+	State              User_UserState         `protobuf:"varint,7,opt,name=state,proto3,enum=beerkellar.User_UserState" json:"state,omitempty"`
+	unknownFields      protoimpl.UnknownFields
+	sizeCache          protoimpl.SizeCache
 }
 
 func (x *User) Reset() {
@@ -205,6 +210,41 @@ func (x *User) GetLastFeedPull() int64 {
 		return x.LastFeedPull
 	}
 	return 0
+}
+
+func (x *User) GetGoogleAccessToken() string {
+	if x != nil {
+		return x.GoogleAccessToken
+	}
+	return ""
+}
+
+func (x *User) GetGoogleRefreshToken() string {
+	if x != nil {
+		return x.GoogleRefreshToken
+	}
+	return ""
+}
+
+func (x *User) GetGoogleTasksEnabled() bool {
+	if x != nil {
+		return x.GoogleTasksEnabled
+	}
+	return false
+}
+
+func (x *User) GetGoogleTaskActive() bool {
+	if x != nil {
+		return x.GoogleTaskActive
+	}
+	return false
+}
+
+func (x *User) GetGoogleAuthState() string {
+	if x != nil {
+		return x.GoogleAuthState
+	}
+	return ""
 }
 
 func (x *User) GetState() User_UserState {
@@ -1350,20 +1390,266 @@ func (*RefreshUserResponse) Descriptor() ([]byte, []int) {
 	return file_api_proto_rawDescGZIP(), []int{24}
 }
 
+type GetGoogleLoginRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetGoogleLoginRequest) Reset() {
+	*x = GetGoogleLoginRequest{}
+	mi := &file_api_proto_msgTypes[25]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetGoogleLoginRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetGoogleLoginRequest) ProtoMessage() {}
+
+func (x *GetGoogleLoginRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_api_proto_msgTypes[25]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetGoogleLoginRequest.ProtoReflect.Descriptor instead.
+func (*GetGoogleLoginRequest) Descriptor() ([]byte, []int) {
+	return file_api_proto_rawDescGZIP(), []int{25}
+}
+
+type GetGoogleLoginResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Url           string                 `protobuf:"bytes,1,opt,name=url,proto3" json:"url,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetGoogleLoginResponse) Reset() {
+	*x = GetGoogleLoginResponse{}
+	mi := &file_api_proto_msgTypes[26]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetGoogleLoginResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetGoogleLoginResponse) ProtoMessage() {}
+
+func (x *GetGoogleLoginResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_api_proto_msgTypes[26]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetGoogleLoginResponse.ProtoReflect.Descriptor instead.
+func (*GetGoogleLoginResponse) Descriptor() ([]byte, []int) {
+	return file_api_proto_rawDescGZIP(), []int{26}
+}
+
+func (x *GetGoogleLoginResponse) GetUrl() string {
+	if x != nil {
+		return x.Url
+	}
+	return ""
+}
+
+type HandleGoogleAuthRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Code          string                 `protobuf:"bytes,1,opt,name=code,proto3" json:"code,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *HandleGoogleAuthRequest) Reset() {
+	*x = HandleGoogleAuthRequest{}
+	mi := &file_api_proto_msgTypes[27]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *HandleGoogleAuthRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*HandleGoogleAuthRequest) ProtoMessage() {}
+
+func (x *HandleGoogleAuthRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_api_proto_msgTypes[27]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use HandleGoogleAuthRequest.ProtoReflect.Descriptor instead.
+func (*HandleGoogleAuthRequest) Descriptor() ([]byte, []int) {
+	return file_api_proto_rawDescGZIP(), []int{27}
+}
+
+func (x *HandleGoogleAuthRequest) GetCode() string {
+	if x != nil {
+		return x.Code
+	}
+	return ""
+}
+
+type HandleGoogleAuthResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *HandleGoogleAuthResponse) Reset() {
+	*x = HandleGoogleAuthResponse{}
+	mi := &file_api_proto_msgTypes[28]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *HandleGoogleAuthResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*HandleGoogleAuthResponse) ProtoMessage() {}
+
+func (x *HandleGoogleAuthResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_api_proto_msgTypes[28]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use HandleGoogleAuthResponse.ProtoReflect.Descriptor instead.
+func (*HandleGoogleAuthResponse) Descriptor() ([]byte, []int) {
+	return file_api_proto_rawDescGZIP(), []int{28}
+}
+
+type ToggleGoogleTasksRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Enable        bool                   `protobuf:"varint,1,opt,name=enable,proto3" json:"enable,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ToggleGoogleTasksRequest) Reset() {
+	*x = ToggleGoogleTasksRequest{}
+	mi := &file_api_proto_msgTypes[29]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ToggleGoogleTasksRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ToggleGoogleTasksRequest) ProtoMessage() {}
+
+func (x *ToggleGoogleTasksRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_api_proto_msgTypes[29]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ToggleGoogleTasksRequest.ProtoReflect.Descriptor instead.
+func (*ToggleGoogleTasksRequest) Descriptor() ([]byte, []int) {
+	return file_api_proto_rawDescGZIP(), []int{29}
+}
+
+func (x *ToggleGoogleTasksRequest) GetEnable() bool {
+	if x != nil {
+		return x.Enable
+	}
+	return false
+}
+
+type ToggleGoogleTasksResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ToggleGoogleTasksResponse) Reset() {
+	*x = ToggleGoogleTasksResponse{}
+	mi := &file_api_proto_msgTypes[30]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ToggleGoogleTasksResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ToggleGoogleTasksResponse) ProtoMessage() {}
+
+func (x *ToggleGoogleTasksResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_api_proto_msgTypes[30]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ToggleGoogleTasksResponse.ProtoReflect.Descriptor instead.
+func (*ToggleGoogleTasksResponse) Descriptor() ([]byte, []int) {
+	return file_api_proto_rawDescGZIP(), []int{30}
+}
+
 var File_api_proto protoreflect.FileDescriptor
 
 const file_api_proto_rawDesc = "" +
 	"\n" +
 	"\tapi.proto\x12\n" +
 	"beerkellar\x1a\n" +
-	"beer.proto\"\xd2\x02\n" +
+	"beer.proto\"\xc0\x04\n" +
 	"\x04User\x12\x12\n" +
 	"\x04auth\x18\x01 \x01(\tR\x04auth\x12!\n" +
 	"\faccess_token\x18\x02 \x01(\tR\vaccessToken\x12\x1a\n" +
 	"\busername\x18\x03 \x01(\tR\busername\x12\x17\n" +
 	"\auser_id\x18\x04 \x01(\x03R\x06userId\x12%\n" +
 	"\x0elatest_checkin\x18\x05 \x01(\x03R\rlatestCheckin\x12$\n" +
-	"\x0elast_feed_pull\x18\x06 \x01(\x03R\flastFeedPull\x120\n" +
+	"\x0elast_feed_pull\x18\x06 \x01(\x03R\flastFeedPull\x12.\n" +
+	"\x13google_access_token\x18\b \x01(\tR\x11googleAccessToken\x120\n" +
+	"\x14google_refresh_token\x18\t \x01(\tR\x12googleRefreshToken\x120\n" +
+	"\x14google_tasks_enabled\x18\n" +
+	" \x01(\bR\x12googleTasksEnabled\x12,\n" +
+	"\x12google_task_active\x18\v \x01(\bR\x10googleTaskActive\x12*\n" +
+	"\x11google_auth_state\x18\f \x01(\tR\x0fgoogleAuthState\x120\n" +
 	"\x05state\x18\a \x01(\x0e2\x1a.beerkellar.User.UserStateR\x05state\"_\n" +
 	"\tUserState\x12\x11\n" +
 	"\rSTATE_UNKNOWN\x10\x00\x12\x14\n" +
@@ -1438,7 +1724,16 @@ const file_api_proto_rawDesc = "" +
 	"\x13SetRedirectResponse\"0\n" +
 	"\x12RefreshUserRequest\x12\x1a\n" +
 	"\busername\x18\x01 \x01(\tR\busername\"\x15\n" +
-	"\x13RefreshUserResponse2\xdd\x04\n" +
+	"\x13RefreshUserResponse\"\x17\n" +
+	"\x15GetGoogleLoginRequest\"*\n" +
+	"\x16GetGoogleLoginResponse\x12\x10\n" +
+	"\x03url\x18\x01 \x01(\tR\x03url\"-\n" +
+	"\x17HandleGoogleAuthRequest\x12\x12\n" +
+	"\x04code\x18\x01 \x01(\tR\x04code\"\x1a\n" +
+	"\x18HandleGoogleAuthResponse\"2\n" +
+	"\x18ToggleGoogleTasksRequest\x12\x16\n" +
+	"\x06enable\x18\x01 \x01(\bR\x06enable\"\x1b\n" +
+	"\x19ToggleGoogleTasksResponse2\xdd\x04\n" +
 	"\n" +
 	"BeerKeller\x12D\n" +
 	"\aAddBeer\x12\x1a.beerkellar.AddBeerRequest\x1a\x1b.beerkellar.AddBeerResponse\"\x00\x12J\n" +
@@ -1451,7 +1746,11 @@ const file_api_proto_rawDesc = "" +
 	"\aHealthy\x12\x1a.beerkellar.HealthyRequest\x1a\x1b.beerkellar.HealthyResponse\"\x002\xb5\x01\n" +
 	"\x0fBeerKellerAdmin\x12P\n" +
 	"\vSetRedirect\x12\x1e.beerkellar.SetRedirectRequest\x1a\x1f.beerkellar.SetRedirectResponse\"\x00\x12P\n" +
-	"\vRefreshUser\x12\x1e.beerkellar.RefreshUserRequest\x1a\x1f.beerkellar.RefreshUserResponse\"\x00B*Z(github.com/brotherlogic/beerkellar/protob\x06proto3"
+	"\vRefreshUser\x12\x1e.beerkellar.RefreshUserRequest\x1a\x1f.beerkellar.RefreshUserResponse\"\x002\xb2\x02\n" +
+	"\x10BeerKellerGoogle\x12Y\n" +
+	"\x0eGetGoogleLogin\x12!.beerkellar.GetGoogleLoginRequest\x1a\".beerkellar.GetGoogleLoginResponse\"\x00\x12_\n" +
+	"\x10HandleGoogleAuth\x12#.beerkellar.HandleGoogleAuthRequest\x1a$.beerkellar.HandleGoogleAuthResponse\"\x00\x12b\n" +
+	"\x11ToggleGoogleTasks\x12$.beerkellar.ToggleGoogleTasksRequest\x1a%.beerkellar.ToggleGoogleTasksResponse\"\x00B*Z(github.com/brotherlogic/beerkellar/protob\x06proto3"
 
 var (
 	file_api_proto_rawDescOnce sync.Once
@@ -1466,7 +1765,7 @@ func file_api_proto_rawDescGZIP() []byte {
 }
 
 var file_api_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_api_proto_msgTypes = make([]protoimpl.MessageInfo, 26)
+var file_api_proto_msgTypes = make([]protoimpl.MessageInfo, 32)
 var file_api_proto_goTypes = []any{
 	(User_UserState)(0),               // 0: beerkellar.User.UserState
 	(BeerRequirement_PickStrategy)(0), // 1: beerkellar.BeerRequirement.PickStrategy
@@ -1495,16 +1794,22 @@ var file_api_proto_goTypes = []any{
 	(*SetRedirectResponse)(nil),       // 24: beerkellar.SetRedirectResponse
 	(*RefreshUserRequest)(nil),        // 25: beerkellar.RefreshUserRequest
 	(*RefreshUserResponse)(nil),       // 26: beerkellar.RefreshUserResponse
-	nil,                               // 27: beerkellar.LastCheckins.LastCheckinsEntry
-	(*Beer)(nil),                      // 28: beerkellar.Beer
+	(*GetGoogleLoginRequest)(nil),     // 27: beerkellar.GetGoogleLoginRequest
+	(*GetGoogleLoginResponse)(nil),    // 28: beerkellar.GetGoogleLoginResponse
+	(*HandleGoogleAuthRequest)(nil),   // 29: beerkellar.HandleGoogleAuthRequest
+	(*HandleGoogleAuthResponse)(nil),  // 30: beerkellar.HandleGoogleAuthResponse
+	(*ToggleGoogleTasksRequest)(nil),  // 31: beerkellar.ToggleGoogleTasksRequest
+	(*ToggleGoogleTasksResponse)(nil), // 32: beerkellar.ToggleGoogleTasksResponse
+	nil,                               // 33: beerkellar.LastCheckins.LastCheckinsEntry
+	(*Beer)(nil),                      // 34: beerkellar.Beer
 }
 var file_api_proto_depIdxs = []int32{
 	0,  // 0: beerkellar.User.state:type_name -> beerkellar.User.UserState
-	27, // 1: beerkellar.LastCheckins.last_checkins:type_name -> beerkellar.LastCheckins.LastCheckinsEntry
-	28, // 2: beerkellar.GetCellarResponse.beers:type_name -> beerkellar.Beer
+	33, // 1: beerkellar.LastCheckins.last_checkins:type_name -> beerkellar.LastCheckins.LastCheckinsEntry
+	34, // 2: beerkellar.GetCellarResponse.beers:type_name -> beerkellar.Beer
 	0,  // 3: beerkellar.GetCellarResponse.state:type_name -> beerkellar.User.UserState
 	17, // 4: beerkellar.GetBeerRequest.requirements:type_name -> beerkellar.BeerRequirement
-	28, // 5: beerkellar.GetBeerResponse.beers:type_name -> beerkellar.Beer
+	34, // 5: beerkellar.GetBeerResponse.beers:type_name -> beerkellar.Beer
 	1,  // 6: beerkellar.BeerRequirement.strategy:type_name -> beerkellar.BeerRequirement.PickStrategy
 	19, // 7: beerkellar.GetDrunkResponse.drunk:type_name -> beerkellar.DrunkBeer
 	5,  // 8: beerkellar.BeerKeller.AddBeer:input_type -> beerkellar.AddBeerRequest
@@ -1517,18 +1822,24 @@ var file_api_proto_depIdxs = []int32{
 	11, // 15: beerkellar.BeerKeller.Healthy:input_type -> beerkellar.HealthyRequest
 	23, // 16: beerkellar.BeerKellerAdmin.SetRedirect:input_type -> beerkellar.SetRedirectRequest
 	25, // 17: beerkellar.BeerKellerAdmin.RefreshUser:input_type -> beerkellar.RefreshUserRequest
-	6,  // 18: beerkellar.BeerKeller.AddBeer:output_type -> beerkellar.AddBeerResponse
-	22, // 19: beerkellar.BeerKeller.DrinkBeer:output_type -> beerkellar.DrinkBeerResponse
-	8,  // 20: beerkellar.BeerKeller.GetLogin:output_type -> beerkellar.GetLoginResponse
-	10, // 21: beerkellar.BeerKeller.GetAuthToken:output_type -> beerkellar.GetAuthTokenResponse
-	14, // 22: beerkellar.BeerKeller.GetCellar:output_type -> beerkellar.GetCellarResponse
-	16, // 23: beerkellar.BeerKeller.GetBeer:output_type -> beerkellar.GetBeerResponse
-	20, // 24: beerkellar.BeerKeller.GetDrunk:output_type -> beerkellar.GetDrunkResponse
-	12, // 25: beerkellar.BeerKeller.Healthy:output_type -> beerkellar.HealthyResponse
-	24, // 26: beerkellar.BeerKellerAdmin.SetRedirect:output_type -> beerkellar.SetRedirectResponse
-	26, // 27: beerkellar.BeerKellerAdmin.RefreshUser:output_type -> beerkellar.RefreshUserResponse
-	18, // [18:28] is the sub-list for method output_type
-	8,  // [8:18] is the sub-list for method input_type
+	27, // 18: beerkellar.BeerKellerGoogle.GetGoogleLogin:input_type -> beerkellar.GetGoogleLoginRequest
+	29, // 19: beerkellar.BeerKellerGoogle.HandleGoogleAuth:input_type -> beerkellar.HandleGoogleAuthRequest
+	31, // 20: beerkellar.BeerKellerGoogle.ToggleGoogleTasks:input_type -> beerkellar.ToggleGoogleTasksRequest
+	6,  // 21: beerkellar.BeerKeller.AddBeer:output_type -> beerkellar.AddBeerResponse
+	22, // 22: beerkellar.BeerKeller.DrinkBeer:output_type -> beerkellar.DrinkBeerResponse
+	8,  // 23: beerkellar.BeerKeller.GetLogin:output_type -> beerkellar.GetLoginResponse
+	10, // 24: beerkellar.BeerKeller.GetAuthToken:output_type -> beerkellar.GetAuthTokenResponse
+	14, // 25: beerkellar.BeerKeller.GetCellar:output_type -> beerkellar.GetCellarResponse
+	16, // 26: beerkellar.BeerKeller.GetBeer:output_type -> beerkellar.GetBeerResponse
+	20, // 27: beerkellar.BeerKeller.GetDrunk:output_type -> beerkellar.GetDrunkResponse
+	12, // 28: beerkellar.BeerKeller.Healthy:output_type -> beerkellar.HealthyResponse
+	24, // 29: beerkellar.BeerKellerAdmin.SetRedirect:output_type -> beerkellar.SetRedirectResponse
+	26, // 30: beerkellar.BeerKellerAdmin.RefreshUser:output_type -> beerkellar.RefreshUserResponse
+	28, // 31: beerkellar.BeerKellerGoogle.GetGoogleLogin:output_type -> beerkellar.GetGoogleLoginResponse
+	30, // 32: beerkellar.BeerKellerGoogle.HandleGoogleAuth:output_type -> beerkellar.HandleGoogleAuthResponse
+	32, // 33: beerkellar.BeerKellerGoogle.ToggleGoogleTasks:output_type -> beerkellar.ToggleGoogleTasksResponse
+	21, // [21:34] is the sub-list for method output_type
+	8,  // [8:21] is the sub-list for method input_type
 	8,  // [8:8] is the sub-list for extension type_name
 	8,  // [8:8] is the sub-list for extension extendee
 	0,  // [0:8] is the sub-list for field type_name
@@ -1546,9 +1857,9 @@ func file_api_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_api_proto_rawDesc), len(file_api_proto_rawDesc)),
 			NumEnums:      2,
-			NumMessages:   26,
+			NumMessages:   32,
 			NumExtensions: 0,
-			NumServices:   2,
+			NumServices:   3,
 		},
 		GoTypes:           file_api_proto_goTypes,
 		DependencyIndexes: file_api_proto_depIdxs,

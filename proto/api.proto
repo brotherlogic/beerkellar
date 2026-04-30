@@ -16,6 +16,12 @@ message User {
     int64 latest_checkin = 5;
     int64 last_feed_pull = 6;
 
+    string google_access_token = 8;
+    string google_refresh_token = 9;
+    bool google_tasks_enabled = 10;
+    bool google_task_active = 11;
+    string google_auth_state = 12;
+
     enum UserState {
         STATE_UNKNOWN = 0;
         STATE_LOGGING_IN = 1;
@@ -141,7 +147,28 @@ message RefreshUserRequest {
 }
 message RefreshUserResponse {}
 
+message GetGoogleLoginRequest {}
+message GetGoogleLoginResponse {
+  string url = 1;
+}
+
+message HandleGoogleAuthRequest {
+  string code = 1;
+}
+message HandleGoogleAuthResponse {}
+
+message ToggleGoogleTasksRequest {
+  bool enable = 1;
+}
+message ToggleGoogleTasksResponse {}
+
 service BeerKellerAdmin {
   rpc SetRedirect(SetRedirectRequest) returns (SetRedirectResponse) {}
   rpc RefreshUser(RefreshUserRequest) returns (RefreshUserResponse) {}
+}
+
+service BeerKellerGoogle {
+  rpc GetGoogleLogin(GetGoogleLoginRequest) returns (GetGoogleLoginResponse) {}
+  rpc HandleGoogleAuth(HandleGoogleAuthRequest) returns (HandleGoogleAuthResponse) {}
+  rpc ToggleGoogleTasks(ToggleGoogleTasksRequest) returns (ToggleGoogleTasksResponse) {}
 }

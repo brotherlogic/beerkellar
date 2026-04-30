@@ -65,7 +65,8 @@ func main() {
 		log.Fatalf("Beerkellar is unable to serve metrics: %v", err)
 	}()
 
-	http.Handle("/", http.HandlerFunc(s.HandleCallback))
+	http.Handle("/untappd/callback", http.HandlerFunc(s.HandleCallback))
+	http.Handle("/google/callback", http.HandlerFunc(s.HandleGoogleCallback))
 	go func() {
 		err := http.ListenAndServe(fmt.Sprintf(":%v", *callbackPort), nil)
 		log.Fatalf("Beerkellar is unable to serve metrics: %v", err)
@@ -79,6 +80,7 @@ func main() {
 	gs := grpc.NewServer()
 	pb.RegisterBeerKellerAdminServer(gs, s)
 	pb.RegisterBeerKellerServer(gs, s)
+	pb.RegisterBeerKellerGoogleServer(gs, s)
 
 	go func() {
 		log.Printf("Serving on port :%d", *adminPort)

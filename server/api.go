@@ -255,6 +255,28 @@ func (s *Server) GetCellar(ctx context.Context, _ *pb.GetCellarRequest) (*pb.Get
 	}, nil
 }
 
+func (s *Server) getWeekdayBeerCount(ctx context.Context, userId int64) (int, error) {
+	cellar, err := s.db.GetCellar(ctx, userId)
+	if err != nil {
+		if status.Code(err) == codes.NotFound {
+			return 0, nil
+		}
+		return 0, err
+	}
+
+	count := 0
+	for _, entry := range cellar.GetEntries() {
+		beer, err := s.db.GetBeer(ctx, entry.GetBeerId())
+		if err == nil {
+			units := convertToLitres(entry.GetSizeFlOz()) * beer.GetAbv()
+			if units < 2.5 {
+				count++
+			}
+		}
+	}
+	return count, nil
+}
+
 func (s *Server) AddBeer(ctx context.Context, req *pb.AddBeerRequest) (*pb.AddBeerResponse, error) {
 	user, err := s.getUser(ctx)
 	if err != nil {
@@ -288,7 +310,18 @@ func (s *Server) AddBeer(ctx context.Context, req *pb.AddBeerRequest) (*pb.AddBe
 		u:      s.untappd.Upgrade(user.GetAccessToken()),
 		d:      s.db})
 
-	return &pb.AddBeerResponse{}, s.db.SaveCellar(ctx, user.GetUserId(), cellar)
+	err = s.db.SaveCellar(ctx, user.GetUserId(), cellar)
+	if err != nil {
+		return nil, err
+	}
+
+	count, _ := s.getWeekdayBeerCount(ctx, user.GetUserId())
+	if count >= 4 && user.GetGoogleTaskActive() {
+		user.GoogleTaskActive = false
+		s.db.SaveUser(ctx, user)
+	}
+
+	return &pb.AddBeerResponse{}, nil
 }
 
 func (s *Server) GetLogin(ctx context.Context, req *pb.GetLoginRequest) (*pb.GetLoginResponse, error) {
@@ -509,6 +542,14 @@ func (s *Server) DrinkBeer(ctx context.Context, req *pb.DrinkBeerRequest) (*pb.D
 	}
 
 	_, err = s.RefreshUser(ctx, &pb.RefreshUserRequest{Username: user.GetUsername()})
+
+	count, _ := s.getWeekdayBeerCount(ctx, user.GetUserId())
+	if count < 4 && !user.GetGoogleTaskActive() {
+		user.GoogleTaskActive = true
+		s.db.SaveUser(ctx, user)
+		s.q.Enqueue(AddGoogleTask{user: user})
+	}
+
 	return &pb.DrinkBeerResponse{}, err
 }
 
