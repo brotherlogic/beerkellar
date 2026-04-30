@@ -134,6 +134,7 @@ type User struct {
 	GoogleRefreshToken string                 `protobuf:"bytes,9,opt,name=google_refresh_token,json=googleRefreshToken,proto3" json:"google_refresh_token,omitempty"`
 	GoogleTasksEnabled bool                   `protobuf:"varint,10,opt,name=google_tasks_enabled,json=googleTasksEnabled,proto3" json:"google_tasks_enabled,omitempty"`
 	GoogleTaskActive   bool                   `protobuf:"varint,11,opt,name=google_task_active,json=googleTaskActive,proto3" json:"google_task_active,omitempty"`
+	GoogleAuthState    string                 `protobuf:"bytes,12,opt,name=google_auth_state,json=googleAuthState,proto3" json:"google_auth_state,omitempty"`
 	State              User_UserState         `protobuf:"varint,7,opt,name=state,proto3,enum=beerkellar.User_UserState" json:"state,omitempty"`
 	unknownFields      protoimpl.UnknownFields
 	sizeCache          protoimpl.SizeCache
@@ -237,6 +238,13 @@ func (x *User) GetGoogleTaskActive() bool {
 		return x.GoogleTaskActive
 	}
 	return false
+}
+
+func (x *User) GetGoogleAuthState() string {
+	if x != nil {
+		return x.GoogleAuthState
+	}
+	return ""
 }
 
 func (x *User) GetState() User_UserState {
@@ -1628,7 +1636,7 @@ const file_api_proto_rawDesc = "" +
 	"\n" +
 	"\tapi.proto\x12\n" +
 	"beerkellar\x1a\n" +
-	"beer.proto\"\x94\x04\n" +
+	"beer.proto\"\xc0\x04\n" +
 	"\x04User\x12\x12\n" +
 	"\x04auth\x18\x01 \x01(\tR\x04auth\x12!\n" +
 	"\faccess_token\x18\x02 \x01(\tR\vaccessToken\x12\x1a\n" +
@@ -1640,7 +1648,8 @@ const file_api_proto_rawDesc = "" +
 	"\x14google_refresh_token\x18\t \x01(\tR\x12googleRefreshToken\x120\n" +
 	"\x14google_tasks_enabled\x18\n" +
 	" \x01(\bR\x12googleTasksEnabled\x12,\n" +
-	"\x12google_task_active\x18\v \x01(\bR\x10googleTaskActive\x120\n" +
+	"\x12google_task_active\x18\v \x01(\bR\x10googleTaskActive\x12*\n" +
+	"\x11google_auth_state\x18\f \x01(\tR\x0fgoogleAuthState\x120\n" +
 	"\x05state\x18\a \x01(\x0e2\x1a.beerkellar.User.UserStateR\x05state\"_\n" +
 	"\tUserState\x12\x11\n" +
 	"\rSTATE_UNKNOWN\x10\x00\x12\x14\n" +

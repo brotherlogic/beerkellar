@@ -5,6 +5,8 @@ import (
 	"log"
 	"net/http"
 	"time"
+
+	pb "github.com/brotherlogic/beerkellar/proto"
 )
 
 func (s *Server) HandleCallback(w http.ResponseWriter, r *http.Request) {
@@ -23,11 +25,25 @@ func (s *Server) HandleGoogleCallback(w http.ResponseWriter, r *http.Request) {
 	defer cancel()
 
 	code := r.URL.Query().Get("code")
-	state := r.URL.Query().Get("state") // Assuming state contains the username or auth token
+	state := r.URL.Query().Get("state")
 
-	user, err := s.db.GetUser(ctx, state)
+	users, err := s.db.GetUsers(ctx)
 	if err != nil {
-		log.Printf("Error getting user for google callback: %v", err)
+		log.Printf("Error getting users for google callback: %v", err)
+		return
+	}
+
+	var user *pb.User
+	for _, u := range users {
+		if u.GetGoogleAuthState() == state {
+			user = u
+			break
+		}
+	}
+
+	if user == nil {
+		log.Printf("Error: No user found for state %v", state)
+		w.Write([]byte("Error: Invalid or expired state."))
 		return
 	}
 

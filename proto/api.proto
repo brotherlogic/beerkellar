@@ -20,6 +20,7 @@ message User {
     string google_refresh_token = 9;
     bool google_tasks_enabled = 10;
     bool google_task_active = 11;
+    string google_auth_state = 12;
 
     enum UserState {
         STATE_UNKNOWN = 0;
