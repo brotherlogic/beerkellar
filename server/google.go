@@ -2,6 +2,8 @@ package server
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/base64"
 	"fmt"
 	"os"
 	"time"
@@ -35,7 +37,11 @@ func (s *Server) GetGoogleLogin(ctx context.Context, req *pb.GetGoogleLoginReque
 
 	conf := getGoogleOAuthConfig()
 	// Generate a unique state string
-	user.GoogleAuthState = fmt.Sprintf("google-state-%v", time.Now().UnixNano())
+	b := make([]byte, 32)
+	if _, err := rand.Read(b); err != nil {
+		return nil, status.Errorf(codes.Internal, "Unable to generate random state: %v", err)
+	}
+	user.GoogleAuthState = base64.URLEncoding.EncodeToString(b)
 	if err := s.db.SaveUser(ctx, user); err != nil {
 		return nil, status.Errorf(codes.Internal, "Unable to save user state: %v", err)
 	}
