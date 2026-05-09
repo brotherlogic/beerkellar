@@ -41,13 +41,14 @@ func (s *Server) GetGoogleLogin(ctx context.Context, req *pb.GetGoogleLoginReque
 	if _, err := rand.Read(b); err != nil {
 		return nil, status.Errorf(codes.Internal, "Unable to generate random state: %v", err)
 	}
-	user.GoogleAuthState = base64.URLEncoding.EncodeToString(b)
+	state := base64.URLEncoding.EncodeToString(b)
+	user.GoogleAuthState = state
 	if err := s.db.SaveUser(ctx, user); err != nil {
 		return nil, status.Errorf(codes.Internal, "Unable to save user state: %v", err)
 	}
 
 	// Pass the new state string
-	url := conf.AuthCodeURL(user.GetGoogleAuthState(), oauth2.AccessTypeOffline, oauth2.ApprovalForce)
+	url := conf.AuthCodeURL(state, oauth2.AccessTypeOffline, oauth2.ApprovalForce)
 	return &pb.GetGoogleLoginResponse{Url: url}, nil
 }
 

@@ -2,10 +2,12 @@ package server
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/base64"
 	"fmt"
 	"log"
 	"math"
-	"math/rand"
+	mrand "math/rand"
 	"sort"
 	"time"
 
@@ -188,7 +190,7 @@ func (s *Server) GetBeer(ctx context.Context, req *pb.GetBeerRequest) (*pb.GetBe
 		// Pick a beer at random
 		if pBeer == nil && len(ncellar) > 0 {
 			log.Printf("CELLAR: %v", len(ncellar))
-			pickedEntry := ncellar[rand.Intn(len(ncellar))]
+			pickedEntry := ncellar[mrand.Intn(len(ncellar))]
 			pBeer = bcache[pickedEntry.GetBeerId()]
 			pUnits = convertToLitres(pickedEntry.GetSizeFlOz()) * pBeer.GetAbv()
 		}
@@ -325,7 +327,11 @@ func (s *Server) AddBeer(ctx context.Context, req *pb.AddBeerRequest) (*pb.AddBe
 }
 
 func (s *Server) GetLogin(ctx context.Context, req *pb.GetLoginRequest) (*pb.GetLoginResponse, error) {
-	tmpToken := fmt.Sprintf("%v-%v", time.Now().UnixNano(), rand.Int63())
+	b := make([]byte, 32)
+	if _, err := rand.Read(b); err != nil {
+		return nil, status.Errorf(codes.Internal, "Unable to generate random state: %v", err)
+	}
+	tmpToken := base64.URLEncoding.EncodeToString(b)
 	user := &pb.User{
 		Auth:  tmpToken,
 		State: pb.User_STATE_LOGGING_IN,
