@@ -60,16 +60,17 @@ func main() {
 	s.StartBackgroundTasks(context.Background())
 
 	http.Handle("/metrics", promhttp.Handler())
+	http.Handle("/untappd/callback", http.HandlerFunc(s.HandleCallback))
+	http.Handle("/google/callback", http.HandlerFunc(s.HandleGoogleCallback))
+
 	go func() {
 		err := http.ListenAndServe(fmt.Sprintf(":%v", *metricsPort), nil)
 		log.Fatalf("Beerkellar is unable to serve metrics: %v", err)
 	}()
 
-	http.Handle("/untappd/callback", http.HandlerFunc(s.HandleCallback))
-	http.Handle("/google/callback", http.HandlerFunc(s.HandleGoogleCallback))
 	go func() {
 		err := http.ListenAndServe(fmt.Sprintf(":%v", *callbackPort), nil)
-		log.Fatalf("Beerkellar is unable to serve metrics: %v", err)
+		log.Fatalf("Beerkellar is unable to serve callback: %v", err)
 	}()
 	log.Printf("Handling %v", *callbackPort)
 
