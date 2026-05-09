@@ -521,3 +521,179 @@ var BeerKellerAdmin_ServiceDesc = grpc.ServiceDesc{
 	Streams:  []grpc.StreamDesc{},
 	Metadata: "api.proto",
 }
+
+const (
+	BeerKellerGoogle_GetGoogleLogin_FullMethodName    = "/beerkellar.BeerKellerGoogle/GetGoogleLogin"
+	BeerKellerGoogle_HandleGoogleAuth_FullMethodName  = "/beerkellar.BeerKellerGoogle/HandleGoogleAuth"
+	BeerKellerGoogle_ToggleGoogleTasks_FullMethodName = "/beerkellar.BeerKellerGoogle/ToggleGoogleTasks"
+)
+
+// BeerKellerGoogleClient is the client API for BeerKellerGoogle service.
+//
+// For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+type BeerKellerGoogleClient interface {
+	GetGoogleLogin(ctx context.Context, in *GetGoogleLoginRequest, opts ...grpc.CallOption) (*GetGoogleLoginResponse, error)
+	HandleGoogleAuth(ctx context.Context, in *HandleGoogleAuthRequest, opts ...grpc.CallOption) (*HandleGoogleAuthResponse, error)
+	ToggleGoogleTasks(ctx context.Context, in *ToggleGoogleTasksRequest, opts ...grpc.CallOption) (*ToggleGoogleTasksResponse, error)
+}
+
+type beerKellerGoogleClient struct {
+	cc grpc.ClientConnInterface
+}
+
+func NewBeerKellerGoogleClient(cc grpc.ClientConnInterface) BeerKellerGoogleClient {
+	return &beerKellerGoogleClient{cc}
+}
+
+func (c *beerKellerGoogleClient) GetGoogleLogin(ctx context.Context, in *GetGoogleLoginRequest, opts ...grpc.CallOption) (*GetGoogleLoginResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetGoogleLoginResponse)
+	err := c.cc.Invoke(ctx, BeerKellerGoogle_GetGoogleLogin_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *beerKellerGoogleClient) HandleGoogleAuth(ctx context.Context, in *HandleGoogleAuthRequest, opts ...grpc.CallOption) (*HandleGoogleAuthResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(HandleGoogleAuthResponse)
+	err := c.cc.Invoke(ctx, BeerKellerGoogle_HandleGoogleAuth_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *beerKellerGoogleClient) ToggleGoogleTasks(ctx context.Context, in *ToggleGoogleTasksRequest, opts ...grpc.CallOption) (*ToggleGoogleTasksResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(ToggleGoogleTasksResponse)
+	err := c.cc.Invoke(ctx, BeerKellerGoogle_ToggleGoogleTasks_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// BeerKellerGoogleServer is the server API for BeerKellerGoogle service.
+// All implementations should embed UnimplementedBeerKellerGoogleServer
+// for forward compatibility.
+type BeerKellerGoogleServer interface {
+	GetGoogleLogin(context.Context, *GetGoogleLoginRequest) (*GetGoogleLoginResponse, error)
+	HandleGoogleAuth(context.Context, *HandleGoogleAuthRequest) (*HandleGoogleAuthResponse, error)
+	ToggleGoogleTasks(context.Context, *ToggleGoogleTasksRequest) (*ToggleGoogleTasksResponse, error)
+}
+
+// UnimplementedBeerKellerGoogleServer should be embedded to have
+// forward compatible implementations.
+//
+// NOTE: this should be embedded by value instead of pointer to avoid a nil
+// pointer dereference when methods are called.
+type UnimplementedBeerKellerGoogleServer struct{}
+
+func (UnimplementedBeerKellerGoogleServer) GetGoogleLogin(context.Context, *GetGoogleLoginRequest) (*GetGoogleLoginResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetGoogleLogin not implemented")
+}
+func (UnimplementedBeerKellerGoogleServer) HandleGoogleAuth(context.Context, *HandleGoogleAuthRequest) (*HandleGoogleAuthResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method HandleGoogleAuth not implemented")
+}
+func (UnimplementedBeerKellerGoogleServer) ToggleGoogleTasks(context.Context, *ToggleGoogleTasksRequest) (*ToggleGoogleTasksResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method ToggleGoogleTasks not implemented")
+}
+func (UnimplementedBeerKellerGoogleServer) testEmbeddedByValue() {}
+
+// UnsafeBeerKellerGoogleServer may be embedded to opt out of forward compatibility for this service.
+// Use of this interface is not recommended, as added methods to BeerKellerGoogleServer will
+// result in compilation errors.
+type UnsafeBeerKellerGoogleServer interface {
+	mustEmbedUnimplementedBeerKellerGoogleServer()
+}
+
+func RegisterBeerKellerGoogleServer(s grpc.ServiceRegistrar, srv BeerKellerGoogleServer) {
+	// If the following call panics, it indicates UnimplementedBeerKellerGoogleServer was
+	// embedded by pointer and is nil.  This will cause panics if an
+	// unimplemented method is ever invoked, so we test this at initialization
+	// time to prevent it from happening at runtime later due to I/O.
+	if t, ok := srv.(interface{ testEmbeddedByValue() }); ok {
+		t.testEmbeddedByValue()
+	}
+	s.RegisterService(&BeerKellerGoogle_ServiceDesc, srv)
+}
+
+func _BeerKellerGoogle_GetGoogleLogin_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetGoogleLoginRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BeerKellerGoogleServer).GetGoogleLogin(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: BeerKellerGoogle_GetGoogleLogin_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BeerKellerGoogleServer).GetGoogleLogin(ctx, req.(*GetGoogleLoginRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _BeerKellerGoogle_HandleGoogleAuth_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(HandleGoogleAuthRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BeerKellerGoogleServer).HandleGoogleAuth(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: BeerKellerGoogle_HandleGoogleAuth_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BeerKellerGoogleServer).HandleGoogleAuth(ctx, req.(*HandleGoogleAuthRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _BeerKellerGoogle_ToggleGoogleTasks_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(ToggleGoogleTasksRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(BeerKellerGoogleServer).ToggleGoogleTasks(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: BeerKellerGoogle_ToggleGoogleTasks_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(BeerKellerGoogleServer).ToggleGoogleTasks(ctx, req.(*ToggleGoogleTasksRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+// BeerKellerGoogle_ServiceDesc is the grpc.ServiceDesc for BeerKellerGoogle service.
+// It's only intended for direct use with grpc.RegisterService,
+// and not to be introspected or modified (even as a copy)
+var BeerKellerGoogle_ServiceDesc = grpc.ServiceDesc{
+	ServiceName: "beerkellar.BeerKellerGoogle",
+	HandlerType: (*BeerKellerGoogleServer)(nil),
+	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "GetGoogleLogin",
+			Handler:    _BeerKellerGoogle_GetGoogleLogin_Handler,
+		},
+		{
+			MethodName: "HandleGoogleAuth",
+			Handler:    _BeerKellerGoogle_HandleGoogleAuth_Handler,
+		},
+		{
+			MethodName: "ToggleGoogleTasks",
+			Handler:    _BeerKellerGoogle_ToggleGoogleTasks_Handler,
+		},
+	},
+	Streams:  []grpc.StreamDesc{},
+	Metadata: "api.proto",
+}

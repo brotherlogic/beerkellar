@@ -484,3 +484,64 @@ func TestGetBeer_UnitsAndFiltering(t *testing.T) {
 		}
 	}
 }
+
+func TestGoogleTaskThreshold(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+	defer cancel()
+
+	s := getTestServer(ctx)
+	// Create user
+	user := &pb.User{
+		UserId:   100,
+		Username: "testuser",
+		Auth:     "auth-token",
+		State:    pb.User_STATE_AUTHORIZED,
+	}
+	s.db.SaveUser(ctx, user)
+	md := metadata.Pairs("auth-token", "auth-token")
+	ctx = metadata.NewIncomingContext(ctx, md)
+
+	// Save a low ABV beer definition
+	s.db.SaveBeer(ctx, &pb.Beer{Id: 1, Name: "Light Beer", Abv: 4.0}) // ~1.4 units for 12oz
+
+	// Add 4 weekday beers to go above the threshold
+	_, err := s.AddBeer(ctx, &pb.AddBeerRequest{
+		BeerId:   1,
+		SizeFlOz: 12,
+		Quantity: 4,
+	})
+	if err != nil {
+		t.Fatalf("Unable to add beer: %v", err)
+	}
+
+	user, _ = s.db.GetUser(ctx, "auth-token")
+	if user.GetGoogleTaskActive() {
+		t.Errorf("GoogleTaskActive should be false initially")
+	}
+
+	// Drink 1 beer, dropping the count to 3 (< 4 threshold)
+	_, err = s.DrinkBeer(ctx, &pb.DrinkBeerRequest{BeerId: 1})
+	if err != nil {
+		t.Fatalf("Unable to drink beer: %v", err)
+	}
+
+	user, _ = s.db.GetUser(ctx, "auth-token")
+	if !user.GetGoogleTaskActive() {
+		t.Errorf("GoogleTaskActive should be true after dropping below threshold")
+	}
+
+	// Add 1 beer, pushing the count back to 4
+	_, err = s.AddBeer(ctx, &pb.AddBeerRequest{
+		BeerId:   1,
+		SizeFlOz: 12,
+		Quantity: 1,
+	})
+	if err != nil {
+		t.Fatalf("Unable to add beer again: %v", err)
+	}
+
+	user, _ = s.db.GetUser(ctx, "auth-token")
+	if user.GetGoogleTaskActive() {
+		t.Errorf("GoogleTaskActive should be false after adding back above threshold")
+	}
+}

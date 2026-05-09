@@ -176,5 +176,32 @@ func main() {
 				}
 			}
 		}
+	case "google":
+		googleClient := pb.NewBeerKellerGoogleClient(conn)
+		if len(os.Args) < 3 {
+			log.Fatalf("Usage: google [login|tasks]")
+		}
+		switch os.Args[2] {
+		case "login":
+			res, err := googleClient.GetGoogleLogin(ctx, &pb.GetGoogleLoginRequest{})
+			if err != nil {
+				log.Fatalf("Unable to get google login url: %v", err)
+			}
+			log.Printf("Opening Google Login URL. After completing, the window will say 'Google Account Linked Successfully!'.")
+			err = browser.OpenURL(res.GetUrl())
+			if err != nil {
+				log.Fatalf("unable to open URL: %v", err)
+			}
+		case "tasks":
+			if len(os.Args) < 4 {
+				log.Fatalf("Usage: google tasks [on|off]")
+			}
+			enable := os.Args[3] == "on"
+			_, err := googleClient.ToggleGoogleTasks(ctx, &pb.ToggleGoogleTasksRequest{Enable: enable})
+			if err != nil {
+				log.Fatalf("Unable to toggle tasks: %v", err)
+			}
+			log.Printf("Google Tasks feature toggled: %v", enable)
+		}
 	}
 }

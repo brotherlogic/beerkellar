@@ -122,7 +122,7 @@ func runTestServer(ctx context.Context, t *testing.T) (*integrationTest, error) 
 	}
 	defer conn.Close()
 	client := pb.NewBeerKellerAdminClient(conn)
-	_, err = client.SetRedirect(ctx, &pb.SetRedirectRequest{Url: fmt.Sprintf("http://beerkellar:%v", 8082)}) //cmp.Int())})
+	_, err = client.SetRedirect(ctx, &pb.SetRedirectRequest{Url: fmt.Sprintf("http://beerkellar:%v/untappd/callback", 8082)}) //cmp.Int())})
 	if err != nil {
 		t.Fatalf("Unable to set redirect: %v", err)
 	}
