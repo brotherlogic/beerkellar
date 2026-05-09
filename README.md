@@ -70,3 +70,37 @@ This project includes a VS Code Dev Container configuration for a consistent dev
 
 ### Grill Me
 The "Grill Me" skill (based on Matt Pocock's workflow) is installed in this workspace. It provides a deep-dive design review process where the agent interviews you one question at a time to surface assumptions and edge cases before implementation. Trigger it by asking the agent to "Grill me" on a feature.
+
+## Google Tasks Integration
+
+Beerkellar can automatically create a task in your Google Tasks list when your supply of weekday beers (those with < 2.5 alcohol units) drops below a certain threshold (currently 4).
+
+### Setup
+
+1.  **Google Cloud Project**:
+    *   Create a project in the [Google Cloud Console](https://console.cloud.google.com/).
+    *   Enable the **Google Tasks API**.
+    *   Create **OAuth 2.0 Credentials** (Web application).
+    *   Add an **Authorized Redirect URI** (e.g., `https://beerkellar-grpc.brotherlogic-backend.com/google/callback`).
+
+2.  **Environment Variables**:
+    Ensure the following variables are set on the Beerkellar server:
+    *   `GOOGLE_CLIENT_ID`: Your Google OAuth client ID.
+    *   `GOOGLE_CLIENT_SECRET`: Your Google OAuth client secret.
+    *   `GOOGLE_REDIRECT_URL`: The same redirect URI configured in the Cloud Console.
+
+3.  **Link your Account**:
+    Run the following command and follow the instructions in your browser:
+    ```bash
+    beerkellar_cli google login
+    ```
+
+4.  **Enable the Feature**:
+    Toggle the task integration on:
+    ```bash
+    beerkellar_cli google tasks on
+    ```
+
+### How it Works
+
+When you record drinking a beer (using `beerkellar_cli drink`), the system checks your remaining weekday beer count. If it falls below 4, it will automatically enqueue a task to "Buy more weekday beer" in your default Google Tasks list. The system will reset this trigger once you add more weekday beers to your cellar.

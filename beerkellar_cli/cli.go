@@ -176,6 +176,22 @@ func main() {
 				}
 			}
 		}
+	case "drink":
+		drinkSet := flag.NewFlagSet("drink_beer", flag.ExitOnError)
+		bid := drinkSet.Int64("id", -1, "The id of the beer to drink")
+		if err := drinkSet.Parse(os.Args[2:]); err == nil {
+			if *bid <= 0 {
+				log.Fatalf("You must specify a beer id to drink (-id)")
+			}
+
+			_, err := client.DrinkBeer(ctx, &pb.DrinkBeerRequest{
+				BeerId: *bid,
+			})
+			if err != nil {
+				log.Fatalf("Error drinking beer: %v", err)
+			}
+			log.Printf("Beer %v recorded as drunk.", *bid)
+		}
 	case "google":
 		googleClient := pb.NewBeerKellerGoogleClient(conn)
 		if len(os.Args) < 3 {
