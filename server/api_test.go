@@ -277,10 +277,10 @@ func TestGetBeer_WeekdayLogic(t *testing.T) {
 	}
 	s.db.SaveBeer(ctx, &pb.Beer{Id: 2, Name: "Light", Abv: 4.0})
 
-	// Test with weekday limit (2.5)
+	// Test with weekday limit (3)
 	r, err := s.GetBeer(ctx, &pb.GetBeerRequest{
 		Requirements: []*pb.BeerRequirement{
-			{MaxUnits: 2.5},
+			{MaxUnits: 3},
 		},
 	})
 	if err != nil {
@@ -457,10 +457,10 @@ func TestGetBeer_UnitsAndFiltering(t *testing.T) {
 	}
 	s.db.SaveBeer(ctx, &pb.Beer{Id: 2, Name: "Light", Abv: 5.0})
 
-	// Call GetBeer with MaxUnits = 2.5
+	// Call GetBeer with MaxUnits = 3
 	r, err := s.GetBeer(ctx, &pb.GetBeerRequest{
 		Requirements: []*pb.BeerRequirement{
-			{MaxUnits: 2.5, Strategy: pb.BeerRequirement_STRATEGY_LEAST_RECENTLY_DRUNK},
+			{MaxUnits: 3, Strategy: pb.BeerRequirement_STRATEGY_LEAST_RECENTLY_DRUNK},
 		},
 	})
 	if err != nil {
@@ -473,7 +473,7 @@ func TestGetBeer_UnitsAndFiltering(t *testing.T) {
 
 	for _, beer := range r.GetBeers() {
 		if beer.GetId() == 1 {
-			t.Errorf("Returned beer 1 which is over 2.5 units (3.54 units)")
+			t.Errorf("Returned beer 1 which is over 3 units (3.54 units)")
 		}
 		if beer.GetUnits() == 0 {
 			t.Errorf("Units not populated for beer %v", beer.GetId())
