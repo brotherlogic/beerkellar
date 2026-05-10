@@ -107,7 +107,7 @@ func main() {
 			}
 			log.Printf("Weekday flag: %v", *weekday)
 			if *weekday {
-				req.Requirements[0].MaxUnits = 2.5
+				req.Requirements[0].MaxUnits = 3
 			}
 			log.Printf("Requirement 0: %+v", req.Requirements[0])
 

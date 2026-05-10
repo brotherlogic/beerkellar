@@ -28,7 +28,7 @@ beerkellar_cli cellar
 ```
 
 ### 4. Pull a Beer
-Choose a beer you haven't drunk recently. Use `--weekday` to limit choices to beers with 2.5 units of alcohol or less.
+Choose a beer you haven't drunk recently. Use `--weekday` to limit choices to beers with 3 units of alcohol or less.
 ```bash
 beerkellar_cli pull [--weekday]
 ```
@@ -47,7 +47,7 @@ beerkellar_cli drunk [--count 10]
 
 ## Google Tasks Integration
 
-Automatically creates a task when weekday beer (< 2.5 units) count drops below 4.
+Automatically creates a task when weekday beer (< 3 units) count drops below 4.
 
 ### 1. Link Google Account
 ```bash
