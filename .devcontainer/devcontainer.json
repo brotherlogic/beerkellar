@@ -32,7 +32,10 @@
 		"${localWorkspaceFolder}/.devcontainer/.env.auth"
 	],
 	"containerEnv": {
-		"GH_GIT_PROTOCOL": "ssh"
+	    		"DBUS_SESSION_BUS_ADDRESS": "unix:path=/run/user/1000/bus",
+		"GH_GIT_PROTOCOL": "ssh",
+		"TZ": "America/Los_Angeles"
+
 	},
 	"mounts": [
 		{
@@ -41,6 +44,9 @@
 			"type": "bind",
 			"options": "readonly" // Optional: makes keys read-only in container
 		},
-	    		    		"source=${localEnv:HOME}/.gemini,target=/home/vscode/.gemini,type=bind"
+	    "source=${localEnv:HOME}/.gemini,target=/home/vscode/.gemini,type=bind",
+	    	    		"source=/var/run/dbus,target=/var/run/dbus,type=bind",
+	    "source=/run/user,target=/run/user,type=bind",
+
 	]
 }
