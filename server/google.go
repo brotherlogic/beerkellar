@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"fmt"
+	"log"
 	"os"
 	"time"
 
@@ -36,6 +37,13 @@ func (s *Server) GetGoogleLogin(ctx context.Context, req *pb.GetGoogleLoginReque
 	}
 
 	conf := getGoogleOAuthConfig()
+	// Log the configuration we are using
+	log.Printf("Google OAuth Config: ClientID length=%d, ClientSecret length=%d, RedirectURL=%s", 
+		len(conf.ClientID), 
+		len(conf.ClientSecret),
+		conf.RedirectURL,
+	)
+
 	// Generate a unique state string
 	b := make([]byte, 32)
 	if _, err := rand.Read(b); err != nil {
@@ -49,6 +57,7 @@ func (s *Server) GetGoogleLogin(ctx context.Context, req *pb.GetGoogleLoginReque
 
 	// Pass the new state string
 	url := conf.AuthCodeURL(state, oauth2.AccessTypeOffline, oauth2.ApprovalForce)
+	log.Printf("Generated Google Login URL: %s", url)
 	return &pb.GetGoogleLoginResponse{Url: url}, nil
 }
 

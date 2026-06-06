@@ -26,7 +26,7 @@ git config --global user.name "Brotherlogic Automation"
 TMUX_BLOCK=$(cat << 'EOF'
 if [ -z "$TMUX" ] && [ -n "$PS1" ]; then
   cd /workspaces/beerkellar
-  /workspaces/beerkellar/start-tmux.sh && tmux attach-session -t dcm
+  /workspaces/beerkellar/start-tmux.sh && tmux attach-session -t beerkellar
 fi
 EOF
 )
