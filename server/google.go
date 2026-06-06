@@ -38,8 +38,9 @@ func (s *Server) GetGoogleLogin(ctx context.Context, req *pb.GetGoogleLoginReque
 
 	conf := getGoogleOAuthConfig()
 	// Log the configuration we are using
-	log.Printf("Google OAuth Config: ClientID length=%d, RedirectURL=%s", 
+	log.Printf("Google OAuth Config: ClientID length=%d, ClientSecret length=%d, RedirectURL=%s", 
 		len(conf.ClientID), 
+		len(conf.ClientSecret),
 		conf.RedirectURL,
 	)
 
