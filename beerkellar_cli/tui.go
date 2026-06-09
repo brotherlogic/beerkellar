@@ -223,7 +223,7 @@ func (m tuiModel) handleWizardInput(input string) (tuiModel, tea.Cmd) {
 func (m tuiModel) runGetCellar() tea.Cmd {
 	return func() tea.Msg {
 		if m.client == nil {
-			return cmdResultMsg{content: "Cellar retrieved successfully (mock)"}
+			return cmdResultMsg{content: "Not running command in mock (cellar)"}
 		}
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 		defer cancel()
@@ -243,7 +243,7 @@ func (m tuiModel) runGetCellar() tea.Cmd {
 func (m tuiModel) runPullBeer() tea.Cmd {
 	return func() tea.Msg {
 		if m.client == nil {
-			return cmdResultMsg{content: "Beer pulled successfully (mock)"}
+			return cmdResultMsg{content: "Not running command in mock (pull)"}
 		}
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 		defer cancel()
@@ -270,7 +270,7 @@ func (m tuiModel) runPullBeer() tea.Cmd {
 func (m tuiModel) runGetDrunk() tea.Cmd {
 	return func() tea.Msg {
 		if m.client == nil {
-			return cmdResultMsg{content: "Drunk beers list retrieved (mock)"}
+			return cmdResultMsg{content: "Not running command in mock (drunk)"}
 		}
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 		defer cancel()
@@ -290,7 +290,7 @@ func (m tuiModel) runGetDrunk() tea.Cmd {
 func (m tuiModel) runAddBeer(id int64, qty, sz int32) tea.Cmd {
 	return func() tea.Msg {
 		if m.client == nil {
-			return cmdResultMsg{content: fmt.Sprintf("Beer ID %v (qty %v, size %v) added (mock)", id, qty, sz)}
+			return cmdResultMsg{content: fmt.Sprintf("Not running command in mock (add - id:%v qty:%v size:%v)", id, qty, sz)}
 		}
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 		defer cancel()
@@ -309,7 +309,7 @@ func (m tuiModel) runAddBeer(id int64, qty, sz int32) tea.Cmd {
 func (m tuiModel) runDrinkBeer(id int64) tea.Cmd {
 	return func() tea.Msg {
 		if m.client == nil {
-			return cmdResultMsg{content: fmt.Sprintf("Beer ID %v recorded as drunk (mock)", id)}
+			return cmdResultMsg{content: fmt.Sprintf("Not running command in mock (drink - id:%v)", id)}
 		}
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 		defer cancel()
@@ -323,20 +323,20 @@ func (m tuiModel) runDrinkBeer(id int64) tea.Cmd {
 
 func (m tuiModel) runLogin() tea.Cmd {
 	return func() tea.Msg {
-		return cmdResultMsg{content: "Login workflow started (mock)"}
+		return cmdResultMsg{content: "Not running command in mock (login)"}
 	}
 }
 
 func (m tuiModel) runGoogleLogin() tea.Cmd {
 	return func() tea.Msg {
-		return cmdResultMsg{content: "Google Login workflow started (mock)"}
+		return cmdResultMsg{content: "Not running command in mock (google login)"}
 	}
 }
 
 func (m tuiModel) runToggleGoogleTasks(enable bool) tea.Cmd {
 	return func() tea.Msg {
 		if m.googleClient == nil {
-			return cmdResultMsg{content: fmt.Sprintf("Google tasks toggled to %v (mock)", enable)}
+			return cmdResultMsg{content: fmt.Sprintf("Not running command in mock (google tasks - enable:%v)", enable)}
 		}
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
 		defer cancel()
