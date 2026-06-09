@@ -4,7 +4,7 @@ description: Triage, classify, and resolve bugs using TDD
 
 # 🐛 The `seraphine-bug` Label Workflow
 
-When a GitHub issue is labeled with `seraphine-bug`, the AI assistant (**Beerkellar**) is triggered to triage and resolve the bug using a structured and disciplined process.
+When a GitHub issue is labeled with `seraphine-bug`, the AI assistant (**Seraphine**) is triggered to triage and resolve the bug using a structured and disciplined process.
 
 ## 🔄 Workflow Lifecycle
 
@@ -31,7 +31,7 @@ Before writing any code, the agent must evaluate the complexity of the reported 
 ### 2. Simple Path: Implementation & Verification
 If the bug is classified as simple, the agent implements the fix immediately.
 * **Triage to Fix:**
-  - Write or modify unit/integration tests to reproduce the issue (TDD style).
+  - Write or modify unit tests to reproduce the issue (TDD style).
   - Implement the fix to make the tests pass cleanly.
 * **Verification:** Run all tests (e.g., `go test -v ./...`) to verify that the fix is correct and introduces no regressions.
 * **Failed Verification:** If the fix fails verification or tests do not pass, the agent must revert any changes and transition immediately to the **Complex Path**.

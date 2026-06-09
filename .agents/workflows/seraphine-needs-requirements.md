@@ -4,7 +4,7 @@ description: Gather requirements and formulate a Product Requirements Document (
 
 # 🏷️ The `seraphine-needs-requirements` Label Workflow
 
-When a GitHub issue is labeled with `seraphine-needs-requirements` (or its variant `seraphine-need-requirements`), the AI assistant (**Beerkellar**) is triggered to run a requirements-gathering process. This stage focuses strictly on **what** needs to be built and **why**, avoiding any early technical implementation details.
+When a GitHub issue is labeled with `seraphine-needs-requirements` (or its variant `seraphine-need-requirements`), the AI assistant (**Seraphine**) is triggered to run a requirements-gathering process. This stage focuses strictly on **what** needs to be built and **why**, avoiding any early technical implementation details.
 
 ## 🔄 Workflow Lifecycle
 
