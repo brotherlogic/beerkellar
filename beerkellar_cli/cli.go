@@ -17,6 +17,8 @@ import (
 	"google.golang.org/protobuf/encoding/prototext"
 
 	pb "github.com/brotherlogic/beerkellar/proto"
+
+	tea "github.com/charmbracelet/bubbletea"
 )
 
 func buildContext() (context.Context, context.CancelFunc, error) {
@@ -54,6 +56,14 @@ func main() {
 		ctx, cancel = context.WithTimeout(context.Background(), time.Minute*5)
 	}
 	defer cancel()
+
+	if len(os.Args) < 2 {
+		p := tea.NewProgram(initialModel())
+		if _, err := p.Run(); err != nil {
+			log.Fatalf("Error running TUI: %v", err)
+		}
+		return
+	}
 
 	switch os.Args[1] {
 	case "add":
