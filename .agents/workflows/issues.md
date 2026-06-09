@@ -19,24 +19,24 @@ This document serves as the entry point and index for Beerkellar's issue-process
 When an issue is labeled, refer to the corresponding workflow document under `.agents/workflows/` for detailed step-by-step instructions:
 
 1. **Requirements gathering**
-   - **Label**: `beerkellar-needs-requirements` (or variant `beerkellar-need-requirements`)
-   - **Workflow Guideline**: [beerkellar-needs-requirements.md](file:///workspaces/beerkellar/.agents/workflows/beerkellar-needs-requirements.md)
+   - **Label**: `seraphine-needs-requirements` (or variant `seraphine-need-requirements`)
+   - **Workflow Guideline**: [seraphine-needs-requirements.md](file:///workspaces/beerkellar/.agents/workflows/seraphine-needs-requirements.md)
 
 2. **Technical implementation plan formulation**
-   - **Label**: `beerkellar-needs-implementation-plan`
-   - **Workflow Guideline**: [beerkellar-needs-implementation-plan.md](file:///workspaces/beerkellar/.agents/workflows/beerkellar-needs-implementation-plan.md)
+   - **Label**: `seraphine-needs-implementation-plan`
+   - **Workflow Guideline**: [seraphine-needs-implementation-plan.md](file:///workspaces/beerkellar/.agents/workflows/seraphine-needs-implementation-plan.md)
 
 3. **Issue breakdown**
-   - **Label**: `beerkellar-break-down-issue`
-   - **Workflow Guideline**: [beerkellar-break-down-issue.md](file:///workspaces/beerkellar/.agents/workflows/beerkellar-break-down-issue.md)
+   - **Label**: `seraphine-break-down-issue`
+   - **Workflow Guideline**: [seraphine-break-down-issue.md](file:///workspaces/beerkellar/.agents/workflows/seraphine-break-down-issue.md)
 
 4. **Component implementation**
-   - **Label**: `beerkellar-ready-to-implement`
-   - **Workflow Guideline**: [beerkellar-ready-to-implement.md](file:///workspaces/beerkellar/.agents/workflows/beerkellar-ready-to-implement.md)
+   - **Label**: `seraphine-ready-to-implement`
+   - **Workflow Guideline**: [seraphine-ready-to-implement.md](file:///workspaces/beerkellar/.agents/workflows/seraphine-ready-to-implement.md)
 
 5. **Bug triage and resolution**
-   - **Label**: `beerkellar-bug`
-   - **Workflow Guideline**: [beerkellar-bug.md](file:///workspaces/beerkellar/.agents/workflows/beerkellar-bug.md)
+   - **Label**: `seraphine-bug`
+   - **Workflow Guideline**: [seraphine-bug.md](file:///workspaces/beerkellar/.agents/workflows/seraphine-bug.md)
 
 ---
 
@@ -44,11 +44,11 @@ When an issue is labeled, refer to the corresponding workflow document under `.a
 
 | Phase | Parent Issue Label(s) | Sub-Issue Title & Label(s) |
 | :--- | :--- | :--- |
-| **Requirements Gathering** | `beerkellar-needs-requirements` | *None (Not yet created)* |
-| **Requirements Approved** | *(Label Removed)* | `[Implementation Plan] <Title>` labeled with `beerkellar-needs-implementation-plan` |
-| **Implementation Plan Drafting** | *None* | `[Implementation Plan] <Title>` labeled with `beerkellar-needs-implementation-plan` |
-| **Implementation Plan Approved** | *None* | **Implementation Plan:** Label removed (remains Open).<br>**Breakdown Sub-Issue:** `[Breakdown] <Title>` labeled with `beerkellar-break-down-issue` |
-| **Issue Breakdown** | *None* | **Breakdown Issue:** `beerkellar-break-down-issue` removed (remains Open).<br>**Child Sub-Issues:** `[Sub-Issue] <Action>` labeled with `beerkellar-ready-to-implement` |
-| **Implementation** | *None* | **Breakdown Issue:** Closed when all child sub-issues are closed (cascading to close Implementation Plan and Parent issues).<br>**Child Sub-Issues:** Labeled with `beerkellar-ready-to-implement`. Closed programmatically via PR submission. |
-| **Bug Triage (Simple)** | `beerkellar-bug` | *None (Direct fix implemented and PR submitted)* |
-| **Bug Triage (Complex/Failed)** | `beerkellar-bug` (Removed) | New issue labeled with `beerkellar-needs-requirements` to initiate requirements gathering |
+| **Requirements Gathering** | `seraphine-needs-requirements` | *None (Not yet created)* |
+| **Requirements Approved** | *(Label Removed)* | `[Implementation Plan] <Title>` labeled with `seraphine-needs-implementation-plan` |
+| **Implementation Plan Drafting** | *None* | `[Implementation Plan] <Title>` labeled with `seraphine-needs-implementation-plan` |
+| **Implementation Plan Approved** | *None* | **Implementation Plan:** Label removed (remains Open).<br>**Breakdown Sub-Issue:** `[Breakdown] <Title>` labeled with `seraphine-break-down-issue` |
+| **Issue Breakdown** | *None* | **Breakdown Issue:** `seraphine-break-down-issue` removed (remains Open).<br>**Child Sub-Issues:** `[Sub-Issue] <Action>` labeled with `seraphine-ready-to-implement` |
+| **Implementation** | *None* | **Breakdown Issue:** Closed when all child sub-issues are closed (cascading to close Implementation Plan and Parent issues).<br>**Child Sub-Issues:** Labeled with `seraphine-ready-to-implement`. Closed programmatically via PR submission. |
+| **Bug Triage (Simple)** | `seraphine-bug` | *None (Direct fix implemented and PR submitted)* |
+| **Bug Triage (Complex/Failed)** | `seraphine-bug` (Removed) | New issue labeled with `seraphine-needs-requirements` to initiate requirements gathering |
