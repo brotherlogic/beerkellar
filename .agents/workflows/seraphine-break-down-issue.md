@@ -2,15 +2,15 @@
 description: Break down technical implementation plans into granular sub-issues
 ---
 
-# 🛠️ The `beerkellar-break-down-issue` Label Workflow
+# 🛠️ The `seraphine-break-down-issue` Label Workflow
 
-When a sub-issue is labeled with `beerkellar-break-down-issue` (typically the `[Breakdown]` sub-issue), the AI assistant (**Beerkellar**) is triggered to break the technical implementation plan down into highly granular, junior-engineer-friendly component issues.
+When a sub-issue is labeled with `seraphine-break-down-issue` (typically the `[Breakdown]` sub-issue), the AI assistant (**Beerkellar**) is triggered to break the technical implementation plan down into highly granular, junior-engineer-friendly component issues.
 
 ## 🔄 Workflow Lifecycle
 
 ```mermaid
 graph TD
-    A[Issue Labeled beerkellar-break-down-issue] --> B[1. Read Context & Parent Issues]
+    A[Issue Labeled seraphine-break-down-issue] --> B[1. Read Context & Parent Issues]
     B --> C[2. Technical Breakdown Analysis]
     C --> D[3. Programmatic Sub-Issue Creation]
     D --> E[4. Transition & Label Cleanup]
@@ -37,9 +37,9 @@ Beerkellar analyzes the technical implementation plan proposed in the current is
 For each identified component, Beerkellar programmatically files a new GitHub sub-issue under the current `[Breakdown]` issue.
 * **Sub-Issue Title:** Must use the format `[Sub-Issue] <Action>` (e.g., `[Sub-Issue] Implement pstore serialization for beer cellar metrics`).
 * **Sub-Issue Body:** Sub-issues should stand alone and do not need to include the parent implementation plan. **Explicitly state issue dependencies in the description: if sub-issue X is dependent on sub-issue Y, this relationship must be clearly documented. They must reference the `[Breakdown]` issue as their parent.**
-* **Sub-Issue Label:** Must be marked with the `beerkellar-ready-to-implement` label.
+* **Sub-Issue Label:** Must be marked with the `seraphine-ready-to-implement` label.
 
 ### 4. Transition & Label Cleanup
 Once all component sub-issues are successfully filed:
-* **Remove the Label:** Remove the `beerkellar-break-down-issue` label from the current `[Breakdown]` issue.
+* **Remove the Label:** Remove the `seraphine-break-down-issue` label from the current `[Breakdown]` issue.
 * **Keep Issue Open:** Do **not** close the `[Breakdown]` issue. Keep it open to serve as the overarching coordination point for the child tasks.
