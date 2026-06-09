@@ -10,6 +10,13 @@ go install ./beerkellar_cli
 
 ## Usage
 
+### Interactive TUI Mode
+Run the CLI without any subcommands to enter the interactive TUI dashboard layout:
+```bash
+beerkellar_cli
+```
+This launches a three-pane dashboard (Cellar Summary, Command Readout, Command Input) with a status bar.
+
 ### 1. Login with Untappd
 ```bash
 beerkellar_cli login
