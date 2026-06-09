@@ -4,7 +4,7 @@ description: GitHub Issue Processing Workflow entry point
 
 # Notes Management System - GitHub Issue Processing Workflow
 
-This document serves as the entry point and index for Beerkellar's issue-processing workflows. It outlines the general rules and lists the specific workflow files for each stage in the issue lifecycle.
+This document serves as the entry point and index for Seraphine's issue-processing workflows. It outlines the general rules and lists the specific workflow files for each stage in the issue lifecycle.
 
 ---
 

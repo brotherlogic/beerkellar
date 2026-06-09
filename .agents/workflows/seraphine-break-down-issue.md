@@ -4,7 +4,7 @@ description: Break down technical implementation plans into granular sub-issues
 
 # 🛠️ The `seraphine-break-down-issue` Label Workflow
 
-When a sub-issue is labeled with `seraphine-break-down-issue` (typically the `[Breakdown]` sub-issue), the AI assistant (**Beerkellar**) is triggered to break the technical implementation plan down into highly granular, junior-engineer-friendly component issues.
+When a sub-issue is labeled with `seraphine-break-down-issue` (typically the `[Breakdown]` sub-issue), the AI assistant (**Seraphine**) is triggered to break the technical implementation plan down into highly granular, junior-engineer-friendly component issues.
 
 ## 🔄 Workflow Lifecycle
 
@@ -24,18 +24,18 @@ graph TD
 The agent must read the description/body of the current breakdown issue and extract the referenced implementation plan issue number (e.g., `#123` or direct link) to fetch the approved technical implementation plan and preceding discussions. This ensures the full historical context is captured before breaking down tasks.
 
 ### 2. Technical Breakdown Analysis
-Beerkellar analyzes the technical implementation plan proposed in the current issue to isolate discrete work items.
+Seraphine analyzes the technical implementation plan proposed in the current issue to isolate discrete work items.
 * **Granularity Goal:** Design tasks that are easily reviewable and can be completed in a single code change.
 * **Component Boundaries:** Each sub-issue must target a single, isolated slice of the technology stack. For example:
   - Just the backend Protocol Buffer definition and `pstore` serialization layer.
-  - Just the Go gRPC service handler or process queue logic.
-  - Just the CLI parser, commands, or interface formatting.
-* **Self-Contained Verification:** Each component must be capable of being coded and tested in isolation (e.g., has its own unit tests, mock data, or integration tests).
+  - Just the Go gRPC service handler or sync loop logic.
+  - Just a specific frontend React component, route, or styling layout.
+* **Self-Contained Verification:** Each component must be capable of being coded and tested in isolation (e.g., has its own unit tests, mock data, or visual validation).
 * **Dependency Identification:** Explicitly identify dependencies between component tasks. If task X is dependent on task Y being completed first, this sequence must be highlighted.
 
 ### 3. Programmatic Sub-Issue Creation
-For each identified component, Beerkellar programmatically files a new GitHub sub-issue under the current `[Breakdown]` issue.
-* **Sub-Issue Title:** Must use the format `[Sub-Issue] <Action>` (e.g., `[Sub-Issue] Implement pstore serialization for beer cellar metrics`).
+For each identified component, Seraphine programmatically files a new GitHub sub-issue under the current `[Breakdown]` issue.
+* **Sub-Issue Title:** Must use the format `[Sub-Issue] <Action>` (e.g., `[Sub-Issue] Implement pstore serialization for note status`).
 * **Sub-Issue Body:** Sub-issues should stand alone and do not need to include the parent implementation plan. **Explicitly state issue dependencies in the description: if sub-issue X is dependent on sub-issue Y, this relationship must be clearly documented. They must reference the `[Breakdown]` issue as their parent.**
 * **Sub-Issue Label:** Must be marked with the `seraphine-ready-to-implement` label.
 
