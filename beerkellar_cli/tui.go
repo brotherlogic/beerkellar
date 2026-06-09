@@ -7,6 +7,7 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
+// tuiModel implements the tea.Model interface for the Bubble Tea program.
 type tuiModel struct {
 	cellarSummary  string
 	commandReadout string
