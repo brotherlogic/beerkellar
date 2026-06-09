@@ -1,45 +1,351 @@
 package main
 
 import (
+	"context"
 	"fmt"
+	"strconv"
+	"strings"
+	"time"
 
+	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	pb "github.com/brotherlogic/beerkellar/proto"
 )
+
+type wizardType int
+
+const (
+	wizardNone wizardType = iota
+	wizardAdd
+	wizardDrink
+)
+
+type addWizardState struct {
+	step     int // 0: ID, 1: Quantity, 2: Size
+	beerID   int64
+	quantity int32
+	size     int32
+}
+
+type drinkWizardState struct {
+	beerID int64
+}
 
 // tuiModel implements the tea.Model interface for the Bubble Tea program.
 type tuiModel struct {
+	client         pb.BeerKellerClient
+	googleClient   pb.BeerKellerGoogleClient
 	cellarSummary  string
 	commandReadout string
 	commandInput   string
 	untappdStatus  string
 	googleStatus   string
 	err            error
+
+	// Input and wizard states
+	textInput   textinput.Model
+	activeWiz   wizardType
+	addWiz      addWizardState
+	drinkWiz    drinkWizardState
 }
 
-func initialModel() tea.Model {
+func initialModel(client pb.BeerKellerClient, googleClient pb.BeerKellerGoogleClient) tea.Model {
+	ti := textinput.New()
+	ti.Placeholder = "Type command here..."
+	ti.Focus()
+	ti.CharLimit = 156
+	ti.Width = 40
+
 	return tuiModel{
+		client:         client,
+		googleClient:   googleClient,
 		cellarSummary:  "CELLAR SUMMARY\nCellar Size & Split: 0 Beers (0 Weekday, 0 Weekend)\nNext Weekday Candidate: None\nNext Weekend Candidate: None",
 		commandReadout: "COMMAND READOUT\nNo logs yet. Type a command below.",
 		commandInput:   "COMMAND INPUT\n> ",
 		untappdStatus:  "Untappd: Disconnected",
 		googleStatus:   "Google Tasks: Disconnected",
+		textInput:      ti,
+		activeWiz:      wizardNone,
 	}
 }
 
 func (m tuiModel) Init() tea.Cmd {
-	return nil
+	return textinput.Blink
+}
+
+type cmdResultMsg struct {
+	content string
+	err     error
 }
 
 func (m tuiModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	var cmd tea.Cmd
+
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "ctrl+c":
 			return m, tea.Quit
+
+		case "enter":
+			input := strings.TrimSpace(m.textInput.Value())
+			m.textInput.SetValue("")
+
+			if m.activeWiz == wizardNone {
+				return m.handleRootCommand(input)
+			} else {
+				return m.handleWizardInput(input)
+			}
 		}
+
+	case cmdResultMsg:
+		if msg.err != nil {
+			m.commandReadout = fmt.Sprintf("COMMAND READOUT\nError: %v", msg.err)
+		} else {
+			m.commandReadout = fmt.Sprintf("COMMAND READOUT\n%s", msg.content)
+		}
+		return m, nil
 	}
+
+	m.textInput, cmd = m.textInput.Update(msg)
+	return m, cmd
+}
+
+func (m tuiModel) handleRootCommand(input string) (tuiModel, tea.Cmd) {
+	parts := strings.Fields(input)
+	if len(parts) == 0 {
+		return m, nil
+	}
+
+	cmdName := strings.ToLower(parts[0])
+	switch cmdName {
+	case "exit", "quit":
+		return m, tea.Quit
+
+	case "add":
+		m.activeWiz = wizardAdd
+		m.addWiz = addWizardState{step: 0}
+		m.textInput.Placeholder = "Enter Beer ID"
+		return m, nil
+
+	case "drink":
+		m.activeWiz = wizardDrink
+		m.textInput.Placeholder = "Enter Beer ID to drink"
+		return m, nil
+
+	case "cellar":
+		return m, m.runGetCellar()
+
+	case "pull":
+		return m, m.runPullBeer()
+
+	case "drunk":
+		return m, m.runGetDrunk()
+
+	case "login":
+		return m, m.runLogin()
+
+	case "google":
+		if len(parts) >= 2 {
+			sub := strings.ToLower(parts[1])
+			if sub == "login" {
+				return m, m.runGoogleLogin()
+			} else if sub == "tasks" && len(parts) >= 3 {
+				enable := strings.ToLower(parts[2]) == "on"
+				return m, m.runToggleGoogleTasks(enable)
+			}
+		}
+		m.commandReadout = "COMMAND READOUT\nInvalid google command. Try 'google login' or 'google tasks [on|off]'"
+		return m, nil
+
+	default:
+		m.commandReadout = fmt.Sprintf("COMMAND READOUT\nUnknown command: %s", input)
+		return m, nil
+	}
+}
+
+func (m tuiModel) handleWizardInput(input string) (tuiModel, tea.Cmd) {
+	switch m.activeWiz {
+	case wizardAdd:
+		switch m.addWiz.step {
+		case 0:
+			id, err := strconv.ParseInt(input, 10, 64)
+			if err != nil {
+				m.commandReadout = "COMMAND READOUT\nInvalid ID. Please enter a number."
+				return m, nil
+			}
+			m.addWiz.beerID = id
+			m.addWiz.step = 1
+			m.textInput.Placeholder = "Enter Quantity"
+			return m, nil
+
+		case 1:
+			qty, err := strconv.ParseInt(input, 10, 32)
+			if err != nil {
+				m.commandReadout = "COMMAND READOUT\nInvalid Quantity. Please enter a number."
+				return m, nil
+			}
+			m.addWiz.quantity = int32(qty)
+			m.addWiz.step = 2
+			m.textInput.Placeholder = "Enter Size (fl oz)"
+			return m, nil
+
+		case 2:
+			sz, err := strconv.ParseInt(input, 10, 32)
+			if err != nil {
+				m.commandReadout = "COMMAND READOUT\nInvalid Size. Please enter a number."
+				return m, nil
+			}
+			m.addWiz.size = int32(sz)
+			m.activeWiz = wizardNone
+			m.textInput.Placeholder = "Type command here..."
+			return m, m.runAddBeer(m.addWiz.beerID, m.addWiz.quantity, m.addWiz.size)
+		}
+
+	case wizardDrink:
+		id, err := strconv.ParseInt(input, 10, 64)
+		if err != nil {
+			m.commandReadout = "COMMAND READOUT\nInvalid ID. Please enter a number."
+			return m, nil
+		}
+		m.drinkWiz.beerID = id
+		m.activeWiz = wizardNone
+		m.textInput.Placeholder = "Type command here..."
+		return m, m.runDrinkBeer(m.drinkWiz.beerID)
+	}
+
 	return m, nil
+}
+
+// gRPC commands executed asynchronously
+
+func (m tuiModel) runGetCellar() tea.Cmd {
+	return func() tea.Msg {
+		if m.client == nil {
+			return cmdResultMsg{content: "Cellar retrieved successfully (mock)"}
+		}
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+		defer cancel()
+		cellar, err := m.client.GetCellar(ctx, &pb.GetCellarRequest{})
+		if err != nil {
+			return cmdResultMsg{err: err}
+		}
+		var sb strings.Builder
+		sb.WriteString(fmt.Sprintf("User: %v (State: %v)\n", cellar.GetUsername(), cellar.GetState()))
+		for i, beer := range cellar.GetBeers() {
+			sb.WriteString(fmt.Sprintf("%v. %v - %v (%.2f units)\n", i+1, beer.GetBrewery(), beer.GetName(), beer.GetUnits()))
+		}
+		return cmdResultMsg{content: sb.String()}
+	}
+}
+
+func (m tuiModel) runPullBeer() tea.Cmd {
+	return func() tea.Msg {
+		if m.client == nil {
+			return cmdResultMsg{content: "Beer pulled successfully (mock)"}
+		}
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+		defer cancel()
+		req := &pb.GetBeerRequest{
+			NoRepeat: true,
+			Requirements: []*pb.BeerRequirement{
+				{
+					Strategy: pb.BeerRequirement_STRATEGY_LEAST_RECENTLY_DRUNK,
+				},
+			},
+		}
+		res, err := m.client.GetBeer(ctx, req)
+		if err != nil {
+			return cmdResultMsg{err: err}
+		}
+		if len(res.GetBeers()) > 0 {
+			beer := res.GetBeers()[0]
+			return cmdResultMsg{content: fmt.Sprintf("Pulled beer: %v - %v (%.2f units)", beer.GetBrewery(), beer.GetName(), beer.GetUnits())}
+		}
+		return cmdResultMsg{content: "No beers found matching requirements"}
+	}
+}
+
+func (m tuiModel) runGetDrunk() tea.Cmd {
+	return func() tea.Msg {
+		if m.client == nil {
+			return cmdResultMsg{content: "Drunk beers list retrieved (mock)"}
+		}
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+		defer cancel()
+		res, err := m.client.GetDrunk(ctx, &pb.GetDrunkRequest{Count: 10})
+		if err != nil {
+			return cmdResultMsg{err: err}
+		}
+		var sb strings.Builder
+		for _, beer := range res.GetDrunk() {
+			dateStr := time.Unix(beer.GetDate(), 0).Format("2006-01-02")
+			sb.WriteString(fmt.Sprintf("%v %v - %v (%.2f units)\n", dateStr, beer.GetBrewery(), beer.GetName(), beer.GetUnits()))
+		}
+		return cmdResultMsg{content: sb.String()}
+	}
+}
+
+func (m tuiModel) runAddBeer(id int64, qty, sz int32) tea.Cmd {
+	return func() tea.Msg {
+		if m.client == nil {
+			return cmdResultMsg{content: fmt.Sprintf("Beer ID %v (qty %v, size %v) added (mock)", id, qty, sz)}
+		}
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+		defer cancel()
+		res, err := m.client.AddBeer(ctx, &pb.AddBeerRequest{
+			BeerId:   id,
+			Quantity: qty,
+			SizeFlOz: sz,
+		})
+		if err != nil {
+			return cmdResultMsg{err: err}
+		}
+		return cmdResultMsg{content: fmt.Sprintf("Beers added successfully: %+v", res)}
+	}
+}
+
+func (m tuiModel) runDrinkBeer(id int64) tea.Cmd {
+	return func() tea.Msg {
+		if m.client == nil {
+			return cmdResultMsg{content: fmt.Sprintf("Beer ID %v recorded as drunk (mock)", id)}
+		}
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+		defer cancel()
+		_, err := m.client.DrinkBeer(ctx, &pb.DrinkBeerRequest{BeerId: id})
+		if err != nil {
+			return cmdResultMsg{err: err}
+		}
+		return cmdResultMsg{content: fmt.Sprintf("Beer %v recorded as drunk.", id)}
+	}
+}
+
+func (m tuiModel) runLogin() tea.Cmd {
+	return func() tea.Msg {
+		return cmdResultMsg{content: "Login workflow started (mock)"}
+	}
+}
+
+func (m tuiModel) runGoogleLogin() tea.Cmd {
+	return func() tea.Msg {
+		return cmdResultMsg{content: "Google Login workflow started (mock)"}
+	}
+}
+
+func (m tuiModel) runToggleGoogleTasks(enable bool) tea.Cmd {
+	return func() tea.Msg {
+		if m.googleClient == nil {
+			return cmdResultMsg{content: fmt.Sprintf("Google tasks toggled to %v (mock)", enable)}
+		}
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+		defer cancel()
+		_, err := m.googleClient.ToggleGoogleTasks(ctx, &pb.ToggleGoogleTasksRequest{Enable: enable})
+		if err != nil {
+			return cmdResultMsg{err: err}
+		}
+		return cmdResultMsg{content: fmt.Sprintf("Google Tasks feature toggled: %v", enable)}
+	}
 }
 
 func (m tuiModel) View() string {
@@ -51,7 +357,15 @@ func (m tuiModel) View() string {
 
 	summaryView := paneStyle.Render(m.cellarSummary)
 	readoutView := paneStyle.Render(m.commandReadout)
-	inputView := paneStyle.Render(m.commandInput)
+	
+	// Command Input View
+	var inputContent string
+	if m.activeWiz != wizardNone {
+		inputContent = fmt.Sprintf("COMMAND INPUT (WIZARD MODE)\nPrompt: %s\n> %s", m.textInput.Placeholder, m.textInput.View())
+	} else {
+		inputContent = fmt.Sprintf("COMMAND INPUT\n> %s", m.textInput.View())
+	}
+	inputView := paneStyle.Render(inputContent)
 
 	footerView := lipgloss.NewStyle().
 		Background(lipgloss.Color("235")).
@@ -68,3 +382,4 @@ func (m tuiModel) View() string {
 		),
 	)
 }
+

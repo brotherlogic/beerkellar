@@ -57,8 +57,10 @@ func main() {
 	}
 	defer cancel()
 
+	googleClient := pb.NewBeerKellerGoogleClient(conn)
+
 	if len(os.Args) < 2 {
-		p := tea.NewProgram(initialModel())
+		p := tea.NewProgram(initialModel(client, googleClient))
 		if _, err := p.Run(); err != nil {
 			log.Fatalf("Error running TUI: %v", err)
 		}
