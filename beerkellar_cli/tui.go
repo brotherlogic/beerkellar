@@ -70,8 +70,107 @@ func initialModel(client pb.BeerKellerClient, googleClient pb.BeerKellerGoogleCl
 	}
 }
 
+type cellarSummaryMsg struct {
+	cellar  *pb.GetCellarResponse
+	weekday *pb.GetBeerResponse
+	weekend *pb.GetBeerResponse
+	err     error
+}
+
+type tickMsg time.Time
+
+func (m tuiModel) fetchCellarSummary() tea.Cmd {
+	return func() tea.Msg {
+		if m.client == nil {
+			return cellarSummaryMsg{}
+		}
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+		defer cancel()
+
+		cellar, err := m.client.GetCellar(ctx, &pb.GetCellarRequest{})
+		if err != nil {
+			return cellarSummaryMsg{err: err}
+		}
+
+		weekdayReq := &pb.GetBeerRequest{
+			NoRepeat: true,
+			Requirements: []*pb.BeerRequirement{
+				{
+					Strategy: pb.BeerRequirement_STRATEGY_LEAST_RECENTLY_DRUNK,
+					MaxUnits: 3,
+				},
+			},
+		}
+		weekdayRes, _ := m.client.GetBeer(ctx, weekdayReq)
+
+		weekendReq := &pb.GetBeerRequest{
+			NoRepeat: true,
+			Requirements: []*pb.BeerRequirement{
+				{
+					Strategy: pb.BeerRequirement_STRATEGY_LEAST_RECENTLY_DRUNK,
+				},
+			},
+		}
+		weekendRes, _ := m.client.GetBeer(ctx, weekendReq)
+
+		return cellarSummaryMsg{
+			cellar:  cellar,
+			weekday: weekdayRes,
+			weekend: weekendRes,
+		}
+	}
+}
+
+func (m *tuiModel) updateCellarSummary(msg cellarSummaryMsg) {
+	if msg.err != nil {
+		m.cellarSummary = fmt.Sprintf("CELLAR SUMMARY\nError loading summary: %v", msg.err)
+		return
+	}
+
+	if msg.cellar == nil {
+		return
+	}
+
+	var total, weekday, weekend int
+	for _, beer := range msg.cellar.GetBeers() {
+		total++
+		if beer.GetUnits() < 2.5 {
+			weekday++
+		} else {
+			weekend++
+		}
+	}
+
+	if msg.cellar.GetState() == pb.User_STATE_LOGGED_IN {
+		m.untappdStatus = "Untappd: Logged In"
+	} else {
+		m.untappdStatus = "Untappd: Disconnected"
+	}
+
+	weekdayCandidate := "None"
+	if msg.weekday != nil && len(msg.weekday.GetBeers()) > 0 {
+		beer := msg.weekday.GetBeers()[0]
+		weekdayCandidate = fmt.Sprintf("%s - %s (%.2f units)", beer.GetBrewery(), beer.GetName(), beer.GetUnits())
+	}
+
+	weekendCandidate := "None"
+	if msg.weekend != nil && len(msg.weekend.GetBeers()) > 0 {
+		beer := msg.weekend.GetBeers()[0]
+		weekendCandidate = fmt.Sprintf("%s - %s (%.2f units)", beer.GetBrewery(), beer.GetName(), beer.GetUnits())
+	}
+
+	m.cellarSummary = fmt.Sprintf("CELLAR SUMMARY\nCellar Size & Split: %d Beers (%d Weekday, %d Weekend)\nNext Weekday Candidate: %s\nNext Weekend Candidate: %s",
+		total, weekday, weekend, weekdayCandidate, weekendCandidate)
+}
+
 func (m tuiModel) Init() tea.Cmd {
-	return textinput.Blink
+	return tea.Batch(
+		textinput.Blink,
+		m.fetchCellarSummary(),
+		tea.Tick(time.Hour, func(t time.Time) tea.Msg {
+			return tickMsg(t)
+		}),
+	)
 }
 
 type cmdResultMsg struct {
@@ -106,6 +205,18 @@ func (m tuiModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.commandReadout = fmt.Sprintf("COMMAND READOUT\n%s", msg.content)
 		}
 		return m, nil
+
+	case cellarSummaryMsg:
+		m.updateCellarSummary(msg)
+		return m, nil
+
+	case tickMsg:
+		return m, tea.Batch(
+			m.fetchCellarSummary(),
+			tea.Tick(time.Hour, func(t time.Time) tea.Msg {
+				return tickMsg(t)
+			}),
+		)
 	}
 
 	m.textInput, cmd = m.textInput.Update(msg)
