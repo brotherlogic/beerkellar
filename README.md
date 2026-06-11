@@ -19,6 +19,7 @@ This launches a three-pane dashboard (Cellar Summary, Command Readout, Command I
 Within the TUI:
 - Type commands directly in the `COMMAND INPUT` pane (e.g. `cellar`, `pull`, `drunk`, `google tasks on`, `exit`, `quit`).
 - For multi-step commands like `add` or `drink`, the pane automatically enters a wizard mode, prompting you step-by-step for the required inputs (e.g. Beer ID, Quantity, Size) before performing the action.
+- Log in to Untappd using `login` or link your Google account using `google login`. These authentication flows run asynchronously (via `tea.Cmd`) so you can keep interacting with the TUI while the authorization occurs in the background. The status bar will automatically update to reflect when you are successfully logged in or linked.
 - Command results are displayed in the middle `COMMAND READOUT` pane.
 
 ### 1. Login with Untappd
