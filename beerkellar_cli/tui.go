@@ -27,6 +27,8 @@ const (
 	wizardDrink
 )
 
+const defaultTimeout = 5 * time.Second
+
 type addWizardState struct {
 	step     int // 0: ID, 1: Quantity, 2: Size
 	beerID   int64
@@ -351,7 +353,7 @@ func (m tuiModel) checkInitialStatus() tea.Cmd {
 		untappd := "Untappd: Disconnected"
 		google := "Google Tasks: Disconnected"
 
-		ctx, cancel := m.getContext(time.Second * 5)
+		ctx, cancel := m.getContext(defaultTimeout)
 		defer cancel()
 
 		if m.client != nil {
@@ -381,7 +383,7 @@ func (m tuiModel) runGetCellar() tea.Cmd {
 		if m.client == nil {
 			return cmdResultMsg{content: "Not running command in mock (cellar)"}
 		}
-		ctx, cancel := m.getContext(time.Second * 5)
+		ctx, cancel := m.getContext(defaultTimeout)
 		defer cancel()
 		cellar, err := m.client.GetCellar(ctx, &pb.GetCellarRequest{})
 		if err != nil {
@@ -401,7 +403,7 @@ func (m tuiModel) runPullBeer() tea.Cmd {
 		if m.client == nil {
 			return cmdResultMsg{content: "Not running command in mock (pull)"}
 		}
-		ctx, cancel := m.getContext(time.Second * 5)
+		ctx, cancel := m.getContext(defaultTimeout)
 		defer cancel()
 		req := &pb.GetBeerRequest{
 			NoRepeat: true,
@@ -428,7 +430,7 @@ func (m tuiModel) runGetDrunk() tea.Cmd {
 		if m.client == nil {
 			return cmdResultMsg{content: "Not running command in mock (drunk)"}
 		}
-		ctx, cancel := m.getContext(time.Second * 5)
+		ctx, cancel := m.getContext(defaultTimeout)
 		defer cancel()
 		res, err := m.client.GetDrunk(ctx, &pb.GetDrunkRequest{Count: 10})
 		if err != nil {
@@ -448,7 +450,7 @@ func (m tuiModel) runAddBeer(id int64, qty, sz int32) tea.Cmd {
 		if m.client == nil {
 			return cmdResultMsg{content: fmt.Sprintf("Not running command in mock (add - id:%v qty:%v size:%v)", id, qty, sz)}
 		}
-		ctx, cancel := m.getContext(time.Second * 5)
+		ctx, cancel := m.getContext(defaultTimeout)
 		defer cancel()
 		res, err := m.client.AddBeer(ctx, &pb.AddBeerRequest{
 			BeerId:   id,
@@ -467,7 +469,7 @@ func (m tuiModel) runDrinkBeer(id int64) tea.Cmd {
 		if m.client == nil {
 			return cmdResultMsg{content: fmt.Sprintf("Not running command in mock (drink - id:%v)", id)}
 		}
-		ctx, cancel := m.getContext(time.Second * 5)
+		ctx, cancel := m.getContext(defaultTimeout)
 		defer cancel()
 		_, err := m.client.DrinkBeer(ctx, &pb.DrinkBeerRequest{BeerId: id})
 		if err != nil {
@@ -482,7 +484,7 @@ func (m tuiModel) runLogin() tea.Cmd {
 		if m.client == nil {
 			return loginInitiatedMsg{err: fmt.Errorf("gRPC client not initialized")}
 		}
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+		ctx, cancel := m.getContext(defaultTimeout)
 		defer cancel()
 		res, err := m.client.GetLogin(ctx, &pb.GetLoginRequest{})
 		if err != nil {
@@ -499,8 +501,8 @@ func (m tuiModel) runLogin() tea.Cmd {
 
 func (m tuiModel) pollLogin(code string, attempt int) tea.Cmd {
 	return func() tea.Msg {
-		time.Sleep(5 * time.Second)
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+		time.Sleep(defaultTimeout)
+		ctx, cancel := m.getContext(defaultTimeout)
 		defer cancel()
 		res, err := m.client.GetAuthToken(ctx, &pb.GetAuthTokenRequest{Code: code})
 		return loginPollMsg{
@@ -517,7 +519,7 @@ func (m tuiModel) runGoogleLogin() tea.Cmd {
 		if m.googleClient == nil {
 			return googleLoginInitiatedMsg{err: fmt.Errorf("google gRPC client not initialized")}
 		}
-		ctx, cancel := m.getContext(time.Second * 5)
+		ctx, cancel := m.getContext(defaultTimeout)
 		defer cancel()
 		res, err := m.googleClient.GetGoogleLogin(ctx, &pb.GetGoogleLoginRequest{})
 		if err != nil {
@@ -534,8 +536,8 @@ func (m tuiModel) runGoogleLogin() tea.Cmd {
 
 func (m tuiModel) pollGoogle(attempt int) tea.Cmd {
 	return func() tea.Msg {
-		time.Sleep(5 * time.Second)
-		ctx, cancel := m.getContext(time.Second * 5)
+		time.Sleep(defaultTimeout)
+		ctx, cancel := m.getContext(defaultTimeout)
 		defer cancel()
 		_, err := m.googleClient.ToggleGoogleTasks(ctx, &pb.ToggleGoogleTasksRequest{Enable: true})
 		return googlePollMsg{
@@ -550,7 +552,7 @@ func (m tuiModel) runToggleGoogleTasks(enable bool) tea.Cmd {
 		if m.googleClient == nil {
 			return cmdResultMsg{content: fmt.Sprintf("Not running command in mock (google tasks - enable:%v)", enable)}
 		}
-		ctx, cancel := m.getContext(time.Second * 5)
+		ctx, cancel := m.getContext(defaultTimeout)
 		defer cancel()
 		_, err := m.googleClient.ToggleGoogleTasks(ctx, &pb.ToggleGoogleTasksRequest{Enable: enable})
 		if err != nil {
