@@ -33,7 +33,7 @@ Displays logs, command execution results, confirmation prompts, and error output
 Type commands directly to interact with your cellar.
 
 #### Standard Commands
-* `cellar`: Retrieves and lists your current cellar inventory.
+* `cellar`: Retrieves and lists your current cellar inventory (hides the user state from the output if it is authorized).
 * `pull`: Selects and displays a recommended beer from your cellar.
 * `drunk`: Shows the last 10 recently consumed beers.
 * `login`: Initiates OAuth authentication with Untappd. Opens your browser automatically, exchanges codes, and updates the status bar once linked.

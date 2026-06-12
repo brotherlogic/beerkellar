@@ -500,7 +500,11 @@ func (m tuiModel) runGetCellar() tea.Cmd {
 			return cmdResultMsg{err: err}
 		}
 		var sb strings.Builder
-		sb.WriteString(fmt.Sprintf("User: %v (State: %v)\n", cellar.GetUsername(), cellar.GetState()))
+		if cellar.GetState() == pb.User_STATE_AUTHORIZED {
+			sb.WriteString(fmt.Sprintf("User: %v\n", cellar.GetUsername()))
+		} else {
+			sb.WriteString(fmt.Sprintf("User: %v (State: %v)\n", cellar.GetUsername(), cellar.GetState()))
+		}
 		for i, beer := range cellar.GetBeers() {
 			sb.WriteString(fmt.Sprintf("%v. %v - %v (%.2f units)\n", i+1, beer.GetBrewery(), beer.GetName(), beer.GetUnits()))
 		}
