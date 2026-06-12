@@ -68,9 +68,9 @@ func initialModel(client pb.BeerKellerClient, googleClient pb.BeerKellerGoogleCl
 	return tuiModel{
 		client:         client,
 		googleClient:   googleClient,
-		cellarSummary:  "CELLAR SUMMARY\nCellar Size & Split: 0 Beers (0 Weekday, 0 Weekend)\nNext Weekday Candidate: None\nNext Weekend Candidate: None",
+		cellarSummary:  "Cellar Size & Split: 0 Beers (0 Weekday, 0 Weekend)\nNext Weekday Candidate: None\nNext Weekend Candidate: None",
 		commandReadout: "COMMAND READOUT\nNo logs yet. Type a command below.",
-		commandInput:   "COMMAND INPUT\n> ",
+		commandInput:   "> ",
 		untappdStatus:  "Untappd: Disconnected",
 		googleStatus:   "Google Tasks: Disconnected",
 		textInput:      ti,
@@ -132,7 +132,7 @@ func (m tuiModel) fetchCellarSummary() tea.Cmd {
 
 func (m *tuiModel) updateCellarSummary(msg cellarSummaryMsg) {
 	if msg.err != nil {
-		m.cellarSummary = fmt.Sprintf("CELLAR SUMMARY\nError loading summary: %v", msg.err)
+		m.cellarSummary = fmt.Sprintf("Error loading summary: %v", msg.err)
 		return
 	}
 
@@ -168,7 +168,7 @@ func (m *tuiModel) updateCellarSummary(msg cellarSummaryMsg) {
 		weekendCandidate = fmt.Sprintf("%s - %s (%.2f units)", beer.GetBrewery(), beer.GetName(), beer.GetUnits())
 	}
 
-	m.cellarSummary = fmt.Sprintf("CELLAR SUMMARY\nCellar Size & Split: %d Beers (%d Weekday, %d Weekend)\nNext Weekday Candidate: %s\nNext Weekend Candidate: %s",
+	m.cellarSummary = fmt.Sprintf("Cellar Size & Split: %d Beers (%d Weekday, %d Weekend)\nNext Weekday Candidate: %s\nNext Weekend Candidate: %s",
 		total, weekday, weekend, weekdayCandidate, weekendCandidate)
 }
 
@@ -691,9 +691,9 @@ func (m tuiModel) View() string {
 	// Command Input View
 	var inputContent string
 	if m.activeWiz != wizardNone {
-		inputContent = fmt.Sprintf("COMMAND INPUT (WIZARD MODE)\nPrompt: %s\n> %s", m.textInput.Placeholder, m.textInput.View())
+		inputContent = fmt.Sprintf("Prompt: %s\n> %s", m.textInput.Placeholder, m.textInput.View())
 	} else {
-		inputContent = fmt.Sprintf("COMMAND INPUT\n> %s", m.textInput.View())
+		inputContent = fmt.Sprintf("> %s", m.textInput.View())
 	}
 	inputView := paneStyle.Render(inputContent)
 

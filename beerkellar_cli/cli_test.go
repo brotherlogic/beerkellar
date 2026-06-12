@@ -23,9 +23,7 @@ func TestInitialTUIDashboardLayout(t *testing.T) {
 
 	// Assert that it contains all three pane headers and status line components
 	expectedSections := []string{
-		"CELLAR SUMMARY",
 		"COMMAND READOUT",
-		"COMMAND INPUT",
 		"Untappd:",
 		"Google Tasks:",
 	}
@@ -33,6 +31,17 @@ func TestInitialTUIDashboardLayout(t *testing.T) {
 	for _, section := range expectedSections {
 		if !strings.Contains(rendered, section) {
 			t.Errorf("Expected TUI layout to contain %q, but got:\n%s", section, rendered)
+		}
+	}
+
+	unexpectedSections := []string{
+		"CELLAR SUMMARY",
+		"COMMAND INPUT",
+	}
+
+	for _, section := range unexpectedSections {
+		if strings.Contains(rendered, section) {
+			t.Errorf("Expected TUI layout NOT to contain %q, but got:\n%s", section, rendered)
 		}
 	}
 }
