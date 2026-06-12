@@ -21,10 +21,14 @@ func TestInitialTUIDashboardLayout(t *testing.T) {
 	// Call View to get the rendered string
 	rendered := model.View()
 
-	// Assert that it contains all three pane headers and status line components
+	// Assert that it does NOT contain COMMAND READOUT initially
+	if strings.Contains(rendered, "COMMAND READOUT") {
+		t.Errorf("Expected initial TUI layout to NOT contain %q, but got:\n%s", "COMMAND READOUT", rendered)
+	}
+
+	// Assert that it contains other expected sections
 	expectedSections := []string{
 		"CELLAR SUMMARY",
-		"COMMAND READOUT",
 		"COMMAND INPUT",
 		"Untappd:",
 		"Google Tasks:",
@@ -38,6 +42,24 @@ func TestInitialTUIDashboardLayout(t *testing.T) {
 
 	if strings.Contains(rendered, "> >") {
 		t.Errorf("Expected TUI layout not to contain double prompt '> >', but got:\n%s", rendered)
+	}
+
+	// Now set a command readout and verify it appears
+	m := model.(tuiModel)
+	m.commandReadout = "COMMAND READOUT\nSome command output"
+	renderedWithReadout := m.View()
+	if !strings.Contains(renderedWithReadout, "COMMAND READOUT") {
+		t.Errorf("Expected TUI layout to contain %q after command output, but got:\n%s", "COMMAND READOUT", renderedWithReadout)
+	}
+}
+
+func TestLogoRendering(t *testing.T) {
+	model := initialModel(nil, nil)
+	rendered := model.View()
+
+	// We expect the ASCII logo containing "██████" to be rendered
+	if !strings.Contains(rendered, "██████") {
+		t.Errorf("Expected TUI layout to contain the stylized BEERKELLAR logo, but got:\n%s", rendered)
 	}
 }
 
@@ -370,5 +392,65 @@ func TestFetchCellarSummaryPropagatesToken(t *testing.T) {
 		t.Errorf("Expected token 'test-token-123' to be propagated, but got: %q", tokenFound)
 	}
 }
+
+func TestTUIListCellarState(t *testing.T) {
+	// Test case 1: State is STATE_AUTHORIZED - should not show state
+	mockClientAuth := &mockBeerKellerClient{
+		cellarRes: &pb.GetCellarResponse{
+			Username: "testuser",
+			State:    pb.User_STATE_AUTHORIZED,
+		},
+	}
+	modelAuth := initialModel(mockClientAuth, nil).(tuiModel)
+	msgAuth := modelAuth.runGetCellar()()
+	resAuth, ok := msgAuth.(cmdResultMsg)
+	if !ok {
+		t.Fatalf("Expected cmdResultMsg, got %T", msgAuth)
+	}
+	if !strings.Contains(resAuth.content, "User: testuser") {
+		t.Errorf("Expected output to contain 'User: testuser', got %q", resAuth.content)
+	}
+	if strings.Contains(resAuth.content, "STATE_AUTHORIZED") {
+		t.Errorf("Expected output NOT to contain 'STATE_AUTHORIZED', got %q", resAuth.content)
+	}
+
+	// Test case 2: State is STATE_LOGGED_IN - should show state
+	mockClientLoggedIn := &mockBeerKellerClient{
+		cellarRes: &pb.GetCellarResponse{
+			Username: "testuser",
+			State:    pb.User_STATE_LOGGED_IN,
+		},
+	}
+	modelLoggedIn := initialModel(mockClientLoggedIn, nil).(tuiModel)
+	msgLoggedIn := modelLoggedIn.runGetCellar()()
+	resLoggedIn, ok := msgLoggedIn.(cmdResultMsg)
+	if !ok {
+		t.Fatalf("Expected cmdResultMsg, got %T", msgLoggedIn)
+	}
+	if !strings.Contains(resLoggedIn.content, "User: testuser (State: STATE_LOGGED_IN)") {
+		t.Errorf("Expected output to contain 'User: testuser (State: STATE_LOGGED_IN)', got %q", resLoggedIn.content)
+	}
+}
+
+func TestTUIBoxWidthOnResize(t *testing.T) {
+	model := initialModel(nil, nil)
+
+	// Send a WindowSizeMsg to set width
+	m, cmd := model.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
+	if cmd != nil {
+		t.Errorf("Expected nil command, got %v", cmd)
+	}
+
+	rendered := m.View()
+
+	// Check that the rendered view contains lines with the expected width.
+	// W = 80, minus docStyle horizontal padding (4) => pane width = 76.
+	// The top border of pane width 76 will be "┌" + 74 "─" + "┐".
+	expectedBorder := "┌" + strings.Repeat("─", 74) + "┐"
+	if !strings.Contains(rendered, expectedBorder) {
+		t.Errorf("Expected rendered view to contain box border %q, but got:\n%s", expectedBorder, rendered)
+	}
+}
+
 
 
