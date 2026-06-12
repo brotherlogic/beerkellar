@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -10,6 +11,11 @@ import (
 	"github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
+	"github.com/golang/protobuf/proto"
+	"github.com/pkg/browser"
+	"google.golang.org/grpc/metadata"
+	"google.golang.org/protobuf/encoding/prototext"
+
 	pb "github.com/brotherlogic/beerkellar/proto"
 )
 
@@ -20,6 +26,8 @@ const (
 	wizardAdd
 	wizardDrink
 )
+
+const defaultTimeout = 5 * time.Second
 
 type addWizardState struct {
 	step     int // 0: ID, 1: Quantity, 2: Size
@@ -168,10 +176,37 @@ func (m tuiModel) Init() tea.Cmd {
 	return tea.Batch(
 		textinput.Blink,
 		m.fetchCellarSummary(),
+		m.checkInitialStatus(),
 		tea.Tick(time.Hour, func(t time.Time) tea.Msg {
 			return tickMsg(t)
 		}),
 	)
+}
+
+type authStatusMsg struct {
+	untappdStatus string
+	googleStatus  string
+}
+
+type loginInitiatedMsg struct {
+	code string
+	err  error
+}
+
+type loginPollMsg struct {
+	code    string
+	attempt int
+	token   *pb.GetAuthTokenResponse
+	err     error
+}
+
+type googleLoginInitiatedMsg struct {
+	err error
+}
+
+type googlePollMsg struct {
+	attempt int
+	err     error
 }
 
 type cmdResultMsg struct {
@@ -198,6 +233,56 @@ func (m tuiModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m.handleWizardInput(input)
 			}
 		}
+
+	case authStatusMsg:
+		m.untappdStatus = msg.untappdStatus
+		m.googleStatus = msg.googleStatus
+		return m, nil
+
+	case loginInitiatedMsg:
+		if msg.err != nil {
+			m.commandReadout = fmt.Sprintf("COMMAND READOUT\nError starting login: %v", msg.err)
+			return m, nil
+		}
+		m.commandReadout = "COMMAND READOUT\nOpening browser... Please log in on Untappd."
+		return m, m.pollLogin(msg.code, 1)
+
+	case loginPollMsg:
+		if msg.err == nil && msg.token != nil && msg.token.GetCode() != "" {
+			err := saveToken(msg.token)
+			if err != nil {
+				m.commandReadout = fmt.Sprintf("COMMAND READOUT\nLogin succeeded but failed to save token: %v", err)
+				return m, nil
+			}
+			m.untappdStatus = "Untappd: Logged In"
+			m.commandReadout = "COMMAND READOUT\nSuccessfully logged in to Untappd!"
+			return m, tea.Batch(m.checkInitialStatus(), m.runGetCellar())
+		}
+		if msg.attempt < 12 {
+			return m, m.pollLogin(msg.code, msg.attempt+1)
+		}
+		m.commandReadout = "COMMAND READOUT\nLogin timed out or failed."
+		return m, nil
+
+	case googleLoginInitiatedMsg:
+		if msg.err != nil {
+			m.commandReadout = fmt.Sprintf("COMMAND READOUT\nError starting Google login: %v", msg.err)
+			return m, nil
+		}
+		m.commandReadout = "COMMAND READOUT\nOpening browser... Please log in to Google."
+		return m, m.pollGoogle(1)
+
+	case googlePollMsg:
+		if msg.err == nil {
+			m.googleStatus = "Google Tasks: Linked"
+			m.commandReadout = "COMMAND READOUT\nSuccessfully linked Google Account!"
+			return m, nil
+		}
+		if msg.attempt < 12 {
+			return m, m.pollGoogle(msg.attempt+1)
+		}
+		m.commandReadout = "COMMAND READOUT\nGoogle login timed out or failed."
+		return m, nil
 
 	case cmdResultMsg:
 		if msg.err != nil {
@@ -332,12 +417,83 @@ func (m tuiModel) handleWizardInput(input string) (tuiModel, tea.Cmd) {
 
 // gRPC commands executed asynchronously
 
+func (m tuiModel) getContext(timeout time.Duration) (context.Context, context.CancelFunc) {
+	dirname, err := os.UserHomeDir()
+	if err != nil {
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		return ctx, cancel
+	}
+
+	text, err := os.ReadFile(fmt.Sprintf("%v/.beerkellar", dirname))
+	if err != nil {
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		return ctx, cancel
+	}
+
+	user := &pb.GetAuthTokenResponse{}
+	err = prototext.Unmarshal(text, user)
+	if err != nil {
+		ctx, cancel := context.WithTimeout(context.Background(), timeout)
+		return ctx, cancel
+	}
+
+	mContext := metadata.AppendToOutgoingContext(context.Background(), "auth-token", user.GetCode())
+	ctx, cancel := context.WithTimeout(mContext, timeout)
+	return ctx, cancel
+}
+
+func saveToken(auth *pb.GetAuthTokenResponse) error {
+	dirname, err := os.UserHomeDir()
+	if err != nil {
+		return fmt.Errorf("unable to get home dir: %w", err)
+	}
+	f, err := os.OpenFile(fmt.Sprintf("%v/.beerkellar", dirname), os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
+	if err != nil {
+		return fmt.Errorf("unable to open file: %w", err)
+	}
+	defer f.Close()
+	if err := proto.MarshalText(f, auth); err != nil {
+		return fmt.Errorf("unable to save token: %w", err)
+	}
+	return nil
+}
+
+func (m tuiModel) checkInitialStatus() tea.Cmd {
+	return func() tea.Msg {
+		untappd := "Untappd: Disconnected"
+		google := "Google Tasks: Disconnected"
+
+		ctx, cancel := m.getContext(defaultTimeout)
+		defer cancel()
+
+		if m.client != nil {
+			cellar, err := m.client.GetCellar(ctx, &pb.GetCellarRequest{})
+			if err == nil {
+				untappd = "Untappd: Logged In"
+				if cellar.GetState() == pb.User_STATE_AUTHORIZED {
+					untappd = "Untappd: Logged In"
+				}
+				if m.googleClient != nil {
+					_, err := m.googleClient.ToggleGoogleTasks(ctx, &pb.ToggleGoogleTasksRequest{Enable: true})
+					if err == nil {
+						google = "Google Tasks: Linked"
+					}
+				}
+			}
+		}
+		return authStatusMsg{
+			untappdStatus: untappd,
+			googleStatus:  google,
+		}
+	}
+}
+
 func (m tuiModel) runGetCellar() tea.Cmd {
 	return func() tea.Msg {
 		if m.client == nil {
 			return cmdResultMsg{content: "Not running command in mock (cellar)"}
 		}
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+		ctx, cancel := m.getContext(defaultTimeout)
 		defer cancel()
 		cellar, err := m.client.GetCellar(ctx, &pb.GetCellarRequest{})
 		if err != nil {
@@ -357,7 +513,7 @@ func (m tuiModel) runPullBeer() tea.Cmd {
 		if m.client == nil {
 			return cmdResultMsg{content: "Not running command in mock (pull)"}
 		}
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+		ctx, cancel := m.getContext(defaultTimeout)
 		defer cancel()
 		req := &pb.GetBeerRequest{
 			NoRepeat: true,
@@ -384,7 +540,7 @@ func (m tuiModel) runGetDrunk() tea.Cmd {
 		if m.client == nil {
 			return cmdResultMsg{content: "Not running command in mock (drunk)"}
 		}
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+		ctx, cancel := m.getContext(defaultTimeout)
 		defer cancel()
 		res, err := m.client.GetDrunk(ctx, &pb.GetDrunkRequest{Count: 10})
 		if err != nil {
@@ -404,7 +560,7 @@ func (m tuiModel) runAddBeer(id int64, qty, sz int32) tea.Cmd {
 		if m.client == nil {
 			return cmdResultMsg{content: fmt.Sprintf("Not running command in mock (add - id:%v qty:%v size:%v)", id, qty, sz)}
 		}
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+		ctx, cancel := m.getContext(defaultTimeout)
 		defer cancel()
 		res, err := m.client.AddBeer(ctx, &pb.AddBeerRequest{
 			BeerId:   id,
@@ -423,7 +579,7 @@ func (m tuiModel) runDrinkBeer(id int64) tea.Cmd {
 		if m.client == nil {
 			return cmdResultMsg{content: fmt.Sprintf("Not running command in mock (drink - id:%v)", id)}
 		}
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+		ctx, cancel := m.getContext(defaultTimeout)
 		defer cancel()
 		_, err := m.client.DrinkBeer(ctx, &pb.DrinkBeerRequest{BeerId: id})
 		if err != nil {
@@ -435,13 +591,69 @@ func (m tuiModel) runDrinkBeer(id int64) tea.Cmd {
 
 func (m tuiModel) runLogin() tea.Cmd {
 	return func() tea.Msg {
-		return cmdResultMsg{content: "Not running command in mock (login)"}
+		if m.client == nil {
+			return loginInitiatedMsg{err: fmt.Errorf("gRPC client not initialized")}
+		}
+		ctx, cancel := m.getContext(defaultTimeout)
+		defer cancel()
+		res, err := m.client.GetLogin(ctx, &pb.GetLoginRequest{})
+		if err != nil {
+			return loginInitiatedMsg{err: err}
+		}
+		
+		go func() {
+			_ = browser.OpenURL(res.GetUrl())
+		}()
+		
+		return loginInitiatedMsg{code: res.GetCode()}
+	}
+}
+
+func (m tuiModel) pollLogin(code string, attempt int) tea.Cmd {
+	return func() tea.Msg {
+		time.Sleep(defaultTimeout)
+		ctx, cancel := m.getContext(defaultTimeout)
+		defer cancel()
+		res, err := m.client.GetAuthToken(ctx, &pb.GetAuthTokenRequest{Code: code})
+		return loginPollMsg{
+			code:    code,
+			attempt: attempt,
+			token:   res,
+			err:     err,
+		}
 	}
 }
 
 func (m tuiModel) runGoogleLogin() tea.Cmd {
 	return func() tea.Msg {
-		return cmdResultMsg{content: "Not running command in mock (google login)"}
+		if m.googleClient == nil {
+			return googleLoginInitiatedMsg{err: fmt.Errorf("google gRPC client not initialized")}
+		}
+		ctx, cancel := m.getContext(defaultTimeout)
+		defer cancel()
+		res, err := m.googleClient.GetGoogleLogin(ctx, &pb.GetGoogleLoginRequest{})
+		if err != nil {
+			return googleLoginInitiatedMsg{err: err}
+		}
+		
+		go func() {
+			_ = browser.OpenURL(res.GetUrl())
+		}()
+		
+		return googleLoginInitiatedMsg{}
+	}
+}
+
+func (m tuiModel) pollGoogle(attempt int) tea.Cmd {
+	return func() tea.Msg {
+		time.Sleep(defaultTimeout)
+		ctx, cancel := m.getContext(defaultTimeout)
+		defer cancel()
+		_, err := m.googleClient.ToggleGoogleTasks(ctx, &pb.ToggleGoogleTasksRequest{Enable: true})
+		return googlePollMsg{
+			attempt: attempt,
+			err:     err,
+		}
 	}
 }
 
@@ -450,7 +662,7 @@ func (m tuiModel) runToggleGoogleTasks(enable bool) tea.Cmd {
 		if m.googleClient == nil {
 			return cmdResultMsg{content: fmt.Sprintf("Not running command in mock (google tasks - enable:%v)", enable)}
 		}
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+		ctx, cancel := m.getContext(defaultTimeout)
 		defer cancel()
 		_, err := m.googleClient.ToggleGoogleTasks(ctx, &pb.ToggleGoogleTasksRequest{Enable: enable})
 		if err != nil {
