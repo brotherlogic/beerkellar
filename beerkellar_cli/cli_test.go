@@ -3,11 +3,14 @@ package main
 import (
 	"context"
 	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/metadata"
 	pb "github.com/brotherlogic/beerkellar/proto"
 )
 
@@ -310,4 +313,54 @@ func TestAsyncGoogleLoginFlow(t *testing.T) {
 		t.Errorf("Expected status line to contain 'Google Tasks: Linked', but got:\n%s", rendered)
 	}
 }
+
+func TestFetchCellarSummaryPropagatesToken(t *testing.T) {
+	// Back up existing token file if it exists
+	homeDir, err := os.UserHomeDir()
+	if err != nil {
+		t.Fatalf("failed to get home dir: %v", err)
+	}
+	tokenFile := filepath.Join(homeDir, ".beerkellar")
+	backupFile := filepath.Join(homeDir, ".beerkellar.backup")
+
+	if _, err := os.Stat(tokenFile); err == nil {
+		if err := os.Rename(tokenFile, backupFile); err != nil {
+			t.Fatalf("failed to backup token file: %v", err)
+		}
+		defer func() {
+			if err := os.Rename(backupFile, tokenFile); err != nil {
+				t.Errorf("failed to restore token file: %v", err)
+			}
+		}()
+	} else {
+		defer os.Remove(tokenFile)
+	}
+
+	// Write test token
+	tokenData := []byte("code: \"test-token-123\"\n")
+	if err := os.WriteFile(tokenFile, tokenData, 0600); err != nil {
+		t.Fatalf("failed to write test token: %v", err)
+	}
+
+	var tokenFound string
+	mockClient := &mockBeerKellerClient{
+		getCellarFunc: func(ctx context.Context, in *pb.GetCellarRequest) (*pb.GetCellarResponse, error) {
+			md, found := metadata.FromOutgoingContext(ctx)
+			if found {
+				if tokens, ok := md["auth-token"]; ok && len(tokens) > 0 {
+					tokenFound = tokens[0]
+				}
+			}
+			return &pb.GetCellarResponse{}, nil
+		},
+	}
+
+	model := initialModel(mockClient, nil)
+	_ = model.(tuiModel).fetchCellarSummary()()
+
+	if tokenFound != "test-token-123" {
+		t.Errorf("Expected token 'test-token-123' to be propagated, but got: %q", tokenFound)
+	}
+}
+
 
