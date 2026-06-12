@@ -687,12 +687,26 @@ func (m tuiModel) runToggleGoogleTasks(enable bool) tea.Cmd {
 	}
 }
 
+const logo = `  ██████╗ ███████╗███████╗██████╗ ██╗  ██╗███████╗██╗     ██╗      █████╗ ██████╗ 
+  ██╔══██╗██╔════╝██╔════╝██╔══██╗██║ ██╔╝██╔════╝██║     ██║     ██╔══██╗██╔══██╗
+  ██████╔╝█████╗  █████╗  ██████╔╝█████╔╝ █████╗  ██║     ██║     ███████║██████╔╝
+  ██╔══██╗██╔══╝  ██╔══╝  ██╔══██╗██╔═██╗ ██╔══╝  ██║     ██║     ██╔══██║██╔══██╗
+  ██████╔╝███████╗███████╗██║  ██║██║  ██╗███████╗███████╗███████╗██║  ██║██║  ██║
+  ╚══════╝╚══════╝╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝╚══════╝╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝`
+
 func (m tuiModel) View() string {
 	docStyle := lipgloss.NewStyle().Padding(1, 2)
 	paneStyle := lipgloss.NewStyle().
 		Border(lipgloss.NormalBorder()).
 		BorderForeground(lipgloss.Color("63")).
 		Padding(0, 1)
+
+	logoStyle := lipgloss.NewStyle().
+		Foreground(lipgloss.Color("#FFB300")). // Beautiful Amber Gold
+		MarginLeft(2).                         // Align with the pane borders
+		MarginBottom(1)
+
+	logoView := logoStyle.Render(logo)
 
 	footerStyle := lipgloss.NewStyle().
 		Background(lipgloss.Color("235")).
@@ -722,6 +736,7 @@ func (m tuiModel) View() string {
 	footerView := footerStyle.Render(fmt.Sprintf(" %s | %s ", m.untappdStatus, m.googleStatus))
 
 	var views []string
+	views = append(views, logoView)
 	views = append(views, summaryView)
 	if m.commandReadout != "" {
 		views = append(views, paneStyle.Render(m.commandReadout))
