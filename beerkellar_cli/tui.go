@@ -56,6 +56,10 @@ type tuiModel struct {
 	activeWiz   wizardType
 	addWiz      addWizardState
 	drinkWiz    drinkWizardState
+
+	// Terminal size
+	width  int
+	height int
 }
 
 func initialModel(client pb.BeerKellerClient, googleClient pb.BeerKellerGoogleClient) tea.Model {
@@ -69,7 +73,7 @@ func initialModel(client pb.BeerKellerClient, googleClient pb.BeerKellerGoogleCl
 		client:         client,
 		googleClient:   googleClient,
 		cellarSummary:  "CELLAR SUMMARY\nCellar Size & Split: 0 Beers (0 Weekday, 0 Weekend)\nNext Weekday Candidate: None\nNext Weekend Candidate: None",
-		commandReadout: "COMMAND READOUT\nNo logs yet. Type a command below.",
+		commandReadout: "",
 		commandInput:   "COMMAND INPUT\n> ",
 		untappdStatus:  "Untappd: Disconnected",
 		googleStatus:   "Google Tasks: Disconnected",
@@ -93,7 +97,7 @@ func (m tuiModel) fetchCellarSummary() tea.Cmd {
 			return cellarSummaryMsg{}
 		}
 		// Set a conservative 10-second timeout for retrieving cellar stats and recommendations.
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+		ctx, cancel := m.getContext(time.Second * 10)
 		defer cancel()
 
 		cellar, err := m.client.GetCellar(ctx, &pb.GetCellarRequest{})
@@ -218,6 +222,11 @@ func (m tuiModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 
 	switch msg := msg.(type) {
+	case tea.WindowSizeMsg:
+		m.width = msg.Width
+		m.height = msg.Height
+		return m, nil
+
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "ctrl+c":
@@ -500,7 +509,13 @@ func (m tuiModel) runGetCellar() tea.Cmd {
 			return cmdResultMsg{err: err}
 		}
 		var sb strings.Builder
-		sb.WriteString(fmt.Sprintf("User: %v (State: %v)\n", cellar.GetUsername(), cellar.GetState()))
+		// Omit the state readout if the user is in the default, fully authorized state (STATE_AUTHORIZED)
+		// to avoid cluttering the cellar output. Other transition states are still displayed.
+		if cellar.GetState() == pb.User_STATE_AUTHORIZED {
+			sb.WriteString(fmt.Sprintf("User: %v\n", cellar.GetUsername()))
+		} else {
+			sb.WriteString(fmt.Sprintf("User: %v (State: %v)\n", cellar.GetUsername(), cellar.GetState()))
+		}
 		for i, beer := range cellar.GetBeers() {
 			sb.WriteString(fmt.Sprintf("%v. %v - %v (%.2f units)\n", i+1, beer.GetBrewery(), beer.GetName(), beer.GetUnits()))
 		}
@@ -692,8 +707,22 @@ func (m tuiModel) View() string {
 		MarginBottom(1)
 
 	logoView := logoStyle.Render(logo)
+
+	footerStyle := lipgloss.NewStyle().
+		Background(lipgloss.Color("235")).
+		Foreground(lipgloss.Color("245"))
+
+	if m.width > 0 {
+		w := m.width - 4
+		if w > 0 {
+			footerStyle = footerStyle.Width(w)
+			if w > 2 {
+				paneStyle = paneStyle.Width(w - 2)
+			}
+		}
+	}
+
 	summaryView := paneStyle.Render(m.cellarSummary)
-	readoutView := paneStyle.Render(m.commandReadout)
 	
 	// Command Input View
 	var inputContent string
@@ -704,19 +733,20 @@ func (m tuiModel) View() string {
 	}
 	inputView := paneStyle.Render(inputContent)
 
-	footerView := lipgloss.NewStyle().
-		Background(lipgloss.Color("235")).
-		Foreground(lipgloss.Color("245")).
-		Render(fmt.Sprintf(" %s | %s ", m.untappdStatus, m.googleStatus))
+	footerView := footerStyle.Render(fmt.Sprintf(" %s | %s ", m.untappdStatus, m.googleStatus))
+
+	var views []string
+	views = append(views, logoView)
+	views = append(views, summaryView)
+	if m.commandReadout != "" {
+		views = append(views, paneStyle.Render(m.commandReadout))
+	}
+	views = append(views, inputView, footerView)
 
 	return docStyle.Render(
 		lipgloss.JoinVertical(
 			lipgloss.Left,
-			logoView,
-			summaryView,
-			readoutView,
-			inputView,
-			footerView,
+			views...,
 		),
 	)
 }
