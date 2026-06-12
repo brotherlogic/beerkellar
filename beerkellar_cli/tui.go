@@ -56,6 +56,10 @@ type tuiModel struct {
 	activeWiz   wizardType
 	addWiz      addWizardState
 	drinkWiz    drinkWizardState
+
+	// Terminal size
+	width  int
+	height int
 }
 
 func initialModel(client pb.BeerKellerClient, googleClient pb.BeerKellerGoogleClient) tea.Model {
@@ -218,6 +222,11 @@ func (m tuiModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 
 	switch msg := msg.(type) {
+	case tea.WindowSizeMsg:
+		m.width = msg.Width
+		m.height = msg.Height
+		return m, nil
+
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "ctrl+c":
@@ -685,6 +694,20 @@ func (m tuiModel) View() string {
 		BorderForeground(lipgloss.Color("63")).
 		Padding(0, 1)
 
+	footerStyle := lipgloss.NewStyle().
+		Background(lipgloss.Color("235")).
+		Foreground(lipgloss.Color("245"))
+
+	if m.width > 0 {
+		w := m.width - 4
+		if w > 0 {
+			footerStyle = footerStyle.Width(w)
+			if w > 2 {
+				paneStyle = paneStyle.Width(w - 2)
+			}
+		}
+	}
+
 	summaryView := paneStyle.Render(m.cellarSummary)
 	readoutView := paneStyle.Render(m.commandReadout)
 	
@@ -697,10 +720,7 @@ func (m tuiModel) View() string {
 	}
 	inputView := paneStyle.Render(inputContent)
 
-	footerView := lipgloss.NewStyle().
-		Background(lipgloss.Color("235")).
-		Foreground(lipgloss.Color("245")).
-		Render(fmt.Sprintf(" %s | %s ", m.untappdStatus, m.googleStatus))
+	footerView := footerStyle.Render(fmt.Sprintf(" %s | %s ", m.untappdStatus, m.googleStatus))
 
 	return docStyle.Render(
 		lipgloss.JoinVertical(
