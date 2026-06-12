@@ -271,7 +271,7 @@ func (s *Server) getWeekdayBeerCount(ctx context.Context, userId int64) (int, er
 		beer, err := s.db.GetBeer(ctx, entry.GetBeerId())
 		if err == nil {
 			units := convertToLitres(entry.GetSizeFlOz()) * beer.GetAbv()
-			if units < 3 {
+			if units < 3.5 {
 				count++
 			}
 		}

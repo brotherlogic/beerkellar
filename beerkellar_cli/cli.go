@@ -86,7 +86,7 @@ func main() {
 		var weekday, nonWeekday int
 		for i, beer := range cellar.GetBeers() {
 			log.Printf("%v. %v - %v (%v) [%v] [%.2f units]", i+1, beer.GetBrewery(), beer.GetName(), beer.GetAbv(), beer.GetId(), beer.GetUnits())
-			if beer.GetUnits() < 2.5 {
+			if beer.GetUnits() < 3.5 {
 				weekday++
 			} else {
 				nonWeekday++
@@ -95,7 +95,7 @@ func main() {
 		log.Printf("Summary: %v weekday beers, %v non-weekday beers", weekday, nonWeekday)
 	case "pull":
 		pullSet := flag.NewFlagSet("pull_beer", flag.ExitOnError)
-		weekday := pullSet.Bool("weekday", true, "Whether it's a weekday (limit to 2.5 units)")
+		weekday := pullSet.Bool("weekday", true, "Whether it's a weekday (limit to 3.5 units)")
 		if err := pullSet.Parse(os.Args[2:]); err == nil {
 			req := &pb.GetBeerRequest{
 				NoRepeat: true,
@@ -107,7 +107,7 @@ func main() {
 			}
 			log.Printf("Weekday flag: %v", *weekday)
 			if *weekday {
-				req.Requirements[0].MaxUnits = 3
+				req.Requirements[0].MaxUnits = 3.5
 			}
 			log.Printf("Requirement 0: %+v", req.Requirements[0])
 
