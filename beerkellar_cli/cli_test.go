@@ -363,4 +363,44 @@ func TestFetchCellarSummaryPropagatesToken(t *testing.T) {
 	}
 }
 
+func TestTUIListCellarState(t *testing.T) {
+	// Test case 1: State is STATE_AUTHORIZED - should not show state
+	mockClientAuth := &mockBeerKellerClient{
+		cellarRes: &pb.GetCellarResponse{
+			Username: "testuser",
+			State:    pb.User_STATE_AUTHORIZED,
+		},
+	}
+	modelAuth := initialModel(mockClientAuth, nil).(tuiModel)
+	msgAuth := modelAuth.runGetCellar()()
+	resAuth, ok := msgAuth.(cmdResultMsg)
+	if !ok {
+		t.Fatalf("Expected cmdResultMsg, got %T", msgAuth)
+	}
+	if !strings.Contains(resAuth.content, "User: testuser") {
+		t.Errorf("Expected output to contain 'User: testuser', got %q", resAuth.content)
+	}
+	if strings.Contains(resAuth.content, "STATE_AUTHORIZED") {
+		t.Errorf("Expected output NOT to contain 'STATE_AUTHORIZED', got %q", resAuth.content)
+	}
+
+	// Test case 2: State is STATE_LOGGED_IN - should show state
+	mockClientLoggedIn := &mockBeerKellerClient{
+		cellarRes: &pb.GetCellarResponse{
+			Username: "testuser",
+			State:    pb.User_STATE_LOGGED_IN,
+		},
+	}
+	modelLoggedIn := initialModel(mockClientLoggedIn, nil).(tuiModel)
+	msgLoggedIn := modelLoggedIn.runGetCellar()()
+	resLoggedIn, ok := msgLoggedIn.(cmdResultMsg)
+	if !ok {
+		t.Fatalf("Expected cmdResultMsg, got %T", msgLoggedIn)
+	}
+	if !strings.Contains(resLoggedIn.content, "User: testuser (State: STATE_LOGGED_IN)") {
+		t.Errorf("Expected output to contain 'User: testuser (State: STATE_LOGGED_IN)', got %q", resLoggedIn.content)
+	}
+}
+
+
 
