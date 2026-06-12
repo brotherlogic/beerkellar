@@ -21,10 +21,14 @@ func TestInitialTUIDashboardLayout(t *testing.T) {
 	// Call View to get the rendered string
 	rendered := model.View()
 
-	// Assert that it contains all three pane headers and status line components
+	// Assert that it does NOT contain COMMAND READOUT initially
+	if strings.Contains(rendered, "COMMAND READOUT") {
+		t.Errorf("Expected initial TUI layout to NOT contain %q, but got:\n%s", "COMMAND READOUT", rendered)
+	}
+
+	// Assert that it contains other expected sections
 	expectedSections := []string{
 		"CELLAR SUMMARY",
-		"COMMAND READOUT",
 		"COMMAND INPUT",
 		"Untappd:",
 		"Google Tasks:",
@@ -34,6 +38,14 @@ func TestInitialTUIDashboardLayout(t *testing.T) {
 		if !strings.Contains(rendered, section) {
 			t.Errorf("Expected TUI layout to contain %q, but got:\n%s", section, rendered)
 		}
+	}
+
+	// Now set a command readout and verify it appears
+	m := model.(tuiModel)
+	m.commandReadout = "COMMAND READOUT\nSome command output"
+	renderedWithReadout := m.View()
+	if !strings.Contains(renderedWithReadout, "COMMAND READOUT") {
+		t.Errorf("Expected TUI layout to contain %q after command output, but got:\n%s", "COMMAND READOUT", renderedWithReadout)
 	}
 }
 

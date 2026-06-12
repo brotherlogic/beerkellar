@@ -73,7 +73,7 @@ func initialModel(client pb.BeerKellerClient, googleClient pb.BeerKellerGoogleCl
 		client:         client,
 		googleClient:   googleClient,
 		cellarSummary:  "CELLAR SUMMARY\nCellar Size & Split: 0 Beers (0 Weekday, 0 Weekend)\nNext Weekday Candidate: None\nNext Weekend Candidate: None",
-		commandReadout: "COMMAND READOUT\nNo logs yet. Type a command below.",
+		commandReadout: "",
 		commandInput:   "COMMAND INPUT\n> ",
 		untappdStatus:  "Untappd: Disconnected",
 		googleStatus:   "Google Tasks: Disconnected",
@@ -709,7 +709,6 @@ func (m tuiModel) View() string {
 	}
 
 	summaryView := paneStyle.Render(m.cellarSummary)
-	readoutView := paneStyle.Render(m.commandReadout)
 	
 	// Command Input View
 	var inputContent string
@@ -722,13 +721,17 @@ func (m tuiModel) View() string {
 
 	footerView := footerStyle.Render(fmt.Sprintf(" %s | %s ", m.untappdStatus, m.googleStatus))
 
+	var views []string
+	views = append(views, summaryView)
+	if m.commandReadout != "" {
+		views = append(views, paneStyle.Render(m.commandReadout))
+	}
+	views = append(views, inputView, footerView)
+
 	return docStyle.Render(
 		lipgloss.JoinVertical(
 			lipgloss.Left,
-			summaryView,
-			readoutView,
-			inputView,
-			footerView,
+			views...,
 		),
 	)
 }
