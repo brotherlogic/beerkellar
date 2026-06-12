@@ -21,8 +21,9 @@ import (
 )
 
 const (
-	CONFIG = "github.com/brotherlogic/beerkellar/config"
-	CACHE  = "github.com/brotherlogic/beerkellar/cache"
+	CONFIG                 = "github.com/brotherlogic/beerkellar/config"
+	CACHE                  = "github.com/brotherlogic/beerkellar/cache"
+	weekdayBeerUnitsLimit = 3.5
 )
 
 type Server struct {
@@ -271,7 +272,7 @@ func (s *Server) getWeekdayBeerCount(ctx context.Context, userId int64) (int, er
 		beer, err := s.db.GetBeer(ctx, entry.GetBeerId())
 		if err == nil {
 			units := convertToLitres(entry.GetSizeFlOz()) * beer.GetAbv()
-			if units < 3.5 {
+			if units < weekdayBeerUnitsLimit {
 				count++
 			}
 		}

@@ -15,9 +15,10 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/protobuf/encoding/prototext"
-
 	pb "github.com/brotherlogic/beerkellar/proto"
 )
+
+const weekdayBeerUnitsLimit = 3.5
 
 func buildContext() (context.Context, context.CancelFunc, error) {
 	dirname, err := os.UserHomeDir()
@@ -86,7 +87,7 @@ func main() {
 		var weekday, nonWeekday int
 		for i, beer := range cellar.GetBeers() {
 			log.Printf("%v. %v - %v (%v) [%v] [%.2f units]", i+1, beer.GetBrewery(), beer.GetName(), beer.GetAbv(), beer.GetId(), beer.GetUnits())
-			if beer.GetUnits() < 3.5 {
+			if beer.GetUnits() < weekdayBeerUnitsLimit {
 				weekday++
 			} else {
 				nonWeekday++
@@ -107,7 +108,7 @@ func main() {
 			}
 			log.Printf("Weekday flag: %v", *weekday)
 			if *weekday {
-				req.Requirements[0].MaxUnits = 3.5
+				req.Requirements[0].MaxUnits = weekdayBeerUnitsLimit
 			}
 			log.Printf("Requirement 0: %+v", req.Requirements[0])
 
