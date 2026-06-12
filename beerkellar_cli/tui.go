@@ -688,6 +688,7 @@ func (m tuiModel) View() string {
 
 	logoStyle := lipgloss.NewStyle().
 		Foreground(lipgloss.Color("#FFB300")). // Beautiful Amber Gold
+		MarginLeft(2).                         // Align with the pane borders
 		MarginBottom(1)
 
 	logoView := logoStyle.Render(logo)
