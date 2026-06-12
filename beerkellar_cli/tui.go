@@ -500,6 +500,8 @@ func (m tuiModel) runGetCellar() tea.Cmd {
 			return cmdResultMsg{err: err}
 		}
 		var sb strings.Builder
+		// Omit the state readout if the user is in the default, fully authorized state (STATE_AUTHORIZED)
+		// to avoid cluttering the cellar output. Other transition states are still displayed.
 		if cellar.GetState() == pb.User_STATE_AUTHORIZED {
 			sb.WriteString(fmt.Sprintf("User: %v\n", cellar.GetUsername()))
 		} else {
