@@ -17,8 +17,8 @@ Run the CLI without any subcommands to enter the interactive Terminal User Inter
 ```bash
 beerkellar_cli
 ```
+This launches a stylized `BEERKELLAR` ASCII logo, followed by a premium three-pane dashboard styled with Lip Gloss, complete with a background updating scheduler and an asynchronous status bar:
 
-The TUI features a premium three-pane dashboard styled with Lip Gloss, complete with a background updating scheduler and an asynchronous status bar:
 
 ### 1. Cellar Summary Pane
 Displays real-time stats (cellar size, weekday vs. weekend split) and recommends:

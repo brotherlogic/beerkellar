@@ -21,9 +21,13 @@ func TestInitialTUIDashboardLayout(t *testing.T) {
 	// Call View to get the rendered string
 	rendered := model.View()
 
-	// Assert that it contains all three pane headers and status line components
+	// Assert that it does NOT contain COMMAND READOUT initially
+	if strings.Contains(rendered, "COMMAND READOUT") {
+		t.Errorf("Expected initial TUI layout to NOT contain %q, but got:\n%s", "COMMAND READOUT", rendered)
+	}
+
+	// Assert that it contains other expected sections
 	expectedSections := []string{
-		"COMMAND READOUT",
 		"Untappd:",
 		"Google Tasks:",
 	}
@@ -43,6 +47,28 @@ func TestInitialTUIDashboardLayout(t *testing.T) {
 		if strings.Contains(rendered, section) {
 			t.Errorf("Expected TUI layout NOT to contain %q, but got:\n%s", section, rendered)
 		}
+	}
+
+	if strings.Contains(rendered, "> >") {
+		t.Errorf("Expected TUI layout not to contain double prompt '> >', but got:\n%s", rendered)
+	}
+
+	// Now set a command readout and verify it appears
+	m := model.(tuiModel)
+	m.commandReadout = "COMMAND READOUT\nSome command output"
+	renderedWithReadout := m.View()
+	if !strings.Contains(renderedWithReadout, "COMMAND READOUT") {
+		t.Errorf("Expected TUI layout to contain %q after command output, but got:\n%s", "COMMAND READOUT", renderedWithReadout)
+	}
+}
+
+func TestLogoRendering(t *testing.T) {
+	model := initialModel(nil, nil)
+	rendered := model.View()
+
+	// We expect the ASCII logo containing "██████" to be rendered
+	if !strings.Contains(rendered, "██████") {
+		t.Errorf("Expected TUI layout to contain the stylized BEERKELLAR logo, but got:\n%s", rendered)
 	}
 }
 
@@ -69,6 +95,10 @@ func TestCommandInputWizardFlow(t *testing.T) {
 	expectedPrompt := "Enter Beer ID"
 	if !strings.Contains(rendered, expectedPrompt) {
 		t.Errorf("Expected TUI to show wizard prompt %q, but got:\n%s", expectedPrompt, rendered)
+	}
+
+	if strings.Contains(rendered, "> >") {
+		t.Errorf("Expected TUI layout in wizard mode not to contain double prompt '> >', but got:\n%s", rendered)
 	}
 }
 
@@ -408,6 +438,26 @@ func TestTUIListCellarState(t *testing.T) {
 	}
 	if !strings.Contains(resLoggedIn.content, "User: testuser (State: STATE_LOGGED_IN)") {
 		t.Errorf("Expected output to contain 'User: testuser (State: STATE_LOGGED_IN)', got %q", resLoggedIn.content)
+	}
+}
+
+func TestTUIBoxWidthOnResize(t *testing.T) {
+	model := initialModel(nil, nil)
+
+	// Send a WindowSizeMsg to set width
+	m, cmd := model.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
+	if cmd != nil {
+		t.Errorf("Expected nil command, got %v", cmd)
+	}
+
+	rendered := m.View()
+
+	// Check that the rendered view contains lines with the expected width.
+	// W = 80, minus docStyle horizontal padding (4) => pane width = 76.
+	// The top border of pane width 76 will be "┌" + 74 "─" + "┐".
+	expectedBorder := "┌" + strings.Repeat("─", 74) + "┐"
+	if !strings.Contains(rendered, expectedBorder) {
+		t.Errorf("Expected rendered view to contain box border %q, but got:\n%s", expectedBorder, rendered)
 	}
 }
 

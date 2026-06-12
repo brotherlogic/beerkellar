@@ -46,7 +46,6 @@ type tuiModel struct {
 	googleClient   pb.BeerKellerGoogleClient
 	cellarSummary  string
 	commandReadout string
-	commandInput   string
 	untappdStatus  string
 	googleStatus   string
 	err            error
@@ -56,6 +55,10 @@ type tuiModel struct {
 	activeWiz   wizardType
 	addWiz      addWizardState
 	drinkWiz    drinkWizardState
+
+	// Terminal size
+	width  int
+	height int
 }
 
 func initialModel(client pb.BeerKellerClient, googleClient pb.BeerKellerGoogleClient) tea.Model {
@@ -69,8 +72,7 @@ func initialModel(client pb.BeerKellerClient, googleClient pb.BeerKellerGoogleCl
 		client:         client,
 		googleClient:   googleClient,
 		cellarSummary:  "Cellar Size & Split: 0 Beers (0 Weekday, 0 Weekend)\nNext Weekday Candidate: None\nNext Weekend Candidate: None",
-		commandReadout: "COMMAND READOUT\nNo logs yet. Type a command below.",
-		commandInput:   "> ",
+		commandReadout: "",
 		untappdStatus:  "Untappd: Disconnected",
 		googleStatus:   "Google Tasks: Disconnected",
 		textInput:      ti,
@@ -218,6 +220,11 @@ func (m tuiModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 
 	switch msg := msg.(type) {
+	case tea.WindowSizeMsg:
+		m.width = msg.Width
+		m.height = msg.Height
+		return m, nil
+
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "ctrl+c":
@@ -678,6 +685,13 @@ func (m tuiModel) runToggleGoogleTasks(enable bool) tea.Cmd {
 	}
 }
 
+const logo = `  ██████╗ ███████╗███████╗██████╗ ██╗  ██╗███████╗██╗     ██╗      █████╗ ██████╗ 
+  ██╔══██╗██╔════╝██╔════╝██╔══██╗██║ ██╔╝██╔════╝██║     ██║     ██╔══██╗██╔══██╗
+  ██████╔╝█████╗  █████╗  ██████╔╝█████╔╝ █████╗  ██║     ██║     ███████║██████╔╝
+  ██╔══██╗██╔══╝  ██╔══╝  ██╔══██╗██╔═██╗ ██╔══╝  ██║     ██║     ██╔══██║██╔══██╗
+  ██████╔╝███████╗███████╗██║  ██║██║  ██╗███████╗███████╗███████╗██║  ██║██║  ██║
+  ╚══════╝╚══════╝╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝╚══════╝╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝`
+
 func (m tuiModel) View() string {
 	docStyle := lipgloss.NewStyle().Padding(1, 2)
 	paneStyle := lipgloss.NewStyle().
@@ -685,30 +699,51 @@ func (m tuiModel) View() string {
 		BorderForeground(lipgloss.Color("63")).
 		Padding(0, 1)
 
+	logoStyle := lipgloss.NewStyle().
+		Foreground(lipgloss.Color("#FFB300")). // Beautiful Amber Gold
+		MarginLeft(2).                         // Align with the pane borders
+		MarginBottom(1)
+
+	logoView := logoStyle.Render(logo)
+
+	footerStyle := lipgloss.NewStyle().
+		Background(lipgloss.Color("235")).
+		Foreground(lipgloss.Color("245"))
+
+	if m.width > 0 {
+		w := m.width - 4
+		if w > 0 {
+			footerStyle = footerStyle.Width(w)
+			if w > 2 {
+				paneStyle = paneStyle.Width(w - 2)
+			}
+		}
+	}
+
 	summaryView := paneStyle.Render(m.cellarSummary)
-	readoutView := paneStyle.Render(m.commandReadout)
 	
-	// Command Input View
 	var inputContent string
 	if m.activeWiz != wizardNone {
-		inputContent = fmt.Sprintf("Prompt: %s\n> %s", m.textInput.Placeholder, m.textInput.View())
+		inputContent = fmt.Sprintf("Prompt: %s\n%s", m.textInput.Placeholder, m.textInput.View())
 	} else {
-		inputContent = fmt.Sprintf("> %s", m.textInput.View())
+		inputContent = m.textInput.View()
 	}
 	inputView := paneStyle.Render(inputContent)
 
-	footerView := lipgloss.NewStyle().
-		Background(lipgloss.Color("235")).
-		Foreground(lipgloss.Color("245")).
-		Render(fmt.Sprintf(" %s | %s ", m.untappdStatus, m.googleStatus))
+	footerView := footerStyle.Render(fmt.Sprintf(" %s | %s ", m.untappdStatus, m.googleStatus))
+
+	var views []string
+	views = append(views, logoView)
+	views = append(views, summaryView)
+	if m.commandReadout != "" {
+		views = append(views, paneStyle.Render(m.commandReadout))
+	}
+	views = append(views, inputView, footerView)
 
 	return docStyle.Render(
 		lipgloss.JoinVertical(
 			lipgloss.Left,
-			summaryView,
-			readoutView,
-			inputView,
-			footerView,
+			views...,
 		),
 	)
 }
