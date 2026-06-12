@@ -93,7 +93,7 @@ func (m tuiModel) fetchCellarSummary() tea.Cmd {
 			return cellarSummaryMsg{}
 		}
 		// Set a conservative 10-second timeout for retrieving cellar stats and recommendations.
-		ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+		ctx, cancel := m.getContext(time.Second * 10)
 		defer cancel()
 
 		cellar, err := m.client.GetCellar(ctx, &pb.GetCellarRequest{})
