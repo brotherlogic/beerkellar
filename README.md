@@ -17,6 +17,7 @@ beerkellar_cli
 ```
 This launches a three-pane dashboard (Cellar Summary, Command Readout, Command Input) with a status bar. 
 Within the TUI:
+- The `CELLAR SUMMARY` pane displays total beer counts, weekday/weekend splits, and the next weekday/weekend candidates (with background updates syncing once every hour).
 - Type commands directly in the `COMMAND INPUT` pane (e.g. `cellar`, `pull`, `drunk`, `google tasks on`, `exit`, `quit`).
 - For multi-step commands like `add` or `drink`, the pane automatically enters a wizard mode, prompting you step-by-step for the required inputs (e.g. Beer ID, Quantity, Size) before performing the action.
 - Log in to Untappd using `login` or link your Google account using `google login`. These authentication flows run asynchronously (via `tea.Cmd`) so you can keep interacting with the TUI while the authorization occurs in the background. The status bar will automatically update to reflect when you are successfully logged in or linked.
