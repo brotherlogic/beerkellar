@@ -15,7 +15,7 @@ Run the CLI without any subcommands to enter the interactive TUI dashboard layou
 ```bash
 beerkellar_cli
 ```
-This launches a three-pane dashboard (Cellar Summary, Command Readout, Command Input) with a status bar. 
+This launches a stylized BEERKELLAR ASCII logo, a three-pane dashboard (Cellar Summary, Command Readout, Command Input) with a status bar. 
 Within the TUI:
 - The `CELLAR SUMMARY` pane displays total beer counts, weekday/weekend splits, and the next weekday/weekend candidates (with background updates syncing once every hour).
 - Type commands directly in the `COMMAND INPUT` pane (e.g. `cellar`, `pull`, `drunk`, `google tasks on`, `exit`, `quit`).

@@ -672,6 +672,13 @@ func (m tuiModel) runToggleGoogleTasks(enable bool) tea.Cmd {
 	}
 }
 
+const logo = `  ██████╗ ███████╗███████╗██████╗ ██╗  ██╗███████╗██╗     ██╗      █████╗ ██████╗ 
+  ██╔══██╗██╔════╝██╔════╝██╔══██╗██║ ██╔╝██╔════╝██║     ██║     ██╔══██╗██╔══██╗
+  ██████╔╝█████╗  █████╗  ██████╔╝█████╔╝ █████╗  ██║     ██║     ███████║██████╔╝
+  ██╔══██╗██╔══╝  ██╔══╝  ██╔══██╗██╔═██╗ ██╔══╝  ██║     ██║     ██╔══██║██╔══██╗
+  ██████╔╝███████╗███████╗██║  ██║██║  ██╗███████╗███████╗███████╗██║  ██║██║  ██║
+  ╚══════╝╚══════╝╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝╚══════╝╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝`
+
 func (m tuiModel) View() string {
 	docStyle := lipgloss.NewStyle().Padding(1, 2)
 	paneStyle := lipgloss.NewStyle().
@@ -679,6 +686,11 @@ func (m tuiModel) View() string {
 		BorderForeground(lipgloss.Color("63")).
 		Padding(0, 1)
 
+	logoStyle := lipgloss.NewStyle().
+		Foreground(lipgloss.Color("#FFB300")). // Beautiful Amber Gold
+		MarginBottom(1)
+
+	logoView := logoStyle.Render(logo)
 	summaryView := paneStyle.Render(m.cellarSummary)
 	readoutView := paneStyle.Render(m.commandReadout)
 	
@@ -699,6 +711,7 @@ func (m tuiModel) View() string {
 	return docStyle.Render(
 		lipgloss.JoinVertical(
 			lipgloss.Left,
+			logoView,
 			summaryView,
 			readoutView,
 			inputView,

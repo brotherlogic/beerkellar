@@ -34,6 +34,16 @@ func TestInitialTUIDashboardLayout(t *testing.T) {
 	}
 }
 
+func TestLogoRendering(t *testing.T) {
+	model := initialModel(nil, nil)
+	rendered := model.View()
+
+	// We expect the ASCII logo containing "██████" to be rendered
+	if !strings.Contains(rendered, "██████") {
+		t.Errorf("Expected TUI layout to contain the stylized BEERKELLAR logo, but got:\n%s", rendered)
+	}
+}
+
 func TestCommandInputWizardFlow(t *testing.T) {
 	// Initialize a new default model
 	model := initialModel(nil, nil)
