@@ -402,5 +402,25 @@ func TestTUIListCellarState(t *testing.T) {
 	}
 }
 
+func TestTUIBoxWidthOnResize(t *testing.T) {
+	model := initialModel(nil, nil)
+
+	// Send a WindowSizeMsg to set width
+	m, cmd := model.Update(tea.WindowSizeMsg{Width: 80, Height: 24})
+	if cmd != nil {
+		t.Errorf("Expected nil command, got %v", cmd)
+	}
+
+	rendered := m.View()
+
+	// Check that the rendered view contains lines with the expected width.
+	// W = 80, minus docStyle horizontal padding (4) => pane width = 76.
+	// The top border of pane width 76 will be "┌" + 74 "─" + "┐".
+	expectedBorder := "┌" + strings.Repeat("─", 74) + "┐"
+	if !strings.Contains(rendered, expectedBorder) {
+		t.Errorf("Expected rendered view to contain box border %q, but got:\n%s", expectedBorder, rendered)
+	}
+}
+
 
 
