@@ -40,6 +40,10 @@ func TestInitialTUIDashboardLayout(t *testing.T) {
 		}
 	}
 
+	if strings.Contains(rendered, "> >") {
+		t.Errorf("Expected TUI layout not to contain double prompt '> >', but got:\n%s", rendered)
+	}
+
 	// Now set a command readout and verify it appears
 	m := model.(tuiModel)
 	m.commandReadout = "COMMAND READOUT\nSome command output"
@@ -82,6 +86,10 @@ func TestCommandInputWizardFlow(t *testing.T) {
 	expectedPrompt := "Enter Beer ID"
 	if !strings.Contains(rendered, expectedPrompt) {
 		t.Errorf("Expected TUI to show wizard prompt %q, but got:\n%s", expectedPrompt, rendered)
+	}
+
+	if strings.Contains(rendered, "> >") {
+		t.Errorf("Expected TUI layout in wizard mode not to contain double prompt '> >', but got:\n%s", rendered)
 	}
 }
 

@@ -46,7 +46,6 @@ type tuiModel struct {
 	googleClient   pb.BeerKellerGoogleClient
 	cellarSummary  string
 	commandReadout string
-	commandInput   string
 	untappdStatus  string
 	googleStatus   string
 	err            error
@@ -74,7 +73,6 @@ func initialModel(client pb.BeerKellerClient, googleClient pb.BeerKellerGoogleCl
 		googleClient:   googleClient,
 		cellarSummary:  "CELLAR SUMMARY\nCellar Size & Split: 0 Beers (0 Weekday, 0 Weekend)\nNext Weekday Candidate: None\nNext Weekend Candidate: None",
 		commandReadout: "",
-		commandInput:   "COMMAND INPUT\n> ",
 		untappdStatus:  "Untappd: Disconnected",
 		googleStatus:   "Google Tasks: Disconnected",
 		textInput:      ti,
@@ -727,9 +725,9 @@ func (m tuiModel) View() string {
 	// Command Input View
 	var inputContent string
 	if m.activeWiz != wizardNone {
-		inputContent = fmt.Sprintf("COMMAND INPUT (WIZARD MODE)\nPrompt: %s\n> %s", m.textInput.Placeholder, m.textInput.View())
+		inputContent = fmt.Sprintf("COMMAND INPUT (WIZARD MODE)\nPrompt: %s\n%s", m.textInput.Placeholder, m.textInput.View())
 	} else {
-		inputContent = fmt.Sprintf("COMMAND INPUT\n> %s", m.textInput.View())
+		inputContent = fmt.Sprintf("COMMAND INPUT\n%s", m.textInput.View())
 	}
 	inputView := paneStyle.Render(inputContent)
 
