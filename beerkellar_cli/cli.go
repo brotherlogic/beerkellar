@@ -1,12 +1,14 @@
 package main
 
 import (
+	"bufio"
 	"context"
 	"flag"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/golang/protobuf/proto"
@@ -20,6 +22,45 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 )
+
+func runTuiTestLoop(model tea.Model) {
+	if tui, ok := model.(tuiModel); ok {
+		summaryMsg := tui.fetchCellarSummary()()
+		model, _ = model.Update(summaryMsg)
+		statusMsg := tui.checkInitialStatus()()
+		model, _ = model.Update(statusMsg)
+	}
+
+	fmt.Println(model.View())
+
+	reader := bufio.NewReader(os.Stdin)
+	for {
+		line, err := reader.ReadString('\n')
+		if err != nil {
+			break
+		}
+		line = strings.TrimSpace(line)
+		if line == "exit" || line == "quit" {
+			break
+		}
+
+		var cmd tea.Cmd
+		for _, char := range line {
+			model, cmd = model.Update(tea.KeyMsg{Runes: []rune{char}})
+			if cmd != nil {
+				msg := cmd()
+				model, _ = model.Update(msg)
+			}
+		}
+		model, cmd = model.Update(tea.KeyMsg{Type: tea.KeyEnter, Runes: []rune{'\r'}})
+		if cmd != nil {
+			msg := cmd()
+			model, _ = model.Update(msg)
+		}
+
+		fmt.Println(model.View())
+	}
+}
 
 func buildContext() (context.Context, context.CancelFunc, error) {
 	dirname, err := os.UserHomeDir()
@@ -44,7 +85,11 @@ func buildContext() (context.Context, context.CancelFunc, error) {
 }
 
 func main() {
-	conn, err := grpc.NewClient("beerkellar-grpc.brotherlogic-backend.com:80", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	addr := "beerkellar-grpc.brotherlogic-backend.com:80"
+	if envAddr := os.Getenv("BEERKELLAR_SERVER_ADDR"); envAddr != "" {
+		addr = envAddr
+	}
+	conn, err := grpc.NewClient(addr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		log.Fatalf("Did not connect: %v", err)
 	}
@@ -60,7 +105,12 @@ func main() {
 	googleClient := pb.NewBeerKellerGoogleClient(conn)
 
 	if len(os.Args) < 2 {
-		p := tea.NewProgram(initialModel(client, googleClient))
+		model := initialModel(client, googleClient)
+		if os.Getenv("TUI_TEST_MODE") == "true" {
+			runTuiTestLoop(model)
+			return
+		}
+		p := tea.NewProgram(model)
 		if _, err := p.Run(); err != nil {
 			log.Fatalf("Error running TUI: %v", err)
 		}

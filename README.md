@@ -76,3 +76,5 @@ beerkellar_cli google tasks on
 
 - Build: `go build ./...`
 - Test: `go test ./...`
+- Integration Tests: Run `go test -v -tags=integration ./integration/...`
+- Headless TUI Test Mode: Set the environment variable `TUI_TEST_MODE=true` to run `beerkellar_cli` in a headless line-by-line test loop without initializing a full terminal alternate screen (useful for automated testing/CI environments).
