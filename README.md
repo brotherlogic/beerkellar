@@ -22,7 +22,7 @@ This launches a stylized `BEERKELLAR` ASCII logo, followed by a premium three-pa
 
 ### 1. Cellar Summary Pane
 Displays real-time stats (cellar size, weekday vs. weekend split) and recommends:
-* **Next Weekday Candidate**: The least recently drunk beer under 3 units of alcohol.
+* **Next Weekday Candidate**: The least recently drunk beer under 3.5 units of alcohol.
 * **Next Weekend Candidate**: The overall least recently drunk beer.
 * *Updates automatically every hour in the background.*
 
@@ -75,7 +75,7 @@ beerkellar_cli cellar
 ```
 
 ### 4. Pull a Beer
-Pulls a beer based on least recently drunk. Use the `--weekday` flag to limit selection to beers with 3 units of alcohol or less.
+Pulls a beer based on least recently drunk. Use the `--weekday` flag to limit selection to beers with 3.5 units of alcohol or less.
 ```bash
 beerkellar_cli pull [--weekday]
 ```
@@ -91,6 +91,8 @@ beerkellar_cli drunk [--count <n>]
 ```
 
 ### 7. Google Tasks Integration
+
+Automatically creates a task when weekday beer (< 3.5 units) count drops below 4.
 ```bash
 beerkellar_cli google login
 beerkellar_cli google tasks [on|off]

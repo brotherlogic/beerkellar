@@ -545,3 +545,51 @@ func TestGoogleTaskThreshold(t *testing.T) {
 		t.Errorf("GoogleTaskActive should be false after adding back above threshold")
 	}
 }
+
+func TestGetWeekdayBeerCount(t *testing.T) {
+	ctx, cancel := GetTestContext(context.Background(), time.Minute)
+	defer cancel()
+
+	s := getTestServer(ctx)
+
+	// Add a user
+	user := &pb.User{
+		Auth:   "testuser",
+		UserId: 12345,
+		State:  pb.User_STATE_AUTHORIZED,
+	}
+	s.db.SaveUser(ctx, user)
+
+	// 12oz, 9% ABV = 12 * 0.029574 * 9.0 = 3.19 units (should count as weekday under the new threshold of 3.5, but not under the old threshold of 3)
+	_, err := s.AddBeer(ctx, &pb.AddBeerRequest{
+		BeerId:   1,
+		SizeFlOz: 12,
+		Quantity: 1,
+	})
+	if err != nil {
+		t.Fatalf("AddBeer failed: %v", err)
+	}
+	s.db.SaveBeer(ctx, &pb.Beer{Id: 1, Name: "Medium-Heavy", Abv: 9.0})
+
+	// 12oz, 10% ABV = 12 * 0.029574 * 10.0 = 3.548 units (should not count as weekday under either threshold)
+	_, err = s.AddBeer(ctx, &pb.AddBeerRequest{
+		BeerId:   2,
+		SizeFlOz: 12,
+		Quantity: 1,
+	})
+	if err != nil {
+		t.Fatalf("AddBeer failed: %v", err)
+	}
+	s.db.SaveBeer(ctx, &pb.Beer{Id: 2, Name: "Very Heavy", Abv: 10.0})
+
+	count, err := s.getWeekdayBeerCount(ctx, user.GetUserId())
+	if err != nil {
+		t.Fatalf("getWeekdayBeerCount failed: %v", err)
+	}
+
+	// Under the new threshold of 3.5, the 9% beer should count, but the 10% should not. So count must be 1.
+	if count != 1 {
+		t.Errorf("Expected weekday beer count of 1, got %v (since 3.19 units < 3.5, but currently using old threshold < 3.0)", count)
+	}
+}
+
