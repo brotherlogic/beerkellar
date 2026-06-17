@@ -152,7 +152,7 @@ func (m *tuiModel) updateCellarSummary(msg cellarSummaryMsg) {
 		}
 	}
 
-	if msg.cellar.GetState() == pb.User_STATE_LOGGED_IN {
+	if msg.cellar.GetState() == pb.User_STATE_LOGGED_IN || msg.cellar.GetState() == pb.User_STATE_AUTHORIZED {
 		m.untappdStatus = "Untappd: Logged In"
 	} else {
 		m.untappdStatus = "Untappd: Disconnected"
