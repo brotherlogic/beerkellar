@@ -730,7 +730,7 @@ func (m tuiModel) View() string {
 	}
 	inputView := paneStyle.Render(inputContent)
 
-	footerView := footerStyle.Render(fmt.Sprintf(" %s | %s ", m.untappdStatus, m.googleStatus))
+	footerView := footerStyle.Render(fmt.Sprintf(" %s | %s | Version: %s ", m.untappdStatus, m.googleStatus, Version))
 
 	var views []string
 	views = append(views, logoView)
