@@ -92,7 +92,7 @@ func buildContext() (context.Context, context.CancelFunc, error) {
 }
 
 func autoUpdateTUI() {
-	_ = func() error {
+	if err := func() error {
 		if Version == "dev" {
 			return nil
 		}
@@ -129,7 +129,9 @@ func autoUpdateTUI() {
 			}
 		}
 		return nil
-	}()
+	}(); err != nil {
+		log.Printf("Auto-update failed: %v", err)
+	}
 }
 
 func main() {
