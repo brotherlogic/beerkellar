@@ -3,12 +3,16 @@ package main
 import (
 	"bufio"
 	"context"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"io/ioutil"
 	"log"
+	"net/http"
 	"os"
+	"os/exec"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/golang/protobuf/proto"
@@ -87,7 +91,52 @@ func buildContext() (context.Context, context.CancelFunc, error) {
 	return ctx, cancel, nil
 }
 
+func autoUpdateTUI() {
+	if err := func() error {
+		if Version == "dev" {
+			return nil
+		}
+
+		client := &http.Client{
+			Timeout: 3 * time.Second,
+		}
+
+		resp, err := client.Get("https://api.github.com/repos/brotherlogic/beerkellar/releases/latest")
+		if err != nil {
+			return err
+		}
+		defer resp.Body.Close()
+
+		var result struct {
+			TagName string `json:"tag_name"`
+		}
+		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+			return err
+		}
+
+		if result.TagName != "" && result.TagName != Version {
+			if err := exec.Command("go", "install", fmt.Sprintf("github.com/brotherlogic/beerkellar/beerkellar_cli@%s", result.TagName)).Run(); err != nil {
+				return err
+			}
+
+			exePath, err := os.Executable()
+			if err != nil {
+				return err
+			}
+
+			if err := syscall.Exec(exePath, os.Args, os.Environ()); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		log.Printf("Auto-update failed: %v", err)
+	}
+}
+
 func main() {
+	autoUpdateTUI()
+
 	addr := "beerkellar-grpc.brotherlogic-backend.com:80"
 	if envAddr := os.Getenv("BEERKELLAR_SERVER_ADDR"); envAddr != "" {
 		addr = envAddr
