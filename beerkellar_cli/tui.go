@@ -145,7 +145,7 @@ func (m *tuiModel) updateCellarSummary(msg cellarSummaryMsg) {
 	var total, weekday, weekend int
 	for _, beer := range msg.cellar.GetBeers() {
 		total++
-		if beer.GetUnits() < 2.5 {
+		if beer.GetUnits() < weekdayBeerUnitsLimit {
 			weekday++
 		} else {
 			weekend++

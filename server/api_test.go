@@ -277,10 +277,10 @@ func TestGetBeer_WeekdayLogic(t *testing.T) {
 	}
 	s.db.SaveBeer(ctx, &pb.Beer{Id: 2, Name: "Light", Abv: 4.0})
 
-	// Test with weekday limit (3)
+	// Test with weekday limit (3.5)
 	r, err := s.GetBeer(ctx, &pb.GetBeerRequest{
 		Requirements: []*pb.BeerRequirement{
-			{MaxUnits: 3},
+			{MaxUnits: 3.5},
 		},
 	})
 	if err != nil {
