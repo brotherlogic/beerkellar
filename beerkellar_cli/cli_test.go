@@ -30,6 +30,7 @@ func TestInitialTUIDashboardLayout(t *testing.T) {
 	expectedSections := []string{
 		"Untappd:",
 		"Google Tasks:",
+		"Version: dev",
 	}
 
 	for _, section := range expectedSections {

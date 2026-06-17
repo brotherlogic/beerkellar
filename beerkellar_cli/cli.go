@@ -22,6 +22,8 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
+var Version string = "dev"
+
 const weekdayBeerUnitsLimit = 3.5
 
 func runTuiTestLoop(model tea.Model) {

@@ -6,8 +6,9 @@ Beerkellar is a command-line interface (CLI) tool and backend service in Go for 
 
 To build and install the Beerkellar CLI, run:
 ```bash
-go install ./beerkellar_cli
+go build -ldflags="-X main.Version=$(git describe --tags --always --dirty --exclude 'v*' --abbrev=0)" -o beerkellar_cli ./beerkellar_cli
 ```
+Note: The `-ldflags="-X main.Version=..."` flag is required to correctly populate the build version number displayed in the TUI footer.
 
 ---
 
