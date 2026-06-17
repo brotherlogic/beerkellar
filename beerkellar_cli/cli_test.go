@@ -162,7 +162,7 @@ func TestCellarSummaryPane(t *testing.T) {
 			Username: "testuser",
 			State:    pb.User_STATE_LOGGED_IN,
 			Beers: []*pb.Beer{
-				{Id: 1, Name: "Beer 1", Brewery: "Brewery A", Units: 2.0}, // weekday (units < 2.5)
+				{Id: 1, Name: "Beer 1", Brewery: "Brewery A", Units: 2.0}, // weekday (units < 3.5)
 				{Id: 2, Name: "Beer 2", Brewery: "Brewery B", Units: 3.5}, // weekend
 			},
 		},
