@@ -462,5 +462,13 @@ func TestTUIBoxWidthOnResize(t *testing.T) {
 	}
 }
 
+func TestAutoUpdateTUIDevMode(t *testing.T) {
+	// Preserve original version
+	origVersion := Version
+	defer func() { Version = origVersion }()
 
-
+	Version = "dev"
+	
+	// This should return immediately without doing any network calls or process replacement
+	autoUpdateTUI()
+}
