@@ -10,6 +10,9 @@ go build -ldflags="-X main.Version=$(git describe --tags --always --dirty --excl
 ```
 Note: The `-ldflags="-X main.Version=..."` flag is required to correctly populate the build version number displayed in the TUI footer.
 
+### Auto-Update
+When the CLI runs, it automatically checks the latest GitHub release. If a newer version tag exists (and the current `Version` is not `"dev"`), the CLI seamlessly reinstalls itself via `go install` and restarts the process in place.
+
 ---
 
 ## Interactive TUI Mode
