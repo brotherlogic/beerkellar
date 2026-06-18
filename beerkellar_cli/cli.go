@@ -33,7 +33,7 @@ func getVersion() string {
 			return info.Main.Version
 		}
 	}
-	return "dev"
+	return "unknown"
 }
 
 var Version string = getVersion()
@@ -103,7 +103,7 @@ func buildContext() (context.Context, context.CancelFunc, error) {
 
 func autoUpdateTUI() {
 	if err := func() error {
-		if Version == "dev" {
+		if Version == "dev" || Version == "unknown" {
 			return nil
 		}
 

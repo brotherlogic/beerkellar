@@ -30,7 +30,7 @@ func TestInitialTUIDashboardLayout(t *testing.T) {
 	expectedSections := []string{
 		"Untappd:",
 		"Google Tasks:",
-		"Version: dev",
+		"Version: unknown",
 	}
 
 	for _, section := range expectedSections {
@@ -470,7 +470,7 @@ func TestAutoUpdateTUIDevMode(t *testing.T) {
 	origVersion := Version
 	defer func() { Version = origVersion }()
 
-	Version = "dev"
+	Version = "unknown"
 	
 	// This should return immediately without doing any network calls or process replacement
 	autoUpdateTUI()
