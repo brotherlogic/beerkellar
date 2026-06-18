@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"runtime/debug"
 	"strings"
 	"syscall"
 	"time"
@@ -26,7 +27,16 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-var Version string = "dev"
+func getVersion() string {
+	if info, ok := debug.ReadBuildInfo(); ok {
+		if info.Main.Version != "" && info.Main.Version != "(devel)" {
+			return info.Main.Version
+		}
+	}
+	return "dev"
+}
+
+var Version string = getVersion()
 
 const weekdayBeerUnitsLimit = 3.5
 
