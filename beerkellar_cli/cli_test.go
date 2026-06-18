@@ -127,6 +127,9 @@ func (m *mockBeerKellerClient) GetCellar(ctx context.Context, in *pb.GetCellarRe
 
 func (m *mockBeerKellerClient) GetBeer(ctx context.Context, in *pb.GetBeerRequest, opts ...grpc.CallOption) (*pb.GetBeerResponse, error) {
 	if len(in.Requirements) > 0 && in.Requirements[0].MaxUnits > 0 {
+		if in.Requirements[0].MaxUnits != weekdayBeerUnitsLimit {
+			return nil, fmt.Errorf("expected MaxUnits %v, got %v", weekdayBeerUnitsLimit, in.Requirements[0].MaxUnits)
+		}
 		return m.weekdayRes, m.weekdayErr
 	}
 	return m.weekendRes, m.weekendErr
