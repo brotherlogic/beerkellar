@@ -108,7 +108,7 @@ func (m tuiModel) fetchCellarSummary() tea.Cmd {
 			Requirements: []*pb.BeerRequirement{
 				{
 					Strategy: pb.BeerRequirement_STRATEGY_LEAST_RECENTLY_DRUNK,
-					MaxUnits: 3,
+					MaxUnits: weekdayBeerUnitsLimit,
 				},
 			},
 		}
