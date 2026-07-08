@@ -207,7 +207,7 @@ func (s *Server) GetBeer(ctx context.Context, req *pb.GetBeerRequest) (*pb.GetBe
 			pUnits = convertToLitres(pickedEntry.GetSizeFlOz()) * pBeer.GetAbv()
 		}
 
-		if len(ncellar) == 0 && fallbackBeer != nil {
+		if len(ncellar) == 0 && fallbackBeer != nil && requirement.GetMinUnits() > 0 {
 			log.Printf("No beers matched criteria. Falling back to highest unit beer: %v", fallbackBeer.GetName())
 			pBeer = fallbackBeer
 			pUnits = fallbackUnits
