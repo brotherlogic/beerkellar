@@ -232,6 +232,8 @@ func main() {
 			log.Printf("Weekday flag: %v", *weekday)
 			if *weekday {
 				req.Requirements[0].MaxUnits = weekdayBeerUnitsLimit
+			} else {
+				req.Requirements[0].MinUnits = weekdayBeerUnitsLimit
 			}
 			log.Printf("Requirement 0: %+v", req.Requirements[0])
 

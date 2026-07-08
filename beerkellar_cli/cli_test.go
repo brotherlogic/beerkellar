@@ -132,6 +132,12 @@ func (m *mockBeerKellerClient) GetBeer(ctx context.Context, in *pb.GetBeerReques
 		}
 		return m.weekdayRes, m.weekdayErr
 	}
+	if len(in.Requirements) > 0 && in.Requirements[0].MinUnits > 0 {
+		if in.Requirements[0].MinUnits != weekdayBeerUnitsLimit {
+			return nil, fmt.Errorf("expected MinUnits %v, got %v", weekdayBeerUnitsLimit, in.Requirements[0].MinUnits)
+		}
+		return m.weekendRes, m.weekendErr
+	}
 	return m.weekendRes, m.weekendErr
 }
 
