@@ -1,7 +1,3 @@
----
-description: Implement granular component issues using Red-Green TDD and feature branching
----
-
 # 🛠️ The `seraphine-ready-to-implement` Label Workflow
 
 When a granular child sub-issue is labeled with `seraphine-ready-to-implement`, the AI assistant is triggered to execute a disciplined engineering process to implement the specified component slice.
