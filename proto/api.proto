@@ -95,6 +95,7 @@ message BeerRequirement {
     STRATEGY_LEAST_RECENTLY_DRUNK = 2;
   }
   PickStrategy strategy = 2;
+  float min_units = 3;
 }
 
 message GetDrunkRequest {
