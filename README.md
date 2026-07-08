@@ -79,7 +79,7 @@ beerkellar_cli cellar
 ```
 
 ### 4. Pull a Beer
-Pulls a beer based on least recently drunk. Use the `--weekday` flag to limit selection to beers with 3.5 units of alcohol or less.
+Pulls a beer based on least recently drunk. Use the `--weekday` flag to limit selection to beers with 3.5 units of alcohol or less. If no beers match the criteria, it will fallback to pulling the beer with the highest units.
 ```bash
 beerkellar_cli pull [--weekday]
 ```

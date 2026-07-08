@@ -593,3 +593,49 @@ func TestGetWeekdayBeerCount(t *testing.T) {
 	}
 }
 
+func TestGetBeer_MinUnitsAndFallback(t *testing.T) {
+	ctx, cancel := GetTestContext(context.Background(), time.Minute)
+	defer cancel()
+
+	s := getTestServer(ctx)
+
+	// Add a light beer (12oz, 4% ABV = ~1.42 units)
+	_, err := s.AddBeer(ctx, &pb.AddBeerRequest{BeerId: 1, SizeFlOz: 12, Quantity: 1})
+	if err != nil {
+		t.Fatalf("Unable to add: %v", err)
+	}
+	s.db.SaveBeer(ctx, &pb.Beer{Id: 1, Name: "Light", Abv: 4.0})
+
+	// Add a medium beer (12oz, 6% ABV = ~2.13 units)
+	_, err = s.AddBeer(ctx, &pb.AddBeerRequest{BeerId: 2, SizeFlOz: 12, Quantity: 1})
+	if err != nil {
+		t.Fatalf("Unable to add: %v", err)
+	}
+	s.db.SaveBeer(ctx, &pb.Beer{Id: 2, Name: "Medium", Abv: 6.0})
+
+	// Scenario 1: MinUnits = 2.0. Should return Medium beer (BeerId = 2).
+	r, err := s.GetBeer(ctx, &pb.GetBeerRequest{
+		Requirements: []*pb.BeerRequirement{
+			{MinUnits: 2.0},
+		},
+	})
+	if err != nil || len(r.GetBeers()) == 0 {
+		t.Fatalf("Failed to get beer: %v", err)
+	}
+	if r.GetBeers()[0].GetId() != 2 {
+		t.Errorf("Expected beer 2, got %v", r.GetBeers()[0].GetId())
+	}
+
+	// Scenario 2: MinUnits = 3.0. No beer has >= 3 units. Fallback should return highest units (Medium beer, BeerId = 2).
+	r2, err := s.GetBeer(ctx, &pb.GetBeerRequest{
+		Requirements: []*pb.BeerRequirement{
+			{MinUnits: 3.0},
+		},
+	})
+	if err != nil || len(r2.GetBeers()) == 0 {
+		t.Fatalf("Failed to get beer: %v", err)
+	}
+	if r2.GetBeers()[0].GetId() != 2 {
+		t.Errorf("Expected fallback to beer 2 (highest units), got %v", r2.GetBeers()[0].GetId())
+	}
+}

@@ -155,13 +155,24 @@ func (s *Server) GetBeer(ctx context.Context, req *pb.GetBeerRequest) (*pb.GetBe
 		var ncellar []*pb.CellarEntry
 		var pBeer *pb.Beer
 		var pUnits float32
+		var fallbackBeer *pb.Beer
+		var fallbackUnits float32
+		var maxFallbackUnits float32 = -1.0
+		
 		oldest := int64(math.MaxInt64)
 		leastRecent := int64(math.MaxInt64)
 		for _, entry := range cellar.GetEntries() {
 			if beer, ok := bcache[entry.GetBeerId()]; ok {
 				units := convertToLitres(entry.GetSizeFlOz()) * beer.GetAbv()
-				log.Printf("Considering %v (%v%% ABV, %voz): %v units (Limit: %v)", beer.GetName(), beer.GetAbv(), entry.GetSizeFlOz(), units, requirement.GetMaxUnits())
-				if requirement.GetMaxUnits() == 0 || units < requirement.GetMaxUnits() {
+				
+				if units > maxFallbackUnits {
+					maxFallbackUnits = units
+					fallbackBeer = bcache[entry.GetBeerId()]
+					fallbackUnits = units
+				}
+
+				log.Printf("Considering %v (%v%% ABV, %voz): %v units (Max: %v, Min: %v)", beer.GetName(), beer.GetAbv(), entry.GetSizeFlOz(), units, requirement.GetMaxUnits(), requirement.GetMinUnits())
+				if (requirement.GetMaxUnits() == 0 || units < requirement.GetMaxUnits()) && (requirement.GetMinUnits() == 0 || units >= requirement.GetMinUnits()) {
 					ncellar = append(ncellar, entry)
 					if requirement.GetStrategy() == pb.BeerRequirement_STRATEGY_OLDEST && entry.GetDateAdded() < oldest {
 						oldest = entry.GetDateAdded()
@@ -194,6 +205,12 @@ func (s *Server) GetBeer(ctx context.Context, req *pb.GetBeerRequest) (*pb.GetBe
 			pickedEntry := ncellar[mrand.Intn(len(ncellar))]
 			pBeer = bcache[pickedEntry.GetBeerId()]
 			pUnits = convertToLitres(pickedEntry.GetSizeFlOz()) * pBeer.GetAbv()
+		}
+
+		if len(ncellar) == 0 && fallbackBeer != nil {
+			log.Printf("No beers matched criteria. Falling back to highest unit beer: %v", fallbackBeer.GetName())
+			pBeer = fallbackBeer
+			pUnits = fallbackUnits
 		}
 
 		if pBeer != nil {
