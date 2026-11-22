@@ -13,7 +13,9 @@ import (
 	"github.com/charmbracelet/lipgloss"
 	"github.com/golang/protobuf/proto"
 	"github.com/pkg/browser"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/prototext"
 
 	pb "github.com/brotherlogic/beerkellar/proto"
@@ -25,9 +27,19 @@ const (
 	wizardNone wizardType = iota
 	wizardAdd
 	wizardDrink
+	wizardRemove
 )
 
 const defaultTimeout = 5 * time.Second
+
+type removeStep int
+
+const (
+	removeStepFetching removeStep = iota
+	removeStepSelectIndex
+	removeStepConfirm
+	removeStepRemoving
+)
 
 type addWizardState struct {
 	step     int // 0: ID, 1: Quantity, 2: Size
@@ -38,6 +50,15 @@ type addWizardState struct {
 
 type drinkWizardState struct {
 	beerID int64
+}
+
+type removeWizardState struct {
+	step           removeStep
+	beers          []*pb.Beer
+	entries        []*pb.CellarEntry
+	selectedIndex  int // 0-based index
+	targetShortcut int // >0 for `remove <number>`, 0 for guided `remove`
+	requestID      int // monotonic counter to ignore stale async fetches after Esc
 }
 
 // tuiModel implements the tea.Model interface for the Bubble Tea program.
@@ -55,6 +76,8 @@ type tuiModel struct {
 	activeWiz   wizardType
 	addWiz      addWizardState
 	drinkWiz    drinkWizardState
+	removeWiz   removeWizardState
+	removeReqID int
 
 	// Terminal size
 	width  int
@@ -217,6 +240,64 @@ type cmdResultMsg struct {
 	err     error
 }
 
+type removeCellarLoadedMsg struct {
+	requestID int
+	cellar    *pb.GetCellarResponse
+	shortcut  int
+	err       error
+}
+
+type removeBeerResultMsg struct {
+	label string
+	err   error
+}
+
+func formatBeerLabel(beer *pb.Beer) string {
+	if beer == nil {
+		return "Unknown Brewery - Unknown Beer [ID: 0] (0.00 units)"
+	}
+	brewery := strings.TrimSpace(beer.GetBrewery())
+	name := strings.TrimSpace(beer.GetName())
+	if brewery != "" && name != "" {
+		return fmt.Sprintf("%s - %s (%.2f units)", brewery, name, beer.GetUnits())
+	}
+	if brewery == "" {
+		brewery = "Unknown Brewery"
+	}
+	if name == "" {
+		name = "Unknown Beer"
+	}
+	return fmt.Sprintf("%s - %s [ID: %d] (%.2f units)", brewery, name, beer.GetId(), beer.GetUnits())
+}
+
+func formatRemoveCellarList(beers []*pb.Beer) string {
+	var sb strings.Builder
+	for i, beer := range beers {
+		sb.WriteString(fmt.Sprintf("%d. %s\n", i+1, formatBeerLabel(beer)))
+	}
+	return strings.TrimSuffix(sb.String(), "\n")
+}
+
+func (m *tuiModel) resetWizard() {
+	m.activeWiz = wizardNone
+	m.removeWiz = removeWizardState{}
+	m.textInput.Placeholder = "Type command here..."
+	m.textInput.SetValue("")
+}
+
+func (m *tuiModel) cancelRemoveWizard() {
+	m.resetWizard()
+	m.commandReadout = "COMMAND READOUT\nRemoval cancelled. No beer was removed."
+}
+
+func (m *tuiModel) enterRemoveConfirm(idx int) {
+	m.removeWiz.selectedIndex = idx
+	m.removeWiz.step = removeStepConfirm
+	label := formatBeerLabel(m.removeWiz.beers[idx])
+	m.commandReadout = fmt.Sprintf("COMMAND READOUT\nRemove #%d %q? (y/n)", idx+1, label)
+	m.textInput.Placeholder = "Confirm removal (y/n)"
+}
+
 func (m tuiModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 
@@ -231,7 +312,18 @@ func (m tuiModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "ctrl+c":
 			return m, tea.Quit
 
-		case "enter":
+		case "esc":
+			if m.activeWiz == wizardRemove && (m.removeWiz.step == removeStepFetching || m.removeWiz.step == removeStepSelectIndex || m.removeWiz.step == removeStepConfirm) {
+				m.cancelRemoveWizard()
+				return m, nil
+			}
+		}
+
+		if m.activeWiz == wizardRemove && (m.removeWiz.step == removeStepFetching || m.removeWiz.step == removeStepRemoving) {
+			return m, nil
+		}
+
+		if msg.String() == "enter" {
 			input := strings.TrimSpace(m.textInput.Value())
 			m.textInput.SetValue("")
 
@@ -300,6 +392,56 @@ func (m tuiModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		return m, nil
 
+	case removeCellarLoadedMsg:
+		if m.activeWiz != wizardRemove || m.removeWiz.step != removeStepFetching || msg.requestID != m.removeWiz.requestID {
+			return m, nil
+		}
+		if msg.err != nil {
+			m.commandReadout = fmt.Sprintf("COMMAND READOUT\nError fetching cellar: %v", msg.err)
+			m.resetWizard()
+			return m, nil
+		}
+		beers := msg.cellar.GetBeers()
+		entries := msg.cellar.GetEntries()
+		if len(beers) == 0 {
+			m.commandReadout = "COMMAND READOUT\nYour cellar is empty. Nothing to remove."
+			m.resetWizard()
+			return m, nil
+		}
+		if len(entries) != len(beers) {
+			m.commandReadout = "COMMAND READOUT\nError: cellar entries count mismatch. Please try again."
+			m.resetWizard()
+			return m, nil
+		}
+		m.removeWiz.beers = beers
+		m.removeWiz.entries = entries
+		if msg.shortcut > 0 {
+			if msg.shortcut > len(beers) {
+				m.commandReadout = fmt.Sprintf("COMMAND READOUT\nInvalid item number %d. Please choose a number between 1 and %d.", msg.shortcut, len(beers))
+				m.resetWizard()
+				return m, nil
+			}
+			m.enterRemoveConfirm(msg.shortcut - 1)
+			return m, nil
+		}
+		m.removeWiz.step = removeStepSelectIndex
+		m.commandReadout = fmt.Sprintf("COMMAND READOUT\nSelect a beer to remove:\n%s", formatRemoveCellarList(beers))
+		m.textInput.Placeholder = fmt.Sprintf("Enter item number (1-%d) or 'cancel'", len(beers))
+		return m, nil
+
+	case removeBeerResultMsg:
+		m.resetWizard()
+		if msg.err != nil {
+			if code := status.Code(msg.err); code == codes.FailedPrecondition || code == codes.OutOfRange {
+				m.commandReadout = "COMMAND READOUT\nCellar changed before removal completed—no beer was removed. Please try again."
+				return m, m.fetchCellarSummary()
+			}
+			m.commandReadout = fmt.Sprintf("COMMAND READOUT\nError removing beer: %v", msg.err)
+			return m, nil
+		}
+		m.commandReadout = fmt.Sprintf("COMMAND READOUT\nRemoved %q from cellar.", msg.label)
+		return m, m.fetchCellarSummary()
+
 	case cellarSummaryMsg:
 		m.updateCellarSummary(msg)
 		return m, nil
@@ -338,6 +480,32 @@ func (m tuiModel) handleRootCommand(input string) (tuiModel, tea.Cmd) {
 		m.activeWiz = wizardDrink
 		m.textInput.Placeholder = "Enter Beer ID to drink"
 		return m, nil
+
+	case "remove":
+		if len(parts) > 2 {
+			m.commandReadout = "COMMAND READOUT\nUsage: remove [item number]"
+			return m, nil
+		}
+		shortcut := 0
+		if len(parts) == 2 {
+			num, err := strconv.Atoi(parts[1])
+			if err != nil || num <= 0 {
+				m.commandReadout = fmt.Sprintf("COMMAND READOUT\nInvalid item number %q. Please enter a positive number.", parts[1])
+				return m, nil
+			}
+			shortcut = num
+		}
+		m.removeReqID++
+		reqID := m.removeReqID
+		m.activeWiz = wizardRemove
+		m.removeWiz = removeWizardState{
+			step:           removeStepFetching,
+			targetShortcut: shortcut,
+			requestID:      reqID,
+		}
+		m.textInput.Placeholder = "Loading cellar..."
+		m.commandReadout = "COMMAND READOUT\nFetching cellar..."
+		return m, m.runFetchCellarForRemove(reqID, shortcut)
 
 	case "cellar":
 		return m, m.runGetCellar()
@@ -418,6 +586,49 @@ func (m tuiModel) handleWizardInput(input string) (tuiModel, tea.Cmd) {
 		m.activeWiz = wizardNone
 		m.textInput.Placeholder = "Type command here..."
 		return m, m.runDrinkBeer(m.drinkWiz.beerID)
+
+	case wizardRemove:
+		switch m.removeWiz.step {
+		case removeStepSelectIndex:
+			lower := strings.ToLower(input)
+			if lower == "cancel" || lower == "n" || lower == "no" {
+				m.cancelRemoveWizard()
+				return m, nil
+			}
+			num, err := strconv.Atoi(input)
+			if err != nil || num < 1 || num > len(m.removeWiz.beers) {
+				m.commandReadout = fmt.Sprintf(
+					"COMMAND READOUT\nInvalid item number. Please enter a number between 1 and %d (or 'cancel').\n%s",
+					len(m.removeWiz.beers),
+					formatRemoveCellarList(m.removeWiz.beers),
+				)
+				return m, nil
+			}
+			m.enterRemoveConfirm(num - 1)
+			return m, nil
+
+		case removeStepConfirm:
+			idx := m.removeWiz.selectedIndex
+			if idx < 0 || idx >= len(m.removeWiz.beers) || idx >= len(m.removeWiz.entries) {
+				m.resetWizard()
+				m.commandReadout = "COMMAND READOUT\nError: invalid beer selection. Please try again."
+				return m, nil
+			}
+			label := formatBeerLabel(m.removeWiz.beers[idx])
+			switch strings.ToLower(input) {
+			case "y", "yes":
+				entry := m.removeWiz.entries[idx]
+				m.removeWiz.step = removeStepRemoving
+				m.textInput.Placeholder = "Removing beer..."
+				return m, m.runRemoveBeer(int32(idx), entry, label)
+			case "n", "no", "cancel":
+				m.cancelRemoveWizard()
+				return m, nil
+			default:
+				m.commandReadout = fmt.Sprintf("COMMAND READOUT\nPlease enter 'y' to confirm removal of #%d %q or 'n' to cancel.", idx+1, label)
+				return m, nil
+			}
+		}
 	}
 
 	return m, nil
@@ -600,6 +811,50 @@ func (m tuiModel) runDrinkBeer(id int64) tea.Cmd {
 			return cmdResultMsg{err: err}
 		}
 		return cmdResultMsg{content: fmt.Sprintf("Beer %v recorded as drunk.", id)}
+	}
+}
+
+func (m tuiModel) runFetchCellarForRemove(reqID int, shortcut int) tea.Cmd {
+	return func() tea.Msg {
+		if m.client == nil {
+			return removeCellarLoadedMsg{
+				requestID: reqID,
+				shortcut:  shortcut,
+				err:       fmt.Errorf("gRPC client not initialized"),
+			}
+		}
+		ctx, cancel := m.getContext(defaultTimeout)
+		defer cancel()
+		cellar, err := m.client.GetCellar(ctx, &pb.GetCellarRequest{})
+		return removeCellarLoadedMsg{
+			requestID: reqID,
+			cellar:    cellar,
+			shortcut:  shortcut,
+			err:       err,
+		}
+	}
+}
+
+func (m tuiModel) runRemoveBeer(index int32, entry *pb.CellarEntry, label string) tea.Cmd {
+	return func() tea.Msg {
+		if m.client == nil {
+			return removeBeerResultMsg{
+				label: label,
+				err:   fmt.Errorf("gRPC client not initialized"),
+			}
+		}
+		ctx, cancel := m.getContext(defaultTimeout)
+		defer cancel()
+		_, err := m.client.RemoveBeer(ctx, &pb.RemoveBeerRequest{
+			Index:     index,
+			BeerId:    entry.GetBeerId(),
+			SizeFlOz:  entry.GetSizeFlOz(),
+			DateAdded: entry.GetDateAdded(),
+		})
+		return removeBeerResultMsg{
+			label: label,
+			err:   err,
+		}
 	}
 }
 
