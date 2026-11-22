@@ -3,6 +3,7 @@ syntax = "proto3";
 package beerkellar;
 
 import "beer.proto";
+import "beerkellar.proto";
 
 option go_package = "github.com/brotherlogic/beerkellar/proto";
 
@@ -77,6 +78,7 @@ message GetCellarResponse{
   repeated Beer beers = 1;
   string username = 2;
   User.UserState state = 3;
+  repeated CellarEntry entries = 4; // 1:1 parallel with beers
 }
 
 message GetBeerRequest{
@@ -122,9 +124,19 @@ message DrinkBeerRequest {
 
 message DrinkBeerResponse {}
 
+message RemoveBeerRequest {
+  int32 index = 1;       // 0-based index into cellar.entries
+  int64 beer_id = 2;     // required (> 0); guards against zeroed/stale requests
+  int32 size_fl_oz = 3;  // expected entry size_fl_oz
+  int64 date_added = 4;  // expected entry date_added
+}
+
+message RemoveBeerResponse {}
+
 service BeerKeller {
   rpc AddBeer(AddBeerRequest) returns (AddBeerResponse) {}
   rpc DrinkBeer(DrinkBeerRequest) returns (DrinkBeerResponse) {}
+  rpc RemoveBeer(RemoveBeerRequest) returns (RemoveBeerResponse) {}
 
   rpc GetLogin(GetLoginRequest) returns (GetLoginResponse) {}
   rpc GetAuthToken(GetAuthTokenRequest) returns (GetAuthTokenResponse) {}
