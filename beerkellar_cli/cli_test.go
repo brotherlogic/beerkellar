@@ -3,6 +3,8 @@ package main
 import (
 	"context"
 	"fmt"
+	"net/http"
+	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"strings"
@@ -1394,4 +1396,128 @@ func TestRemoveWizardErrorStates(t *testing.T) {
 			t.Errorf("Expected summary error in summary pane, got:\n%s", rendered)
 		}
 	})
+}
+
+func TestAutoUpdateTUITriggersUpdateOnNewerTag(t *testing.T) {
+	origVersion := Version
+	origURL := githubTagsURL
+	origInstall := goInstallRunner
+	origExec := execRunner
+	defer func() {
+		Version = origVersion
+		githubTagsURL = origURL
+		goInstallRunner = origInstall
+		execRunner = origExec
+	}()
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(`[{"name": "v0.119.0"}]`))
+	}))
+	defer server.Close()
+
+	var installedPkg string
+	var restarted bool
+	Version = "v0.115.0"
+	githubTagsURL = server.URL
+	goInstallRunner = func(pkg string) error {
+		installedPkg = pkg
+		return nil
+	}
+	execRunner = func(argv0 string, argv []string, envv []string) error {
+		restarted = true
+		return nil
+	}
+
+	autoUpdateTUI()
+
+	expectedPkg := "github.com/brotherlogic/beerkellar/beerkellar_cli@v0.119.0"
+	if installedPkg != expectedPkg {
+		t.Errorf("Expected go install package %q, got %q", expectedPkg, installedPkg)
+	}
+	if !restarted {
+		t.Error("Expected execRunner to be called to restart the CLI, but it was not")
+	}
+}
+
+func TestAutoUpdateTUISkipsWhenUpToDate(t *testing.T) {
+	origVersion := Version
+	origURL := githubTagsURL
+	origInstall := goInstallRunner
+	origExec := execRunner
+	defer func() {
+		Version = origVersion
+		githubTagsURL = origURL
+		goInstallRunner = origInstall
+		execRunner = origExec
+	}()
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(`[{"name": "v0.119.0"}]`))
+	}))
+	defer server.Close()
+
+	installCalled := false
+	execCalled := false
+	Version = "v0.119.0"
+	githubTagsURL = server.URL
+	goInstallRunner = func(pkg string) error {
+		installCalled = true
+		return nil
+	}
+	execRunner = func(argv0 string, argv []string, envv []string) error {
+		execCalled = true
+		return nil
+	}
+
+	autoUpdateTUI()
+
+	if installCalled {
+		t.Error("Expected goInstallRunner not to be called when already up to date")
+	}
+	if execCalled {
+		t.Error("Expected execRunner not to be called when already up to date")
+	}
+}
+
+func TestAutoUpdateTUIHandlesNon200Status(t *testing.T) {
+	origVersion := Version
+	origURL := githubTagsURL
+	origInstall := goInstallRunner
+	origExec := execRunner
+	defer func() {
+		Version = origVersion
+		githubTagsURL = origURL
+		goInstallRunner = origInstall
+		execRunner = origExec
+	}()
+
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusNotFound)
+		_, _ = w.Write([]byte(`{"message": "Not Found"}`))
+	}))
+	defer server.Close()
+
+	installCalled := false
+	execCalled := false
+	Version = "v0.115.0"
+	githubTagsURL = server.URL
+	goInstallRunner = func(pkg string) error {
+		installCalled = true
+		return nil
+	}
+	execRunner = func(argv0 string, argv []string, envv []string) error {
+		execCalled = true
+		return nil
+	}
+
+	autoUpdateTUI()
+
+	if installCalled {
+		t.Error("Expected goInstallRunner not to be called on non-200 status")
+	}
+	if execCalled {
+		t.Error("Expected execRunner not to be called on non-200 status")
+	}
 }
