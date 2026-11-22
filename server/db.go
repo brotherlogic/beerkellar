@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"sync"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -50,9 +51,45 @@ func NewDatabase(ctx context.Context) Database {
 	return db
 }
 
+// syncPStoreClient serializes access to pstore_client.TestClient's unsynchronized map.
+type syncPStoreClient struct {
+	mu     sync.Mutex
+	client pstore_client.PStoreClient
+}
+
+func (c *syncPStoreClient) Read(ctx context.Context, req *pspb.ReadRequest) (*pspb.ReadResponse, error) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return c.client.Read(ctx, req)
+}
+
+func (c *syncPStoreClient) Write(ctx context.Context, req *pspb.WriteRequest) (*pspb.WriteResponse, error) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return c.client.Write(ctx, req)
+}
+
+func (c *syncPStoreClient) GetKeys(ctx context.Context, req *pspb.GetKeysRequest) (*pspb.GetKeysResponse, error) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return c.client.GetKeys(ctx, req)
+}
+
+func (c *syncPStoreClient) Delete(ctx context.Context, req *pspb.DeleteRequest) (*pspb.DeleteResponse, error) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return c.client.Delete(ctx, req)
+}
+
+func (c *syncPStoreClient) Count(ctx context.Context, req *pspb.CountRequest) (*pspb.CountResponse, error) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return c.client.Count(ctx, req)
+}
+
 func NewTestDatabase(ctx context.Context) Database {
 	db := &DB{}
-	client := pstore_client.GetTestClient()
+	client := &syncPStoreClient{client: pstore_client.GetTestClient()}
 	db.client = client
 
 	// Because this is the test database, add a test user

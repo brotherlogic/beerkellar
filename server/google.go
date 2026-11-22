@@ -109,6 +109,10 @@ type AddGoogleTask struct {
 }
 
 func (a AddGoogleTask) run(ctx context.Context) error {
+	if !a.user.GetGoogleTasksEnabled() {
+		return nil
+	}
+
 	conf := getGoogleOAuthConfig()
 	tok := &oauth2.Token{
 		AccessToken:  a.user.GetGoogleAccessToken(),
@@ -121,11 +125,6 @@ func (a AddGoogleTask) run(ctx context.Context) error {
 	srv, err := tasks.New(client)
 	if err != nil {
 		return fmt.Errorf("unable to create tasks client: %v", err)
-	}
-
-	// Double check we are enabled
-	if !a.user.GetGoogleTasksEnabled() {
-		return nil
 	}
 
 	task := &tasks.Task{
