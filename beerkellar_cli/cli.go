@@ -139,6 +139,16 @@ func buildContext() (context.Context, context.CancelFunc, error) {
 	return ctx, cancel, nil
 }
 
+var (
+	githubTagsURL   = "https://api.github.com/repos/brotherlogic/beerkellar/tags?per_page=1"
+	goInstallRunner = func(pkg string) error {
+		return exec.Command("go", "install", pkg).Run()
+	}
+	execRunner = func(argv0 string, argv []string, envv []string) error {
+		return syscall.Exec(argv0, argv, envv)
+	}
+)
+
 func autoUpdateTUI() {
 	if err := func() error {
 		if Version == "dev" || Version == "unknown" {
@@ -149,21 +159,25 @@ func autoUpdateTUI() {
 			Timeout: 3 * time.Second,
 		}
 
-		resp, err := client.Get("https://api.github.com/repos/brotherlogic/beerkellar/releases/latest")
+		resp, err := client.Get(githubTagsURL)
 		if err != nil {
 			return err
 		}
 		defer resp.Body.Close()
 
-		var result struct {
-			TagName string `json:"tag_name"`
+		if resp.StatusCode != http.StatusOK {
+			return fmt.Errorf("unexpected status code: %d", resp.StatusCode)
 		}
-		if err := json.NewDecoder(resp.Body).Decode(&result); err != nil {
+
+		var tags []struct {
+			Name string `json:"name"`
+		}
+		if err := json.NewDecoder(resp.Body).Decode(&tags); err != nil {
 			return err
 		}
 
-		if result.TagName != "" && result.TagName != Version {
-			if err := exec.Command("go", "install", fmt.Sprintf("github.com/brotherlogic/beerkellar/beerkellar_cli@%s", result.TagName)).Run(); err != nil {
+		if len(tags) > 0 && tags[0].Name != "" && tags[0].Name != Version {
+			if err := goInstallRunner(fmt.Sprintf("github.com/brotherlogic/beerkellar/beerkellar_cli@%s", tags[0].Name)); err != nil {
 				return err
 			}
 
@@ -172,7 +186,7 @@ func autoUpdateTUI() {
 				return err
 			}
 
-			if err := syscall.Exec(exePath, os.Args, os.Environ()); err != nil {
+			if err := execRunner(exePath, os.Args, os.Environ()); err != nil {
 				return err
 			}
 		}
