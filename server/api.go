@@ -9,6 +9,7 @@ import (
 	"math"
 	mrand "math/rand"
 	"sort"
+	"sync"
 	"time"
 
 	pb "github.com/brotherlogic/beerkellar/proto"
@@ -36,7 +37,8 @@ type Server struct {
 
 	untappd UntappdAPI
 
-	q *Queue
+	q        *Queue
+	cellarMu sync.Mutex
 }
 
 func NewServer(clientId, clientSecret, redirectUrl string, db Database, ut *Untappd) *Server {
@@ -272,6 +274,7 @@ func (s *Server) GetCellar(ctx context.Context, _ *pb.GetCellarRequest) (*pb.Get
 		Beers:    beers,
 		Username: user.GetUsername(),
 		State:    user.GetState(),
+		Entries:  cellar.GetEntries(),
 	}, nil
 }
 
@@ -306,34 +309,39 @@ func (s *Server) AddBeer(ctx context.Context, req *pb.AddBeerRequest) (*pb.AddBe
 		return nil, status.Errorf(codes.InvalidArgument, "size_fl_oz must be specified and greater than zero")
 	}
 
-	cellar, err := s.db.GetCellar(ctx, user.GetUserId())
-	if err != nil {
-		// OutOfRange is cannot be found in DB
-		if status.Code(err) == codes.NotFound && user.GetUserId() > 0 {
-			cellar = &pb.Cellar{}
-		} else {
-			return nil, err
-		}
-	}
+	err = func() error {
+		s.cellarMu.Lock()
+		defer s.cellarMu.Unlock()
 
-	for range req.GetQuantity() {
-		cellar.Entries = append(cellar.Entries,
-			&pb.CellarEntry{
-				BeerId:    req.GetBeerId(),
-				SizeFlOz:  req.GetSizeFlOz(),
-				DateAdded: time.Now().Unix(),
-			})
+		cellar, err := s.db.GetCellar(ctx, user.GetUserId())
+		if err != nil {
+			// OutOfRange is cannot be found in DB
+			if status.Code(err) == codes.NotFound && user.GetUserId() > 0 {
+				cellar = &pb.Cellar{}
+			} else {
+				return err
+			}
+		}
+
+		for range req.GetQuantity() {
+			cellar.Entries = append(cellar.Entries,
+				&pb.CellarEntry{
+					BeerId:    req.GetBeerId(),
+					SizeFlOz:  req.GetSizeFlOz(),
+					DateAdded: time.Now().Unix(),
+				})
+		}
+
+		return s.db.SaveCellar(ctx, user.GetUserId(), cellar)
+	}()
+	if err != nil {
+		return nil, err
 	}
 
 	s.q.Enqueue(CacheBeer{
 		beerId: req.GetBeerId(),
 		u:      s.untappd.Upgrade(user.GetAccessToken()),
 		d:      s.db})
-
-	err = s.db.SaveCellar(ctx, user.GetUserId(), cellar)
-	if err != nil {
-		return nil, err
-	}
 
 	count, _ := s.getWeekdayBeerCount(ctx, user.GetUserId())
 	if count >= 4 && user.GetGoogleTaskActive() {
@@ -428,6 +436,9 @@ func (s *Server) RefreshUser(ctx context.Context, req *pb.RefreshUserRequest) (*
 	if err != nil {
 		return nil, fmt.Errorf("unable to get checkins: %w", err)
 	}
+
+	s.cellarMu.Lock()
+	defer s.cellarMu.Unlock()
 
 	cellar, err := s.db.GetCellar(ctx, user.GetUserId())
 	cellarChanged := false
@@ -554,6 +565,21 @@ func (s *Server) GetDrunk(ctx context.Context, req *pb.GetDrunkRequest) (*pb.Get
 
 	return &pb.GetDrunkResponse{Drunk: drunks}, nil
 }
+func (s *Server) triggerRestockIfNeeded(ctx context.Context, user *pb.User) {
+	count, err := s.getWeekdayBeerCount(ctx, user.GetUserId())
+	if err != nil {
+		log.Printf("Unable to get weekday beer count for user %d: %v", user.GetUserId(), err)
+		return
+	}
+	if count < 4 && !user.GetGoogleTaskActive() {
+		user.GoogleTaskActive = true
+		if err := s.db.SaveUser(ctx, user); err != nil {
+			log.Printf("Unable to save user %d after activating google task: %v", user.GetUserId(), err)
+		}
+		s.q.Enqueue(AddGoogleTask{user: proto.Clone(user).(*pb.User)})
+	}
+}
+
 func (s *Server) DrinkBeer(ctx context.Context, req *pb.DrinkBeerRequest) (*pb.DrinkBeerResponse, error) {
 	err := s.untappd.Checkin(ctx, req.GetBeerId())
 	if err != nil {
@@ -567,18 +593,54 @@ func (s *Server) DrinkBeer(ctx context.Context, req *pb.DrinkBeerRequest) (*pb.D
 
 	_, err = s.RefreshUser(ctx, &pb.RefreshUserRequest{Username: user.GetUsername()})
 
-	count, _ := s.getWeekdayBeerCount(ctx, user.GetUserId())
-	if count < 4 && !user.GetGoogleTaskActive() {
-		user.GoogleTaskActive = true
-		s.db.SaveUser(ctx, user)
-		s.q.Enqueue(AddGoogleTask{user: user})
-	}
+	s.triggerRestockIfNeeded(ctx, user)
 
 	return &pb.DrinkBeerResponse{}, err
 }
 
 func (s *Server) RemoveBeer(ctx context.Context, req *pb.RemoveBeerRequest) (*pb.RemoveBeerResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method RemoveBeer not implemented")
+	user, err := s.getUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	if req.GetIndex() < 0 || req.GetBeerId() <= 0 {
+		return nil, status.Errorf(codes.InvalidArgument, "index must be >= 0 and beer_id must be > 0")
+	}
+
+	err = func() error {
+		s.cellarMu.Lock()
+		defer s.cellarMu.Unlock()
+
+		cellar, err := s.db.GetCellar(ctx, user.GetUserId())
+		if err != nil {
+			if status.Code(err) == codes.NotFound {
+				return status.Errorf(codes.OutOfRange, "cellar is empty")
+			}
+			return err
+		}
+
+		idx := int(req.GetIndex())
+		if idx >= len(cellar.GetEntries()) {
+			return status.Errorf(codes.OutOfRange, "cellar index %d out of range (cellar has %d entries)", idx, len(cellar.GetEntries()))
+		}
+
+		entry := cellar.Entries[idx]
+		if entry.GetBeerId() != req.GetBeerId() ||
+			entry.GetSizeFlOz() != req.GetSizeFlOz() ||
+			entry.GetDateAdded() != req.GetDateAdded() {
+			return status.Errorf(codes.FailedPrecondition, "cellar entry at index %d has changed; please retry", idx)
+		}
+
+		cellar.Entries = append(cellar.Entries[:idx], cellar.Entries[idx+1:]...)
+		return s.db.SaveCellar(ctx, user.GetUserId(), cellar)
+	}()
+	if err != nil {
+		return nil, err
+	}
+
+	s.triggerRestockIfNeeded(ctx, user)
+	return &pb.RemoveBeerResponse{}, nil
 }
 
 func (s *Server) StartBackgroundTasks(ctx context.Context) {
