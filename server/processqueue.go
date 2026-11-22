@@ -73,46 +73,68 @@ func (c CacheBeer) run(ctx context.Context) error {
 }
 
 type Queue struct {
+	mu        sync.Mutex
 	elements  []Queueable
 	flushLock sync.Mutex
 }
 
 func (q *Queue) Enqueue(a Queueable) {
+	q.mu.Lock()
+	defer q.mu.Unlock()
 	q.elements = append(q.elements, a)
+}
+
+func (q *Queue) pop() (Queueable, bool) {
+	q.mu.Lock()
+	defer q.mu.Unlock()
+	if len(q.elements) == 0 {
+		return nil, false
+	}
+	f := q.elements[0]
+	q.elements[0] = nil
+	q.elements = q.elements[1:]
+	if len(q.elements) == 0 {
+		q.elements = nil
+	}
+	return f, true
 }
 
 func (q *Queue) RunQueue() {
 	backoff := time.Millisecond * 20
 	for {
 		time.Sleep(backoff)
-		if len(q.elements) > 0 {
-			q.flushLock.Lock()
-			ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
-			f := q.elements[0]
-			q.elements = q.elements[1:]
-			err := f.run(ctx)
-			if err != nil {
-				backoff += time.Second
-				log.Printf("Unable to run queue element: %v", err)
-				q.elements = append(q.elements, f)
-			} else {
-				if backoff > time.Second {
-					backoff -= time.Second
-				}
-			}
-			log.Printf("Ran Queue Element %+v -> %v", f, err)
-			cancel()
+		q.flushLock.Lock()
+		f, ok := q.pop()
+		if !ok {
 			q.flushLock.Unlock()
+			continue
 		}
+		ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+		err := f.run(ctx)
+		if err != nil {
+			backoff += time.Second
+			log.Printf("Unable to run queue element: %v", err)
+			q.Enqueue(f)
+		} else {
+			if backoff > time.Second {
+				backoff -= time.Second
+			}
+		}
+		log.Printf("Ran Queue Element %+v -> %v", f, err)
+		cancel()
+		q.flushLock.Unlock()
 	}
 }
 
 func (q *Queue) Flush() {
-	for len(q.elements) > 0 {
+	for {
 		q.flushLock.Lock()
+		f, ok := q.pop()
+		if !ok {
+			q.flushLock.Unlock()
+			return
+		}
 		ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
-		f := q.elements[0]
-		q.elements = q.elements[1:]
 		err := f.run(ctx)
 		if err != nil {
 			log.Printf("Unable to run queue element: %v", err)
