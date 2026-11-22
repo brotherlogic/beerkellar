@@ -88,6 +88,8 @@ func drainTuiCmds(model tea.Model, initial tea.Cmd, maxSteps int) tea.Model {
 func runTuiTestLoop(model tea.Model) {
 	if tui, ok := model.(tuiModel); ok {
 		model = drainTuiCmds(model, tui.fetchCellarSummary(), maxTuiTestDrainSteps)
+	}
+	if tui, ok := model.(tuiModel); ok {
 		model = drainTuiCmds(model, tui.checkInitialStatus(), maxTuiTestDrainSteps)
 	}
 
