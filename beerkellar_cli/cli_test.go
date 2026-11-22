@@ -1395,3 +1395,185 @@ func TestRemoveWizardErrorStates(t *testing.T) {
 		}
 	})
 }
+
+type drainStepMsg struct {
+	label string
+}
+
+type drainTestModel struct {
+	steps      []string
+	onStepFunc func(label string, count int) tea.Cmd
+}
+
+func (m drainTestModel) Init() tea.Cmd {
+	return nil
+}
+
+func (m drainTestModel) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	switch msg := msg.(type) {
+	case drainStepMsg:
+		m.steps = append(m.steps, msg.label)
+		if m.onStepFunc != nil {
+			return m, m.onStepFunc(msg.label, len(m.steps))
+		}
+	}
+	return m, nil
+}
+
+func (m drainTestModel) View() string {
+	return strings.Join(m.steps, ",")
+}
+
+func TestDrainTuiCmds(t *testing.T) {
+	t.Run("nil_and_nonpositive_budget", func(t *testing.T) {
+		m := drainTestModel{}
+		res := drainTuiCmds(m, nil, 10).(drainTestModel)
+		if len(res.steps) != 0 {
+			t.Errorf("Expected 0 steps for nil cmd, got %v", res.steps)
+		}
+
+		called := false
+		cmd := func() tea.Msg {
+			called = true
+			return drainStepMsg{label: "should-not-run"}
+		}
+		res = drainTuiCmds(m, cmd, 0).(drainTestModel)
+		if called || len(res.steps) != 0 {
+			t.Errorf("Expected cmd not to run when maxSteps=0, called=%v steps=%v", called, res.steps)
+		}
+		res = drainTuiCmds(m, cmd, -1).(drainTestModel)
+		if called || len(res.steps) != 0 {
+			t.Errorf("Expected cmd not to run when maxSteps=-1, called=%v steps=%v", called, res.steps)
+		}
+	})
+
+	t.Run("chained_cmds", func(t *testing.T) {
+		var cmd3 tea.Cmd = func() tea.Msg { return drainStepMsg{label: "step3"} }
+		var cmd2 tea.Cmd = func() tea.Msg { return drainStepMsg{label: "step2"} }
+		var cmd1 tea.Cmd = func() tea.Msg { return drainStepMsg{label: "step1"} }
+
+		m := drainTestModel{
+			onStepFunc: func(label string, _ int) tea.Cmd {
+				switch label {
+				case "step1":
+					return cmd2
+				case "step2":
+					return cmd3
+				default:
+					return nil
+				}
+			},
+		}
+
+		res := drainTuiCmds(m, cmd1, maxTuiTestDrainSteps).(drainTestModel)
+		want := []string{"step1", "step2", "step3"}
+		if strings.Join(res.steps, ",") != strings.Join(want, ",") {
+			t.Errorf("Expected steps %v, got %v", want, res.steps)
+		}
+	})
+
+	t.Run("batch_msg_and_nested_batch", func(t *testing.T) {
+		cmdA := func() tea.Msg { return drainStepMsg{label: "A"} }
+		cmdB := func() tea.Msg { return nil }
+		cmdC := func() tea.Msg { return drainStepMsg{label: "C"} }
+		cmdD := func() tea.Msg { return drainStepMsg{label: "D"} }
+
+		m := drainTestModel{
+			onStepFunc: func(label string, _ int) tea.Cmd {
+				if label == "A" {
+					return cmdD
+				}
+				return nil
+			},
+		}
+
+		initial := tea.Batch(cmdA, nil, tea.Batch(cmdB, cmdC))
+		res := drainTuiCmds(m, initial, maxTuiTestDrainSteps).(drainTestModel)
+		got := strings.Join(res.steps, ",")
+		for _, want := range []string{"A", "C", "D"} {
+			if !strings.Contains(got, want) {
+				t.Errorf("Expected step %q in %v", want, res.steps)
+			}
+		}
+		if len(res.steps) != 3 {
+			t.Errorf("Expected 3 steps (A, C, D), got %d: %v", len(res.steps), res.steps)
+		}
+	})
+
+	t.Run("bounded_step_guard", func(t *testing.T) {
+		var loopCmd func() tea.Msg
+		loopCmd = func() tea.Msg {
+			return drainStepMsg{label: "tick"}
+		}
+
+		m := drainTestModel{
+			onStepFunc: func(_ string, _ int) tea.Cmd {
+				return loopCmd
+			},
+		}
+
+		res := drainTuiCmds(m, loopCmd, 5).(drainTestModel)
+		if len(res.steps) != 5 {
+			t.Errorf("Expected bounded guard to stop at 5 steps, got %d: %v", len(res.steps), res.steps)
+		}
+	})
+
+	t.Run("quit_msg_stops_draining", func(t *testing.T) {
+		followUpRan := false
+		followUpCmd := func() tea.Msg {
+			followUpRan = true
+			return drainStepMsg{label: "after-quit"}
+		}
+
+		m := drainTestModel{}
+		res := drainTuiCmds(m, tea.Batch(tea.Quit, followUpCmd), maxTuiTestDrainSteps).(drainTestModel)
+		if followUpRan || len(res.steps) != 0 {
+			t.Errorf("Expected QuitMsg to halt draining immediately, followUpRan=%v steps=%v", followUpRan, res.steps)
+		}
+	})
+
+	t.Run("tui_remove_chains_summary_refresh", func(t *testing.T) {
+		cellarCalls := 0
+		mockClient := &mockBeerKellerClient{
+			getCellarFunc: func(ctx context.Context, in *pb.GetCellarRequest) (*pb.GetCellarResponse, error) {
+				cellarCalls++
+				if cellarCalls == 1 {
+					return sampleRemoveCellarResponse(), nil
+				}
+				return &pb.GetCellarResponse{
+					Username: "testuser",
+					State:    pb.User_STATE_AUTHORIZED,
+					Beers: []*pb.Beer{
+						{Id: 202, Name: "Beer 2", Brewery: "Brewery B", Units: 4.0},
+					},
+					Entries: []*pb.CellarEntry{
+						{BeerId: 202, DateAdded: 1700000200, SizeFlOz: 16},
+					},
+				}, nil
+			},
+			removeBeerFunc: func(ctx context.Context, in *pb.RemoveBeerRequest) (*pb.RemoveBeerResponse, error) {
+				return &pb.RemoveBeerResponse{}, nil
+			},
+			weekdayRes: &pb.GetBeerResponse{},
+			weekendRes: &pb.GetBeerResponse{
+				Beers: []*pb.Beer{{Id: 202, Name: "Beer 2", Brewery: "Brewery B", Units: 4.0}},
+			},
+		}
+
+		m := initialModel(mockClient, nil)
+		var cmd tea.Cmd
+		m, cmd = typeCommand(m, "remove 1")
+		m = drainTuiCmds(m, cmd, maxTuiTestDrainSteps)
+
+		m, cmd = typeCommand(m, "y")
+		m = drainTuiCmds(m, cmd, maxTuiTestDrainSteps)
+
+		rendered := m.View()
+		if !strings.Contains(rendered, `Removed "Brewery A - Beer 1 (2.00 units)" from cellar.`) {
+			t.Errorf("Expected removal readout in View, got:\n%s", rendered)
+		}
+		if !strings.Contains(rendered, "Cellar Size & Split: 1 Beers") {
+			t.Errorf("Expected refreshed summary count 'Cellar Size & Split: 1 Beers' in View, got:\n%s", rendered)
+		}
+	})
+}
