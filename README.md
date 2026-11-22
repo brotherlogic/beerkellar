@@ -51,6 +51,7 @@ Type commands directly to interact with your cellar.
   2. **Quantity**
   3. **Size (fl oz)**
 * `drink`: Prompts you for the **Beer ID** to record a beer as consumed.
+* `remove` / `remove <number>`: Removes a single beer entry from your cellar by its 1-based list position (with explicit confirmation and automatic cellar summary refresh, without posting an Untappd check-in).
 
 ### 4. Status Bar
 Located at the bottom of the screen, showing the live connectivity state:

@@ -10,7 +10,9 @@ import (
 
 	tea "github.com/charmbracelet/bubbletea"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
+	"google.golang.org/grpc/status"
 	pb "github.com/brotherlogic/beerkellar/proto"
 )
 
@@ -116,6 +118,7 @@ type mockBeerKellerClient struct {
 	getCellarFunc    func(ctx context.Context, in *pb.GetCellarRequest) (*pb.GetCellarResponse, error)
 	getLoginFunc     func(ctx context.Context, in *pb.GetLoginRequest) (*pb.GetLoginResponse, error)
 	getAuthTokenFunc func(ctx context.Context, in *pb.GetAuthTokenRequest) (*pb.GetAuthTokenResponse, error)
+	removeBeerFunc   func(ctx context.Context, in *pb.RemoveBeerRequest) (*pb.RemoveBeerResponse, error)
 }
 
 func (m *mockBeerKellerClient) GetCellar(ctx context.Context, in *pb.GetCellarRequest, opts ...grpc.CallOption) (*pb.GetCellarResponse, error) {
@@ -146,6 +149,12 @@ func (m *mockBeerKellerClient) AddBeer(ctx context.Context, in *pb.AddBeerReques
 }
 func (m *mockBeerKellerClient) DrinkBeer(ctx context.Context, in *pb.DrinkBeerRequest, opts ...grpc.CallOption) (*pb.DrinkBeerResponse, error) {
 	return &pb.DrinkBeerResponse{}, nil
+}
+func (m *mockBeerKellerClient) RemoveBeer(ctx context.Context, in *pb.RemoveBeerRequest, opts ...grpc.CallOption) (*pb.RemoveBeerResponse, error) {
+	if m.removeBeerFunc != nil {
+		return m.removeBeerFunc(ctx, in)
+	}
+	return &pb.RemoveBeerResponse{}, nil
 }
 func (m *mockBeerKellerClient) GetLogin(ctx context.Context, in *pb.GetLoginRequest, opts ...grpc.CallOption) (*pb.GetLoginResponse, error) {
 	if m.getLoginFunc != nil {
@@ -234,10 +243,31 @@ func (m mockKey) Type() int {
 }
 
 func mockKeyMsg(s string) tea.KeyMsg {
-	if s == "enter" {
+	switch s {
+	case "enter":
 		return tea.KeyMsg{Type: tea.KeyEnter, Runes: []rune{'\r'}}
+	case "esc":
+		return tea.KeyMsg{Type: tea.KeyEsc}
+	case "ctrl+c":
+		return tea.KeyMsg{Type: tea.KeyCtrlC}
+	default:
+		return tea.KeyMsg{Runes: []rune(s)}
 	}
-	return tea.KeyMsg{Runes: []rune(s)}
+}
+
+func typeCommand(m tea.Model, text string) (tea.Model, tea.Cmd) {
+	for _, r := range text {
+		m, _ = m.Update(mockKeyMsg(string(r)))
+	}
+	return m.Update(mockKeyMsg("enter"))
+}
+
+func mustRunCmd(t *testing.T, cmd tea.Cmd) tea.Msg {
+	t.Helper()
+	if cmd == nil {
+		t.Fatal("Expected non-nil tea.Cmd, got nil")
+	}
+	return cmd()
 }
 
 type mockGoogleClient struct {
@@ -480,4 +510,888 @@ func TestAutoUpdateTUIDevMode(t *testing.T) {
 	
 	// This should return immediately without doing any network calls or process replacement
 	autoUpdateTUI()
+}
+
+func sampleRemoveCellarResponse() *pb.GetCellarResponse {
+	return &pb.GetCellarResponse{
+		Username: "testuser",
+		State:    pb.User_STATE_AUTHORIZED,
+		Beers: []*pb.Beer{
+			{Id: 101, Name: "Beer 1", Brewery: "Brewery A", Units: 2.0},
+			{Id: 202, Name: "Beer 2", Brewery: "Brewery B", Units: 4.0},
+		},
+		Entries: []*pb.CellarEntry{
+			{BeerId: 101, DateAdded: 1700000100, SizeFlOz: 12},
+			{BeerId: 202, DateAdded: 1700000200, SizeFlOz: 16},
+		},
+	}
+}
+
+func TestRemoveWizardGuidedFlow(t *testing.T) {
+	cases := []struct {
+		name        string
+		removeCmd   string
+		confirmText string
+	}{
+		{name: "lowercase_y", removeCmd: "remove", confirmText: "y"},
+		{name: "lowercase_yes", removeCmd: "remove", confirmText: "yes"},
+		{name: "uppercase_trimmed", removeCmd: "  REMOVE  ", confirmText: "  YES  "},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			var removedReq *pb.RemoveBeerRequest
+			removeCalls := 0
+			cellarCalls := 0
+
+			mockClient := &mockBeerKellerClient{
+				getCellarFunc: func(ctx context.Context, in *pb.GetCellarRequest) (*pb.GetCellarResponse, error) {
+					cellarCalls++
+					if cellarCalls == 1 {
+						return sampleRemoveCellarResponse(), nil
+					}
+					// Summary refresh after removal returns remaining 1 beer
+					return &pb.GetCellarResponse{
+						Username: "testuser",
+						State:    pb.User_STATE_AUTHORIZED,
+						Beers: []*pb.Beer{
+							{Id: 101, Name: "Beer 1", Brewery: "Brewery A", Units: 2.0},
+						},
+						Entries: []*pb.CellarEntry{
+							{BeerId: 101, DateAdded: 1700000100, SizeFlOz: 12},
+						},
+					}, nil
+				},
+				removeBeerFunc: func(ctx context.Context, in *pb.RemoveBeerRequest) (*pb.RemoveBeerResponse, error) {
+					removeCalls++
+					removedReq = in
+					return &pb.RemoveBeerResponse{}, nil
+				},
+				weekdayRes: &pb.GetBeerResponse{
+					Beers: []*pb.Beer{{Id: 101, Name: "Beer 1", Brewery: "Brewery A", Units: 2.0}},
+				},
+				weekendRes: &pb.GetBeerResponse{},
+			}
+
+			m := initialModel(mockClient, nil)
+
+			// Step 1: Enter remove command
+			m, cmd := typeCommand(m, tc.removeCmd)
+			if cmd == nil {
+				t.Fatal("Expected fetch cellar cmd after 'remove', got nil")
+			}
+			tm := m.(tuiModel)
+			if !strings.Contains(tm.commandReadout, "Fetching cellar...") {
+				t.Errorf("Expected 'Fetching cellar...' in readout, got %q", tm.commandReadout)
+			}
+			if tm.textInput.Placeholder != "Loading cellar..." {
+				t.Errorf("Expected placeholder 'Loading cellar...', got %q", tm.textInput.Placeholder)
+			}
+
+			// Deliver cellar loaded message
+			m, cmd = m.Update(cmd())
+			if cmd != nil {
+				t.Errorf("Expected nil cmd after loading cellar list, got %v", cmd)
+			}
+			tm = m.(tuiModel)
+			for _, want := range []string{
+				"1. Brewery A - Beer 1 (2.00 units)",
+				"2. Brewery B - Beer 2 (4.00 units)",
+			} {
+				if !strings.Contains(tm.commandReadout, want) {
+					t.Errorf("Expected readout to contain %q, got:\n%s", want, tm.commandReadout)
+				}
+			}
+			if tm.textInput.Placeholder != "Enter item number (1-2) or 'cancel'" {
+				t.Errorf("Expected guided placeholder, got %q", tm.textInput.Placeholder)
+			}
+
+			// Step 2: Select item #2
+			m, cmd = typeCommand(m, "2")
+			if cmd != nil {
+				t.Errorf("Expected nil cmd after selecting item, got %v", cmd)
+			}
+			tm = m.(tuiModel)
+			expectedConfirm := `Remove #2 "Brewery B - Beer 2 (4.00 units)"? (y/n)`
+			if !strings.Contains(tm.commandReadout, expectedConfirm) {
+				t.Errorf("Expected confirmation prompt %q, got:\n%s", expectedConfirm, tm.commandReadout)
+			}
+			if tm.textInput.Placeholder != "Confirm removal (y/n)" {
+				t.Errorf("Expected placeholder 'Confirm removal (y/n)', got %q", tm.textInput.Placeholder)
+			}
+			if len(tm.textInput.Placeholder) > 40 {
+				t.Errorf("Expected placeholder to fit within 40 chars, got %d (%q)", len(tm.textInput.Placeholder), tm.textInput.Placeholder)
+			}
+
+			// Step 3: Confirm removal
+			m, cmd = typeCommand(m, tc.confirmText)
+			if cmd == nil {
+				t.Fatal("Expected RemoveBeer cmd after confirmation, got nil")
+			}
+			if m.(tuiModel).textInput.Placeholder != "Removing beer..." {
+				t.Errorf("Expected placeholder 'Removing beer...', got %q", m.(tuiModel).textInput.Placeholder)
+			}
+
+			// Execute RemoveBeer cmd and deliver result
+			m, summaryCmd := m.Update(cmd())
+			if removeCalls != 1 {
+				t.Fatalf("Expected RemoveBeer to be called once, got %d", removeCalls)
+			}
+			if removedReq.GetIndex() != 1 || removedReq.GetBeerId() != 202 || removedReq.GetSizeFlOz() != 16 || removedReq.GetDateAdded() != 1700000200 {
+				t.Errorf("Unexpected RemoveBeerRequest: %+v", removedReq)
+			}
+
+			tm = m.(tuiModel)
+			expectedSuccess := `Removed "Brewery B - Beer 2 (4.00 units)" from cellar.`
+			if !strings.Contains(tm.commandReadout, expectedSuccess) {
+				t.Errorf("Expected readout %q, got:\n%s", expectedSuccess, tm.commandReadout)
+			}
+			if tm.textInput.Placeholder != "Type command here..." {
+				t.Errorf("Expected reset placeholder 'Type command here...', got %q", tm.textInput.Placeholder)
+			}
+			if tm.activeWiz != wizardNone {
+				t.Errorf("Expected activeWiz reset to wizardNone, got %v", tm.activeWiz)
+			}
+			if summaryCmd == nil {
+				t.Fatal("Expected fetchCellarSummary cmd after successful removal, got nil")
+			}
+
+			// Run summary refresh cmd and verify top summary updates
+			m, _ = m.Update(summaryCmd())
+			rendered := m.View()
+			if !strings.Contains(rendered, "1 Beers (1 Weekday, 0 Weekend)") {
+				t.Errorf("Expected refreshed summary pane to show 1 Beer, got:\n%s", rendered)
+			}
+		})
+	}
+}
+
+func TestRemoveWizardDirectShortcut(t *testing.T) {
+	var removedReq *pb.RemoveBeerRequest
+	removeCalls := 0
+	cellarCalls := 0
+
+	mockClient := &mockBeerKellerClient{
+		getCellarFunc: func(ctx context.Context, in *pb.GetCellarRequest) (*pb.GetCellarResponse, error) {
+			cellarCalls++
+			if cellarCalls == 1 {
+				return sampleRemoveCellarResponse(), nil
+			}
+			return &pb.GetCellarResponse{
+				Beers:   []*pb.Beer{{Id: 101, Name: "Beer 1", Brewery: "Brewery A", Units: 2.0}},
+				Entries: []*pb.CellarEntry{{BeerId: 101, DateAdded: 1700000100, SizeFlOz: 12}},
+			}, nil
+		},
+		removeBeerFunc: func(ctx context.Context, in *pb.RemoveBeerRequest) (*pb.RemoveBeerResponse, error) {
+			removeCalls++
+			removedReq = in
+			return &pb.RemoveBeerResponse{}, nil
+		},
+	}
+
+	m := initialModel(mockClient, nil)
+	m, cmd := typeCommand(m, "  REMOVE   2  ")
+	if cmd == nil {
+		t.Fatal("Expected fetch cmd for shortcut 'remove 2', got nil")
+	}
+
+	// Deliver cellar fetch -> should skip numbered list and go straight to confirmation
+	m, cmd = m.Update(cmd())
+	if cmd != nil {
+		t.Errorf("Expected nil cmd after shortcut fetch, got %v", cmd)
+	}
+	tm := m.(tuiModel)
+	if strings.Contains(tm.commandReadout, "1. Brewery A") {
+		t.Errorf("Expected shortcut flow to skip numbered list, got:\n%s", tm.commandReadout)
+	}
+	expectedConfirm := `Remove #2 "Brewery B - Beer 2 (4.00 units)"? (y/n)`
+	if !strings.Contains(tm.commandReadout, expectedConfirm) {
+		t.Errorf("Expected confirmation %q, got:\n%s", expectedConfirm, tm.commandReadout)
+	}
+	if tm.textInput.Placeholder != "Confirm removal (y/n)" {
+		t.Errorf("Expected placeholder 'Confirm removal (y/n)', got %q", tm.textInput.Placeholder)
+	}
+
+	m, cmd = typeCommand(m, "y")
+	if cmd == nil {
+		t.Fatal("Expected RemoveBeer cmd, got nil")
+	}
+	m, summaryCmd := m.Update(cmd())
+	if removeCalls != 1 {
+		t.Fatalf("Expected 1 RemoveBeer call, got %d", removeCalls)
+	}
+	if removedReq.GetIndex() != 1 || removedReq.GetBeerId() != 202 || removedReq.GetSizeFlOz() != 16 || removedReq.GetDateAdded() != 1700000200 {
+		t.Errorf("Unexpected RemoveBeerRequest: %+v", removedReq)
+	}
+	if !strings.Contains(m.(tuiModel).commandReadout, `Removed "Brewery B - Beer 2 (4.00 units)" from cellar.`) {
+		t.Errorf("Unexpected success readout: %s", m.(tuiModel).commandReadout)
+	}
+	if summaryCmd == nil {
+		t.Fatal("Expected summary refresh cmd after removal, got nil")
+	}
+}
+
+func TestRemoveWizardCancellation(t *testing.T) {
+	t.Run("text_cancel_at_select_index", func(t *testing.T) {
+		for _, cancelWord := range []string{"n", "no", "cancel", "Cancel", "NO"} {
+			t.Run(cancelWord, func(t *testing.T) {
+				removeCalls := 0
+				mockClient := &mockBeerKellerClient{
+					cellarRes: sampleRemoveCellarResponse(),
+					removeBeerFunc: func(ctx context.Context, in *pb.RemoveBeerRequest) (*pb.RemoveBeerResponse, error) {
+						removeCalls++
+						return &pb.RemoveBeerResponse{}, nil
+					},
+				}
+				m := initialModel(mockClient, nil)
+				m, cmd := typeCommand(m, "remove")
+				m, _ = m.Update(mustRunCmd(t, cmd))
+
+				m, cmd = typeCommand(m, cancelWord)
+				if cmd != nil {
+					t.Errorf("Expected nil cmd on cancel, got %v", cmd)
+				}
+				if removeCalls != 0 {
+					t.Errorf("Expected 0 RemoveBeer calls, got %d", removeCalls)
+				}
+				tm := m.(tuiModel)
+				if tm.activeWiz != wizardNone {
+					t.Errorf("Expected wizard reset to wizardNone, got %v", tm.activeWiz)
+				}
+				if tm.textInput.Placeholder != "Type command here..." {
+					t.Errorf("Expected default placeholder, got %q", tm.textInput.Placeholder)
+				}
+				if !strings.Contains(tm.commandReadout, "Removal cancelled. No beer was removed.") {
+					t.Errorf("Expected cancellation readout, got %q", tm.commandReadout)
+				}
+			})
+		}
+	})
+
+	t.Run("text_cancel_at_confirm", func(t *testing.T) {
+		for _, cancelWord := range []string{"n", "no", "cancel", "CANCEL"} {
+			t.Run(cancelWord, func(t *testing.T) {
+				removeCalls := 0
+				mockClient := &mockBeerKellerClient{
+					cellarRes: sampleRemoveCellarResponse(),
+					removeBeerFunc: func(ctx context.Context, in *pb.RemoveBeerRequest) (*pb.RemoveBeerResponse, error) {
+						removeCalls++
+						return &pb.RemoveBeerResponse{}, nil
+					},
+				}
+				m := initialModel(mockClient, nil)
+				m, cmd := typeCommand(m, "remove 1")
+				m, _ = m.Update(mustRunCmd(t, cmd))
+
+				m, cmd = typeCommand(m, cancelWord)
+				if cmd != nil {
+					t.Errorf("Expected nil cmd on cancel, got %v", cmd)
+				}
+				if removeCalls != 0 {
+					t.Errorf("Expected 0 RemoveBeer calls, got %d", removeCalls)
+				}
+				tm := m.(tuiModel)
+				if tm.activeWiz != wizardNone || tm.textInput.Placeholder != "Type command here..." {
+					t.Errorf("Expected wizard reset, got activeWiz=%v placeholder=%q", tm.activeWiz, tm.textInput.Placeholder)
+				}
+				if !strings.Contains(tm.commandReadout, "Removal cancelled. No beer was removed.") {
+					t.Errorf("Expected cancellation readout, got %q", tm.commandReadout)
+				}
+			})
+		}
+	})
+
+	t.Run("esc_during_fetching_ignores_stale_response", func(t *testing.T) {
+		mockClient := &mockBeerKellerClient{
+			cellarRes: sampleRemoveCellarResponse(),
+		}
+		m := initialModel(mockClient, nil)
+
+		// Start first remove fetch
+		m, fetchCmd1 := typeCommand(m, "remove")
+		if fetchCmd1 == nil {
+			t.Fatal("Expected fetchCmd1, got nil")
+		}
+
+		// Press Esc before async fetch completes
+		m, escCmd := m.Update(mockKeyMsg("esc"))
+		if escCmd != nil {
+			t.Errorf("Expected nil cmd on Esc, got %v", escCmd)
+		}
+		tm := m.(tuiModel)
+		if tm.activeWiz != wizardNone {
+			t.Errorf("Expected wizardNone after Esc, got %v", tm.activeWiz)
+		}
+		if !strings.Contains(tm.commandReadout, "Removal cancelled. No beer was removed.") {
+			t.Errorf("Expected cancellation message, got %q", tm.commandReadout)
+		}
+
+		// Now stale fetch response arrives -> must be ignored
+		staleMsg1 := fetchCmd1()
+		m, _ = m.Update(staleMsg1)
+		tm = m.(tuiModel)
+		if tm.activeWiz != wizardNone {
+			t.Errorf("Expected stale response to be ignored and remain wizardNone, got %v", tm.activeWiz)
+		}
+		if !strings.Contains(tm.commandReadout, "Removal cancelled. No beer was removed.") {
+			t.Errorf("Expected cancelled readout to remain intact, got %q", tm.commandReadout)
+		}
+
+		// Also verify starting a second remove ignores staleMsg1 while accepting fetchCmd2
+		m, fetchCmd2 := typeCommand(m, "remove 1")
+		if fetchCmd2 == nil {
+			t.Fatal("Expected fetchCmd2, got nil")
+		}
+		// Re-deliver staleMsg1 during active fetch #2 -> must be ignored
+		m, _ = m.Update(staleMsg1)
+		if !strings.Contains(m.(tuiModel).commandReadout, "Fetching cellar...") {
+			t.Errorf("Expected stale fetch #1 to be ignored during fetch #2, got %q", m.(tuiModel).commandReadout)
+		}
+		// Deliver fetchCmd2 -> must transition to confirm for #1
+		m, _ = m.Update(fetchCmd2())
+		if !strings.Contains(m.(tuiModel).commandReadout, `Remove #1 "Brewery A - Beer 1 (2.00 units)"? (y/n)`) {
+			t.Errorf("Expected fetch #2 to succeed, got %q", m.(tuiModel).commandReadout)
+		}
+	})
+
+	t.Run("esc_during_select_and_confirm", func(t *testing.T) {
+		removeCalls := 0
+		mockClient := &mockBeerKellerClient{
+			cellarRes: sampleRemoveCellarResponse(),
+			removeBeerFunc: func(ctx context.Context, in *pb.RemoveBeerRequest) (*pb.RemoveBeerResponse, error) {
+				removeCalls++
+				return &pb.RemoveBeerResponse{}, nil
+			},
+		}
+
+		// Esc at select index
+		m := initialModel(mockClient, nil)
+		m, cmd := typeCommand(m, "remove")
+		m, _ = m.Update(mustRunCmd(t, cmd))
+		m, _ = m.Update(mockKeyMsg("esc"))
+		if m.(tuiModel).activeWiz != wizardNone || !strings.Contains(m.(tuiModel).commandReadout, "Removal cancelled. No beer was removed.") {
+			t.Errorf("Expected Esc to cancel from select step, got activeWiz=%v readout=%q", m.(tuiModel).activeWiz, m.(tuiModel).commandReadout)
+		}
+
+		// Esc at confirm
+		m, cmd = typeCommand(m, "remove 1")
+		m, _ = m.Update(mustRunCmd(t, cmd))
+		m, _ = m.Update(mockKeyMsg("esc"))
+		if m.(tuiModel).activeWiz != wizardNone || !strings.Contains(m.(tuiModel).commandReadout, "Removal cancelled. No beer was removed.") {
+			t.Errorf("Expected Esc to cancel from confirm step, got activeWiz=%v readout=%q", m.(tuiModel).activeWiz, m.(tuiModel).commandReadout)
+		}
+		if removeCalls != 0 {
+			t.Errorf("Expected 0 RemoveBeer calls, got %d", removeCalls)
+		}
+	})
+
+	t.Run("esc_during_removing_does_not_claim_no_beer_removed", func(t *testing.T) {
+		mockClient := &mockBeerKellerClient{
+			cellarRes: sampleRemoveCellarResponse(),
+		}
+		m := initialModel(mockClient, nil)
+		m, cmd := typeCommand(m, "remove 1")
+		m, _ = m.Update(mustRunCmd(t, cmd))
+		m, removeCmd := typeCommand(m, "y")
+		if removeCmd == nil {
+			t.Fatal("Expected removeCmd, got nil")
+		}
+
+		m, _ = m.Update(mockKeyMsg("esc"))
+		if strings.Contains(m.(tuiModel).commandReadout, "No beer was removed") {
+			t.Errorf("Expected Esc during removing RPC NOT to claim no beer was removed, got %q", m.(tuiModel).commandReadout)
+		}
+		if m.(tuiModel).activeWiz == wizardNone {
+			t.Errorf("Expected Esc during removing RPC to leave wizard in removing state")
+		}
+	})
+
+	t.Run("ctrl_c_exits_cleanly_from_all_wizard_steps", func(t *testing.T) {
+		removeCalls := 0
+		mockClient := &mockBeerKellerClient{
+			cellarRes: sampleRemoveCellarResponse(),
+			removeBeerFunc: func(ctx context.Context, in *pb.RemoveBeerRequest) (*pb.RemoveBeerResponse, error) {
+				removeCalls++
+				return &pb.RemoveBeerResponse{}, nil
+			},
+		}
+
+		// 1. During fetching
+		m1, _ := typeCommand(initialModel(mockClient, nil), "remove")
+		_, quitCmd1 := m1.Update(mockKeyMsg("ctrl+c"))
+		if quitCmd1 == nil {
+			t.Fatal("Expected tea.Quit cmd on Ctrl+C during fetching")
+		}
+		if _, ok := quitCmd1().(tea.QuitMsg); !ok {
+			t.Errorf("Expected tea.QuitMsg, got %T", quitCmd1())
+		}
+
+		// 2. During select index
+		m2, fetchCmd := typeCommand(initialModel(mockClient, nil), "remove")
+		m2, _ = m2.Update(mustRunCmd(t, fetchCmd))
+		_, quitCmd2 := m2.Update(mockKeyMsg("ctrl+c"))
+		if quitCmd2 == nil {
+			t.Fatal("Expected tea.Quit cmd on Ctrl+C during select index")
+		}
+		if _, ok := quitCmd2().(tea.QuitMsg); !ok {
+			t.Errorf("Expected tea.QuitMsg, got %T", quitCmd2())
+		}
+
+		// 3. During confirm
+		m3, fetchCmd3 := typeCommand(initialModel(mockClient, nil), "remove 1")
+		m3, _ = m3.Update(mustRunCmd(t, fetchCmd3))
+		_, quitCmd3 := m3.Update(mockKeyMsg("ctrl+c"))
+		if quitCmd3 == nil {
+			t.Fatal("Expected tea.Quit cmd on Ctrl+C during confirm")
+		}
+		if _, ok := quitCmd3().(tea.QuitMsg); !ok {
+			t.Errorf("Expected tea.QuitMsg, got %T", quitCmd3())
+		}
+
+		if removeCalls != 0 {
+			t.Errorf("Expected 0 RemoveBeer calls on Ctrl+C, got %d", removeCalls)
+		}
+	})
+}
+
+func TestRemoveWizardUnrecognizedConfirmation(t *testing.T) {
+	removeCalls := 0
+	mockClient := &mockBeerKellerClient{
+		cellarRes: sampleRemoveCellarResponse(),
+		removeBeerFunc: func(ctx context.Context, in *pb.RemoveBeerRequest) (*pb.RemoveBeerResponse, error) {
+			removeCalls++
+			return &pb.RemoveBeerResponse{}, nil
+		},
+	}
+
+	m := initialModel(mockClient, nil)
+	m, cmd := typeCommand(m, "remove 1")
+	m, _ = m.Update(mustRunCmd(t, cmd))
+
+	for _, invalid := range []string{"maybe", "", "1", "yep"} {
+		m, cmd = typeCommand(m, invalid)
+		if cmd != nil {
+			t.Errorf("Expected nil cmd for unrecognized confirmation %q, got %v", invalid, cmd)
+		}
+		if removeCalls != 0 {
+			t.Errorf("Expected 0 RemoveBeer calls after %q, got %d", invalid, removeCalls)
+		}
+		tm := m.(tuiModel)
+		if tm.activeWiz == wizardNone {
+			t.Errorf("Expected wizard to remain active after unrecognized confirmation %q", invalid)
+		}
+		wantPrompt := `Please enter 'y' to confirm removal of #1 "Brewery A - Beer 1 (2.00 units)" or 'n' to cancel.`
+		if !strings.Contains(tm.commandReadout, wantPrompt) {
+			t.Errorf("Expected re-prompt %q, got:\n%s", wantPrompt, tm.commandReadout)
+		}
+	}
+
+	// Confirming with 'y' afterward still succeeds
+	m, cmd = typeCommand(m, "y")
+	if cmd == nil {
+		t.Fatal("Expected RemoveBeer cmd after valid 'y'")
+	}
+	m, _ = m.Update(cmd())
+	if removeCalls != 1 {
+		t.Errorf("Expected 1 RemoveBeer call, got %d", removeCalls)
+	}
+	if !strings.Contains(m.(tuiModel).commandReadout, `Removed "Brewery A - Beer 1 (2.00 units)" from cellar.`) {
+		t.Errorf("Expected removal success readout, got %q", m.(tuiModel).commandReadout)
+	}
+}
+
+func TestRemoveWizardValidation(t *testing.T) {
+	t.Run("empty_cellar_guided_and_shortcut", func(t *testing.T) {
+		for _, command := range []string{"remove", "remove 1"} {
+			t.Run(command, func(t *testing.T) {
+				mockClient := &mockBeerKellerClient{
+					cellarRes: &pb.GetCellarResponse{Username: "testuser", State: pb.User_STATE_AUTHORIZED},
+				}
+				m := initialModel(mockClient, nil)
+				m, cmd := typeCommand(m, command)
+				m, _ = m.Update(mustRunCmd(t, cmd))
+
+				tm := m.(tuiModel)
+				if tm.activeWiz != wizardNone || tm.textInput.Placeholder != "Type command here..." {
+					t.Errorf("Expected wizard reset on empty cellar, got activeWiz=%v placeholder=%q", tm.activeWiz, tm.textInput.Placeholder)
+				}
+				if !strings.Contains(tm.commandReadout, "Your cellar is empty. Nothing to remove.") {
+					t.Errorf("Expected empty cellar message, got %q", tm.commandReadout)
+				}
+			})
+		}
+	})
+
+	t.Run("mismatched_entries_length", func(t *testing.T) {
+		mockClient := &mockBeerKellerClient{
+			cellarRes: &pb.GetCellarResponse{
+				Beers:   []*pb.Beer{{Id: 101, Name: "Beer 1", Brewery: "Brewery A", Units: 2.0}},
+				Entries: nil,
+			},
+		}
+		m := initialModel(mockClient, nil)
+		m, cmd := typeCommand(m, "remove")
+		m, _ = m.Update(mustRunCmd(t, cmd))
+
+		tm := m.(tuiModel)
+		if tm.activeWiz != wizardNone {
+			t.Errorf("Expected wizard reset on entries mismatch, got %v", tm.activeWiz)
+		}
+		if !strings.Contains(strings.ToLower(tm.commandReadout), "mismatch") {
+			t.Errorf("Expected entries mismatch error, got %q", tm.commandReadout)
+		}
+	})
+
+	t.Run("extra_args", func(t *testing.T) {
+		getCellarCalls := 0
+		mockClient := &mockBeerKellerClient{
+			getCellarFunc: func(ctx context.Context, in *pb.GetCellarRequest) (*pb.GetCellarResponse, error) {
+				getCellarCalls++
+				return sampleRemoveCellarResponse(), nil
+			},
+		}
+		for _, command := range []string{"remove 1 2", "remove 1 foo"} {
+			m := initialModel(mockClient, nil)
+			m, cmd := typeCommand(m, command)
+			if cmd != nil {
+				t.Errorf("Expected nil cmd for %q, got %v", command, cmd)
+			}
+			tm := m.(tuiModel)
+			if tm.activeWiz != wizardNone {
+				t.Errorf("Expected wizardNone for %q, got %v", command, tm.activeWiz)
+			}
+			if !strings.Contains(tm.commandReadout, "Usage: remove [item number]") {
+				t.Errorf("Expected usage message for %q, got %q", command, tm.commandReadout)
+			}
+		}
+		if getCellarCalls != 0 {
+			t.Errorf("Expected 0 GetCellar calls on invalid syntax, got %d", getCellarCalls)
+		}
+	})
+
+	t.Run("invalid_shortcut_numbers", func(t *testing.T) {
+		getCellarCalls := 0
+		mockClient := &mockBeerKellerClient{
+			getCellarFunc: func(ctx context.Context, in *pb.GetCellarRequest) (*pb.GetCellarResponse, error) {
+				getCellarCalls++
+				return sampleRemoveCellarResponse(), nil
+			},
+		}
+		for _, command := range []string{"remove abc", "remove 0", "remove -1", "remove 99999999999999999999999"} {
+			m := initialModel(mockClient, nil)
+			m, cmd := typeCommand(m, command)
+			if cmd != nil {
+				t.Errorf("Expected nil cmd for %q, got %v", command, cmd)
+			}
+			tm := m.(tuiModel)
+			if tm.activeWiz != wizardNone {
+				t.Errorf("Expected wizardNone for %q, got %v", command, tm.activeWiz)
+			}
+			if !strings.Contains(tm.commandReadout, "Invalid item number") {
+				t.Errorf("Expected invalid item number error for %q, got %q", command, tm.commandReadout)
+			}
+		}
+		if getCellarCalls != 0 {
+			t.Errorf("Expected 0 GetCellar calls on invalid shortcut arg, got %d", getCellarCalls)
+		}
+	})
+
+	t.Run("out_of_range_shortcut", func(t *testing.T) {
+		mockClient := &mockBeerKellerClient{
+			cellarRes: sampleRemoveCellarResponse(),
+		}
+		m := initialModel(mockClient, nil)
+		m, cmd := typeCommand(m, "remove 5")
+		m, _ = m.Update(mustRunCmd(t, cmd))
+
+		tm := m.(tuiModel)
+		if tm.activeWiz != wizardNone || tm.textInput.Placeholder != "Type command here..." {
+			t.Errorf("Expected wizard reset on out-of-range shortcut, got activeWiz=%v placeholder=%q", tm.activeWiz, tm.textInput.Placeholder)
+		}
+		if !strings.Contains(tm.commandReadout, "1 and 2") {
+			t.Errorf("Expected valid range (1 and 2) in error, got %q", tm.commandReadout)
+		}
+	})
+
+	t.Run("invalid_guided_selections_reprompt_and_retry", func(t *testing.T) {
+		mockClient := &mockBeerKellerClient{
+			cellarRes: sampleRemoveCellarResponse(),
+		}
+		m := initialModel(mockClient, nil)
+		m, cmd := typeCommand(m, "remove")
+		m, _ = m.Update(mustRunCmd(t, cmd))
+
+		for _, badInput := range []string{"abc", "0", "-1", "99999999999999999999999", "5"} {
+			m, cmd = typeCommand(m, badInput)
+			if cmd != nil {
+				t.Errorf("Expected nil cmd on invalid guided input %q", badInput)
+			}
+			tm := m.(tuiModel)
+			if tm.activeWiz == wizardNone {
+				t.Errorf("Expected wizard to stay active after invalid guided input %q", badInput)
+			}
+			if !strings.Contains(tm.commandReadout, "1 and 2") {
+				t.Errorf("Expected range error (1 and 2) for %q, got:\n%s", badInput, tm.commandReadout)
+			}
+			if !strings.Contains(tm.commandReadout, "1. Brewery A - Beer 1 (2.00 units)") || !strings.Contains(tm.commandReadout, "2. Brewery B - Beer 2 (4.00 units)") {
+				t.Errorf("Expected numbered list to remain visible after %q, got:\n%s", badInput, tm.commandReadout)
+			}
+		}
+
+		// User can now pick valid item #1
+		m, _ = typeCommand(m, "1")
+		if !strings.Contains(m.(tuiModel).commandReadout, `Remove #1 "Brewery A - Beer 1 (2.00 units)"? (y/n)`) {
+			t.Errorf("Expected retry with '1' to transition to confirm, got:\n%s", m.(tuiModel).commandReadout)
+		}
+	})
+}
+
+func TestRemoveWizardUncachedMetadata(t *testing.T) {
+	cases := []struct {
+		name     string
+		beer     *pb.Beer
+		entry    *pb.CellarEntry
+		wantID   string
+		wantText []string
+	}{
+		{
+			name:     "empty_brewery_and_name",
+			beer:     &pb.Beer{Id: 98765, Units: 1.75},
+			entry:    &pb.CellarEntry{BeerId: 98765, DateAdded: 1700000300, SizeFlOz: 12},
+			wantID:   "[ID: 98765]",
+			wantText: []string{"[ID: 98765]", "1.75 units"},
+		},
+		{
+			name:     "empty_name_only",
+			beer:     &pb.Beer{Id: 54321, Brewery: "Mystery Brewery", Units: 2.25},
+			entry:    &pb.CellarEntry{BeerId: 54321, DateAdded: 1700000400, SizeFlOz: 16},
+			wantID:   "[ID: 54321]",
+			wantText: []string{"Mystery Brewery", "[ID: 54321]", "2.25 units"},
+		},
+		{
+			name:     "empty_brewery_only",
+			beer:     &pb.Beer{Id: 11111, Name: "Mystery IPA", Units: 3.0},
+			entry:    &pb.CellarEntry{BeerId: 11111, DateAdded: 1700000500, SizeFlOz: 12},
+			wantID:   "[ID: 11111]",
+			wantText: []string{"Mystery IPA", "[ID: 11111]", "3.00 units"},
+		},
+		{
+			name:     "nil_beer_entry",
+			beer:     nil,
+			entry:    &pb.CellarEntry{BeerId: 22222, DateAdded: 1700000600, SizeFlOz: 12},
+			wantID:   "[ID: 0]",
+			wantText: []string{"[ID: 0]", "0.00 units"},
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			var removedReq *pb.RemoveBeerRequest
+			mockClient := &mockBeerKellerClient{
+				cellarRes: &pb.GetCellarResponse{
+					Beers:   []*pb.Beer{tc.beer},
+					Entries: []*pb.CellarEntry{tc.entry},
+				},
+				removeBeerFunc: func(ctx context.Context, in *pb.RemoveBeerRequest) (*pb.RemoveBeerResponse, error) {
+					removedReq = in
+					return &pb.RemoveBeerResponse{}, nil
+				},
+			}
+
+			m := initialModel(mockClient, nil)
+			m, cmd := typeCommand(m, "remove")
+			m, _ = m.Update(mustRunCmd(t, cmd))
+
+			tm := m.(tuiModel)
+			for _, w := range tc.wantText {
+				if !strings.Contains(tm.commandReadout, w) {
+					t.Errorf("Expected readout to contain %q, got:\n%s", w, tm.commandReadout)
+				}
+			}
+
+			m, _ = typeCommand(m, "1")
+			if !strings.Contains(m.(tuiModel).commandReadout, tc.wantID) {
+				t.Errorf("Expected confirm prompt to include %q, got:\n%s", tc.wantID, m.(tuiModel).commandReadout)
+			}
+
+			m, cmd = typeCommand(m, "y")
+			m, _ = m.Update(mustRunCmd(t, cmd))
+			if removedReq == nil || removedReq.GetBeerId() != tc.entry.GetBeerId() {
+				t.Errorf("Expected RemoveBeerRequest with BeerId %d, got %+v", tc.entry.GetBeerId(), removedReq)
+			}
+			if !strings.Contains(m.(tuiModel).commandReadout, tc.wantID) || !strings.Contains(m.(tuiModel).commandReadout, "Removed ") {
+				t.Errorf("Expected removal success readout with fallback ID %q, got %q", tc.wantID, m.(tuiModel).commandReadout)
+			}
+		})
+	}
+}
+
+func TestRemoveWizardBusyGuard(t *testing.T) {
+	getCellarCalls := 0
+	removeCalls := 0
+	mockClient := &mockBeerKellerClient{
+		getCellarFunc: func(ctx context.Context, in *pb.GetCellarRequest) (*pb.GetCellarResponse, error) {
+			getCellarCalls++
+			return sampleRemoveCellarResponse(), nil
+		},
+		removeBeerFunc: func(ctx context.Context, in *pb.RemoveBeerRequest) (*pb.RemoveBeerResponse, error) {
+			removeCalls++
+			return &pb.RemoveBeerResponse{}, nil
+		},
+	}
+
+	m := initialModel(mockClient, nil)
+	m, fetchCmd := typeCommand(m, "remove 1")
+
+	// Busy guard during removeStepFetching: pressing Enter should do nothing
+	m, busyCmd1 := typeCommand(m, "1")
+	if busyCmd1 != nil {
+		t.Errorf("Expected nil cmd while fetching, got %v", busyCmd1)
+	}
+	if !strings.Contains(m.(tuiModel).commandReadout, "Fetching cellar...") {
+		t.Errorf("Expected readout to stay 'Fetching cellar...', got %q", m.(tuiModel).commandReadout)
+	}
+
+	// Complete fetch
+	m, _ = m.Update(mustRunCmd(t, fetchCmd))
+	if getCellarCalls != 1 {
+		t.Errorf("Expected 1 GetCellar call, got %d", getCellarCalls)
+	}
+
+	// Submit 'y' to enter removeStepRemoving
+	m, removeCmd := typeCommand(m, "y")
+	if removeCmd == nil {
+		t.Fatal("Expected removeCmd, got nil")
+	}
+
+	// Busy guard during removeStepRemoving: pressing Enter again should do nothing
+	m, busyCmd2 := typeCommand(m, "y")
+	if busyCmd2 != nil {
+		t.Errorf("Expected nil cmd while removing, got %v", busyCmd2)
+	}
+
+	// Complete original removal
+	m, _ = m.Update(removeCmd())
+	if removeCalls != 1 {
+		t.Errorf("Expected 1 RemoveBeer call, got %d", removeCalls)
+	}
+}
+
+func TestRemoveWizardErrorStates(t *testing.T) {
+	t.Run("get_cellar_error", func(t *testing.T) {
+		mockClient := &mockBeerKellerClient{
+			cellarErr: status.Error(codes.Unauthenticated, "unauthenticated"),
+		}
+		m := initialModel(mockClient, nil)
+		m, cmd := typeCommand(m, "remove")
+		m, _ = m.Update(mustRunCmd(t, cmd))
+
+		tm := m.(tuiModel)
+		if tm.activeWiz != wizardNone || tm.textInput.Placeholder != "Type command here..." {
+			t.Errorf("Expected wizard reset on GetCellar error, got activeWiz=%v placeholder=%q", tm.activeWiz, tm.textInput.Placeholder)
+		}
+		if !strings.Contains(tm.commandReadout, "unauthenticated") {
+			t.Errorf("Expected error details in readout, got %q", tm.commandReadout)
+		}
+	})
+
+	for _, staleCode := range []codes.Code{codes.FailedPrecondition, codes.OutOfRange} {
+		t.Run("stale_cellar_"+staleCode.String(), func(t *testing.T) {
+			getCellarCalls := 0
+			mockClient := &mockBeerKellerClient{
+				getCellarFunc: func(ctx context.Context, in *pb.GetCellarRequest) (*pb.GetCellarResponse, error) {
+					getCellarCalls++
+					return sampleRemoveCellarResponse(), nil
+				},
+				removeBeerFunc: func(ctx context.Context, in *pb.RemoveBeerRequest) (*pb.RemoveBeerResponse, error) {
+					return nil, status.Error(staleCode, "cellar changed")
+				},
+			}
+
+			m := initialModel(mockClient, nil)
+			m, cmd := typeCommand(m, "remove 1")
+			m, _ = m.Update(mustRunCmd(t, cmd))
+			m, cmd = typeCommand(m, "y")
+			m, summaryCmd := m.Update(mustRunCmd(t, cmd))
+
+			tm := m.(tuiModel)
+			if tm.activeWiz != wizardNone || tm.textInput.Placeholder != "Type command here..." {
+				t.Errorf("Expected wizard reset, got activeWiz=%v placeholder=%q", tm.activeWiz, tm.textInput.Placeholder)
+			}
+			want := "Cellar changed before removal completed—no beer was removed. Please try again."
+			if !strings.Contains(tm.commandReadout, want) {
+				t.Errorf("Expected %q, got %q", want, tm.commandReadout)
+			}
+			if summaryCmd == nil {
+				t.Fatal("Expected summary refresh cmd on stale cellar error, got nil")
+			}
+			_, _ = m.Update(summaryCmd())
+			if getCellarCalls != 2 {
+				t.Errorf("Expected summary refresh to call GetCellar (total 2 calls), got %d", getCellarCalls)
+			}
+		})
+	}
+
+	for _, errCode := range []codes.Code{codes.PermissionDenied, codes.Unavailable, codes.DeadlineExceeded} {
+		t.Run("remove_error_"+errCode.String(), func(t *testing.T) {
+			mockClient := &mockBeerKellerClient{
+				cellarRes: sampleRemoveCellarResponse(),
+				removeBeerFunc: func(ctx context.Context, in *pb.RemoveBeerRequest) (*pb.RemoveBeerResponse, error) {
+					return nil, status.Error(errCode, "backend error")
+				},
+			}
+
+			m := initialModel(mockClient, nil)
+			m, cmd := typeCommand(m, "remove 1")
+			m, _ = m.Update(mustRunCmd(t, cmd))
+			m, cmd = typeCommand(m, "y")
+			m, nextCmd := m.Update(mustRunCmd(t, cmd))
+
+			tm := m.(tuiModel)
+			if tm.activeWiz != wizardNone || tm.textInput.Placeholder != "Type command here..." {
+				t.Errorf("Expected wizard reset, got activeWiz=%v placeholder=%q", tm.activeWiz, tm.textInput.Placeholder)
+			}
+			if !strings.Contains(tm.commandReadout, "Error removing beer:") {
+				t.Errorf("Expected 'Error removing beer:' in readout, got %q", tm.commandReadout)
+			}
+			if nextCmd != nil {
+				t.Errorf("Expected nil cmd on non-stale RemoveBeer error, got %v", nextCmd)
+			}
+		})
+	}
+
+	t.Run("summary_refresh_error_preserves_removal_success", func(t *testing.T) {
+		cellarCalls := 0
+		mockClient := &mockBeerKellerClient{
+			getCellarFunc: func(ctx context.Context, in *pb.GetCellarRequest) (*pb.GetCellarResponse, error) {
+				cellarCalls++
+				if cellarCalls == 1 {
+					return sampleRemoveCellarResponse(), nil
+				}
+				return nil, status.Error(codes.Unavailable, "summary backend unavailable")
+			},
+			removeBeerFunc: func(ctx context.Context, in *pb.RemoveBeerRequest) (*pb.RemoveBeerResponse, error) {
+				return &pb.RemoveBeerResponse{}, nil
+			},
+		}
+
+		m := initialModel(mockClient, nil)
+		m, cmd := typeCommand(m, "remove 1")
+		m, _ = m.Update(mustRunCmd(t, cmd))
+		m, cmd = typeCommand(m, "y")
+		m, summaryCmd := m.Update(mustRunCmd(t, cmd))
+		if summaryCmd == nil {
+			t.Fatal("Expected summary refresh cmd, got nil")
+		}
+
+		// Summary refresh fails -> summary pane updates, removal success readout preserved
+		m, _ = m.Update(summaryCmd())
+		rendered := m.View()
+		if !strings.Contains(rendered, `Removed "Brewery A - Beer 1 (2.00 units)" from cellar.`) {
+			t.Errorf("Expected removal success message preserved in View, got:\n%s", rendered)
+		}
+		if !strings.Contains(rendered, "Error loading summary:") {
+			t.Errorf("Expected summary error in summary pane, got:\n%s", rendered)
+		}
+	})
 }
