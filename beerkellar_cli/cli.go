@@ -40,12 +40,57 @@ var Version string = getVersion()
 
 const weekdayBeerUnitsLimit = 3.5
 
+const maxTuiTestDrainSteps = 32
+
+func drainTuiCmds(model tea.Model, initial tea.Cmd, maxSteps int) tea.Model {
+	if initial == nil || maxSteps <= 0 {
+		return model
+	}
+
+	queue := []tea.Cmd{initial}
+	steps := 0
+
+	for len(queue) > 0 && steps < maxSteps {
+		cmd := queue[0]
+		queue = queue[1:]
+		if cmd == nil {
+			continue
+		}
+
+		steps++
+		msg := cmd()
+		if msg == nil {
+			continue
+		}
+
+		switch m := msg.(type) {
+		case tea.BatchMsg:
+			for _, sub := range m {
+				if sub != nil {
+					queue = append(queue, sub)
+				}
+			}
+			continue
+		case tea.QuitMsg:
+			return model
+		}
+
+		var next tea.Cmd
+		model, next = model.Update(msg)
+		if next != nil {
+			queue = append(queue, next)
+		}
+	}
+
+	return model
+}
+
 func runTuiTestLoop(model tea.Model) {
 	if tui, ok := model.(tuiModel); ok {
-		summaryMsg := tui.fetchCellarSummary()()
-		model, _ = model.Update(summaryMsg)
-		statusMsg := tui.checkInitialStatus()()
-		model, _ = model.Update(statusMsg)
+		model = drainTuiCmds(model, tui.fetchCellarSummary(), maxTuiTestDrainSteps)
+	}
+	if tui, ok := model.(tuiModel); ok {
+		model = drainTuiCmds(model, tui.checkInitialStatus(), maxTuiTestDrainSteps)
 	}
 
 	fmt.Println(model.View())
@@ -61,19 +106,12 @@ func runTuiTestLoop(model tea.Model) {
 			break
 		}
 
-		var cmd tea.Cmd
 		for _, char := range line {
-			model, cmd = model.Update(tea.KeyMsg{Runes: []rune{char}})
-			if cmd != nil {
-				msg := cmd()
-				model, _ = model.Update(msg)
-			}
+			model, _ = model.Update(tea.KeyMsg{Runes: []rune{char}})
 		}
+		var cmd tea.Cmd
 		model, cmd = model.Update(tea.KeyMsg{Type: tea.KeyEnter, Runes: []rune{'\r'}})
-		if cmd != nil {
-			msg := cmd()
-			model, _ = model.Update(msg)
-		}
+		model = drainTuiCmds(model, cmd, maxTuiTestDrainSteps)
 
 		fmt.Println(model.View())
 	}
