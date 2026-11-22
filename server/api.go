@@ -577,6 +577,10 @@ func (s *Server) DrinkBeer(ctx context.Context, req *pb.DrinkBeerRequest) (*pb.D
 	return &pb.DrinkBeerResponse{}, err
 }
 
+func (s *Server) RemoveBeer(ctx context.Context, req *pb.RemoveBeerRequest) (*pb.RemoveBeerResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method RemoveBeer not implemented")
+}
+
 func (s *Server) StartBackgroundTasks(ctx context.Context) {
 	go func() {
 		// Wait for 1 minute before starting the refresh
